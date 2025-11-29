@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <ImageView
+        android:id="@+id/backgroundImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/sample_background" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Swipe down from top-right corner"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:padding="16dp"
+        android:background="#80000000" />
+
+    <View
+        android:id="@+id/gestureArea"
+        android:layout_width="120dp"
+        android:layout_height="80dp"
+        android:layout_gravity="top|end"
+        android:background="@android:color/transparent" />
+
+    <include
+        android:id="@+id/controlCenterPanel"
+        layout="@layout/control_center_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:visibility="gone" />
+
+</FrameLayout>

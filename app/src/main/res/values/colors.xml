@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="control_center_background">#80000000</color>
+    <color name="control_item_active">#FF007AFF</color>
+    <color name="control_item_inactive">#4DFFFFFF</color>
+    <color name="control_item_text">#FFFFFF</color>
+    <color name="slider_track">#4DFFFFFF</color>
+    <color name="slider_progress">#FFFFFF</color>
+    <color name="divider">#33FFFFFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Control Center</string>
+    <string name="wifi">Wi-Fi</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="airplane_mode">Airplane Mode</string>
+    <string name="mobile_data">Mobile Data</string>
+    <string name="flashlight">Flashlight</string>
+    <string name="do_not_disturb">Do Not Disturb</string>
+    <string name="screen_rotation">Rotation Lock</string>
+    <string name="brightness">Brightness</string>
+    <string name="volume">Volume</string>
+</resources>
