@@ -84,14 +84,24 @@ class ControlCenterService : Service() {
     private var panelMeasured = false
 
     private var startY = 0f
+    private var startX = 0f
     private var currentTranslationY = 0f
+    private var currentTranslationX = 0f
     private var velocityTracker: VelocityTracker? = null
     private var isDragging = false
     private var isHiding = false
+    private var isHorizontalSwipe = false
     private var currentAnimation: SpringAnimation? = null
+    private var horizontalAnimation: SpringAnimation? = null
+    
+    private var notificationPanelView: View? = null
+    private var currentPage = 0
+    private var pageIndicatorContainer: LinearLayout? = null
     
     private val maxBlurRadius = 180f
     private val minFlingVelocity = 1000f
+    private val minHorizontalFlingVelocity = 800f
+    private val horizontalSwipeThreshold = 50f
     private val openThreshold = 0.0f
 
     private val controlStates = mutableMapOf(
@@ -430,8 +440,11 @@ class ControlCenterService : Service() {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 isDragging = true
+                isHorizontalSwipe = false
                 startY = event.rawY
+                startX = event.rawX
                 currentTranslationY = controlCenterView?.translationY ?: 0f
+                currentTranslationX = controlCenterView?.translationX ?: 0f
                 
                 velocityTracker?.clear()
                 velocityTracker = VelocityTracker.obtain()
@@ -439,16 +452,33 @@ class ControlCenterService : Service() {
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-                if (isDragging) {
+                if (isDragging && currentPage == 0) {
                     velocityTracker?.addMovement(event)
                     
+                    val deltaX = event.rawX - startX
                     val deltaY = event.rawY - startY
-                    val newTranslation = (currentTranslationY + deltaY).coerceIn(-panelHeight.toFloat(), 0f)
-                    controlCenterView?.translationY = newTranslation
+                    
+                    val absX = kotlin.math.abs(deltaX)
+                    val absY = kotlin.math.abs(deltaY)
+                    
+                    if (absX > horizontalSwipeThreshold && absX > absY * 1.5f && deltaX < 0) {
+                        isHorizontalSwipe = true
+                        handleHorizontalSwipe(deltaX)
+                    } else if (absY > horizontalSwipeThreshold || !isHorizontalSwipe) {
+                        if (isHorizontalSwipe && absY > absX) {
+                            resetHorizontalSwipeInstant()
+                            isHorizontalSwipe = false
+                        }
+                        
+                        if (!isHorizontalSwipe) {
+                            val newTranslation = (currentTranslationY + deltaY).coerceIn(-panelHeight.toFloat(), 0f)
+                            controlCenterView?.translationY = newTranslation
 
-                    val progress = 1f - (kotlin.math.abs(newTranslation) / panelHeight.toFloat())
-                    backgroundView?.alpha = progress
-                    updateBlurRadius(progress)
+                            val progress = 1f - (kotlin.math.abs(newTranslation) / panelHeight.toFloat())
+                            backgroundView?.alpha = progress
+                            updateBlurRadius(progress)
+                        }
+                    }
                 }
                 return true
             }
@@ -458,17 +488,35 @@ class ControlCenterService : Service() {
                     
                     velocityTracker?.addMovement(event)
                     velocityTracker?.computeCurrentVelocity(1000)
+                    val velocityX = velocityTracker?.xVelocity ?: 0f
                     val velocityY = velocityTracker?.yVelocity ?: 0f
                     
-                    val currentTransY = controlCenterView?.translationY ?: 0f
-                    val shouldHide = currentTransY < -panelHeight / 3f || velocityY < -minFlingVelocity
+                    val deltaX = event.rawX - startX
+                    val deltaY = event.rawY - startY
+                    val absX = kotlin.math.abs(deltaX)
+                    val absY = kotlin.math.abs(deltaY)
                     
-                    if (shouldHide) {
-                        hideControlCenterWithVelocity(velocityY)
+                    val currentTransX = controlCenterView?.translationX ?: 0f
+                    val horizontalProgress = kotlin.math.abs(currentTransX) / screenWidth.toFloat()
+                    
+                    if (isHorizontalSwipe && horizontalProgress > 0.2f) {
+                        finishHorizontalSwipe(velocityX)
+                    } else if (isHorizontalSwipe && kotlin.math.abs(velocityX) > minHorizontalFlingVelocity && velocityX < 0) {
+                        finishHorizontalSwipe(velocityX)
+                    } else if (isHorizontalSwipe) {
+                        resetHorizontalSwipe()
                     } else {
-                        animateShowWithVelocity(velocityY)
+                        val currentTransY = controlCenterView?.translationY ?: 0f
+                        val shouldHide = currentTransY < -panelHeight / 3f || velocityY < -minFlingVelocity
+                        
+                        if (shouldHide) {
+                            hideControlCenterWithVelocity(velocityY)
+                        } else {
+                            animateShowWithVelocity(velocityY)
+                        }
                     }
                     
+                    isHorizontalSwipe = false
                     velocityTracker?.recycle()
                     velocityTracker = null
                 }
@@ -476,6 +524,175 @@ class ControlCenterService : Service() {
             }
         }
         return false
+    }
+    
+    private fun resetHorizontalSwipeInstant() {
+        controlCenterView?.translationX = 0f
+        notificationPanelView?.translationX = screenWidth.toFloat()
+    }
+    
+    private fun resetHorizontalSwipe() {
+        horizontalAnimation?.cancel()
+        
+        if (currentPage == 0) {
+            controlCenterView?.let { panel ->
+                val spring = SpringAnimation(panel, DynamicAnimation.TRANSLATION_X, 0f)
+                spring.spring.apply {
+                    stiffness = SpringForce.STIFFNESS_MEDIUM
+                    dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+                }
+                spring.start()
+            }
+            
+            notificationPanelView?.let { panel ->
+                val spring = SpringAnimation(panel, DynamicAnimation.TRANSLATION_X, screenWidth.toFloat())
+                spring.spring.apply {
+                    stiffness = SpringForce.STIFFNESS_MEDIUM
+                    dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+                }
+                spring.start()
+            }
+            
+            updatePageIndicator(0f)
+        } else {
+            notificationPanelView?.let { panel ->
+                val spring = SpringAnimation(panel, DynamicAnimation.TRANSLATION_X, 0f)
+                spring.spring.apply {
+                    stiffness = SpringForce.STIFFNESS_MEDIUM
+                    dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+                }
+                spring.start()
+            }
+            
+            controlCenterView?.let { panel ->
+                val spring = SpringAnimation(panel, DynamicAnimation.TRANSLATION_X, -screenWidth.toFloat())
+                spring.spring.apply {
+                    stiffness = SpringForce.STIFFNESS_MEDIUM
+                    dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+                }
+                spring.start()
+            }
+            
+            updatePageIndicator(1f)
+        }
+    }
+    
+    private fun handleHorizontalSwipe(deltaX: Float) {
+        if (currentPage == 0) {
+            val translation = deltaX.coerceIn(-screenWidth.toFloat(), 0f)
+            controlCenterView?.translationX = translation
+            
+            if (notificationPanelView == null) {
+                addNotificationPanelView()
+            }
+            notificationPanelView?.translationX = screenWidth + translation
+            
+            val progress = kotlin.math.abs(translation) / screenWidth.toFloat()
+            updatePageIndicator(progress)
+        } else {
+            val translation = deltaX.coerceIn(0f, screenWidth.toFloat())
+            notificationPanelView?.translationX = translation
+            controlCenterView?.translationX = -screenWidth + translation
+            
+            val progress = 1f - (translation / screenWidth.toFloat())
+            updatePageIndicator(progress)
+        }
+    }
+    
+    private fun finishHorizontalSwipe(velocityX: Float) {
+        val currentTransX = controlCenterView?.translationX ?: 0f
+        val swipeProgress = kotlin.math.abs(currentTransX) / screenWidth.toFloat()
+        
+        if (currentPage == 0) {
+            val shouldSwitchToNotification = swipeProgress > 0.3f || velocityX < -minHorizontalFlingVelocity
+            
+            if (shouldSwitchToNotification) {
+                animateToNotificationPage(velocityX)
+            } else {
+                animateBackToControlCenter(velocityX)
+            }
+        } else {
+            val notifTransX = notificationPanelView?.translationX ?: 0f
+            val returnProgress = notifTransX / screenWidth.toFloat()
+            val shouldSwitchToControl = returnProgress > 0.3f || velocityX > minHorizontalFlingVelocity
+            
+            if (shouldSwitchToControl) {
+                animateBackToControlCenter(velocityX)
+            } else {
+                animateToNotificationPage(velocityX)
+            }
+        }
+    }
+    
+    private fun animateToNotificationPage(velocity: Float) {
+        horizontalAnimation?.cancel()
+        
+        if (notificationPanelView == null) {
+            addNotificationPanelView()
+        }
+        
+        controlCenterView?.let { controlPanel ->
+            val controlSpring = SpringAnimation(controlPanel, DynamicAnimation.TRANSLATION_X, -screenWidth.toFloat())
+            controlSpring.spring.apply {
+                stiffness = SpringForce.STIFFNESS_MEDIUM
+                dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+            }
+            if (velocity < 0) controlSpring.setStartVelocity(velocity)
+            controlSpring.start()
+        }
+        
+        notificationPanelView?.let { notifPanel ->
+            val notifSpring = SpringAnimation(notifPanel, DynamicAnimation.TRANSLATION_X, 0f)
+            notifSpring.spring.apply {
+                stiffness = SpringForce.STIFFNESS_MEDIUM
+                dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+            }
+            if (velocity < 0) notifSpring.setStartVelocity(velocity)
+            notifSpring.addUpdateListener { _, value, _ ->
+                val progress = 1f - (value / screenWidth.toFloat())
+                updatePageIndicator(progress.coerceIn(0f, 1f))
+            }
+            notifSpring.addEndListener { _, _, _, _ ->
+                currentPage = 1
+                updatePageIndicator(1f)
+            }
+            horizontalAnimation = notifSpring
+            notifSpring.start()
+        }
+    }
+    
+    private fun animateBackToControlCenter(velocity: Float) {
+        horizontalAnimation?.cancel()
+        
+        controlCenterView?.let { controlPanel ->
+            val controlSpring = SpringAnimation(controlPanel, DynamicAnimation.TRANSLATION_X, 0f)
+            controlSpring.spring.apply {
+                stiffness = SpringForce.STIFFNESS_MEDIUM
+                dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+            }
+            if (velocity > 0) controlSpring.setStartVelocity(velocity)
+            controlSpring.addEndListener { _, _, _, _ ->
+                currentPage = 0
+                updatePageIndicator(0f)
+                removeNotificationPanelView()
+            }
+            horizontalAnimation = controlSpring
+            controlSpring.start()
+        }
+        
+        notificationPanelView?.let { notifPanel ->
+            val notifSpring = SpringAnimation(notifPanel, DynamicAnimation.TRANSLATION_X, screenWidth.toFloat())
+            notifSpring.spring.apply {
+                stiffness = SpringForce.STIFFNESS_MEDIUM
+                dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+            }
+            if (velocity > 0) notifSpring.setStartVelocity(velocity)
+            notifSpring.addUpdateListener { _, value, _ ->
+                val progress = 1f - (value / screenWidth.toFloat())
+                updatePageIndicator(progress.coerceIn(0f, 1f))
+            }
+            notifSpring.start()
+        }
     }
 
     private fun animateShow() {
@@ -557,10 +774,15 @@ class ControlCenterService : Service() {
         isDragging = false
         isHiding = false
         isInteractiveDragging = false
+        isHorizontalSwipe = false
         panelMeasured = false
+        currentPage = 0
         
         currentAnimation?.cancel()
         currentAnimation = null
+        
+        horizontalAnimation?.cancel()
+        horizontalAnimation = null
         
         blurAnimator?.cancel()
         blurAnimator = null
@@ -569,6 +791,8 @@ class ControlCenterService : Service() {
         velocityTracker = null
 
         controlCenterView?.let {
+            it.translationX = 0f
+            it.translationY = 0f
             it.visibility = View.INVISIBLE
             try {
                 windowManager?.removeView(it)
@@ -577,6 +801,9 @@ class ControlCenterService : Service() {
             }
         }
         controlCenterView = null
+        
+        removeNotificationPanelView()
+        removePageIndicator()
 
         backgroundView?.let {
             it.visibility = View.INVISIBLE
@@ -587,6 +814,335 @@ class ControlCenterService : Service() {
             }
         }
         backgroundView = null
+        
+        startX = 0f
+        startY = 0f
+        currentTranslationX = 0f
+        currentTranslationY = 0f
+    }
+    
+    private fun addNotificationPanelView() {
+        if (notificationPanelView != null) return
+        
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT
+        )
+        params.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+
+        val inflater = LayoutInflater.from(this)
+        notificationPanelView = inflater.inflate(R.layout.notification_center_panel, null)
+        
+        notificationPanelView?.translationX = screenWidth.toFloat()
+        
+        setupNotificationPanel()
+        setupNotificationPanelGesture()
+
+        try {
+            windowManager?.addView(notificationPanelView, params)
+            showTransparentSystemBars(notificationPanelView)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
+        addPageIndicator()
+    }
+    
+    private fun setupNotificationPanel() {
+        MediaNotificationListener.forceRefreshNotifications()
+        loadNotificationsFromListener()
+        
+        notificationPanelView?.findViewById<TextView>(R.id.clearAllButton)?.setOnClickListener {
+            vibrate()
+            clearAllNotifications()
+        }
+    }
+    
+    private fun loadNotificationsFromListener() {
+        val container = notificationPanelView?.findViewById<LinearLayout>(R.id.notificationsContainer) ?: return
+        container.removeAllViews()
+        
+        if (!MediaNotificationListener.isNotificationAccessEnabled(this)) {
+            val emptyText = TextView(this).apply {
+                text = "Cần cấp quyền truy cập thông báo"
+                setTextColor(0x99FFFFFF.toInt())
+                textSize = 16f
+                gravity = Gravity.CENTER
+                setPadding(0, 100, 0, 0)
+            }
+            container.addView(emptyText)
+            
+            val settingsButton = TextView(this).apply {
+                text = "Mở cài đặt"
+                setTextColor(0xFF007AFF.toInt())
+                textSize = 14f
+                gravity = Gravity.CENTER
+                setPadding(0, 20, 0, 0)
+                setOnClickListener {
+                    MediaNotificationListener.openNotificationAccessSettings(this@ControlCenterService)
+                }
+            }
+            container.addView(settingsButton)
+            return
+        }
+        
+        val notifications = try {
+            MediaNotificationListener.getActiveNotifications()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+        
+        if (notifications.isEmpty()) {
+            val emptyText = TextView(this).apply {
+                text = "Không có thông báo"
+                setTextColor(0x99FFFFFF.toInt())
+                textSize = 16f
+                gravity = Gravity.CENTER
+                setPadding(0, 100, 0, 0)
+            }
+            container.addView(emptyText)
+            return
+        }
+        
+        for (sbn in notifications) {
+            if (sbn.packageName == packageName) continue
+            
+            val itemView = LayoutInflater.from(this).inflate(R.layout.item_notification, container, false)
+            
+            try {
+                val appInfo = packageManager.getApplicationInfo(sbn.packageName, 0)
+                val appName = packageManager.getApplicationLabel(appInfo).toString()
+                val appIcon = packageManager.getApplicationIcon(sbn.packageName)
+                
+                itemView.findViewById<ImageView>(R.id.appIcon)?.setImageDrawable(appIcon)
+                itemView.findViewById<TextView>(R.id.appName)?.text = appName
+                
+                val notification = sbn.notification
+                val extras = notification.extras
+                
+                val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
+                val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: ""
+                
+                itemView.findViewById<TextView>(R.id.notificationTitle)?.text = title
+                itemView.findViewById<TextView>(R.id.notificationContent)?.text = text
+                
+                val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                val timeText = timeFormat.format(java.util.Date(sbn.postTime))
+                itemView.findViewById<TextView>(R.id.notificationTime)?.text = timeText
+                
+                itemView.setOnClickListener {
+                    vibrate()
+                    try {
+                        notification.contentIntent?.send()
+                        hideControlCenter()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                
+                container.addView(itemView)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    private fun clearAllNotifications() {
+        try {
+            MediaNotificationListener.cancelAllNotifications()
+            handler.postDelayed({
+                MediaNotificationListener.forceRefreshNotifications()
+                handler.postDelayed({
+                    loadNotificationsFromListener()
+                }, 100)
+            }, 300)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Không thể xóa thông báo", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun setupNotificationPanelGesture() {
+        notificationPanelView?.setOnTouchListener { _, event ->
+            handleNotificationPanelTouch(event)
+        }
+    }
+    
+    private fun handleNotificationPanelTouch(event: MotionEvent): Boolean {
+        if (isInteractiveDragging) return false
+        
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                isDragging = true
+                isHorizontalSwipe = false
+                startY = event.rawY
+                startX = event.rawX
+                currentTranslationX = notificationPanelView?.translationX ?: 0f
+                
+                velocityTracker?.clear()
+                velocityTracker = VelocityTracker.obtain()
+                velocityTracker?.addMovement(event)
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (isDragging) {
+                    velocityTracker?.addMovement(event)
+                    
+                    val deltaX = event.rawX - startX
+                    val deltaY = event.rawY - startY
+                    
+                    if (!isHorizontalSwipe && kotlin.math.abs(deltaX) > horizontalSwipeThreshold && kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 1.5f) {
+                        isHorizontalSwipe = true
+                    }
+                    
+                    if (isHorizontalSwipe) {
+                        handleHorizontalSwipe(deltaX)
+                    }
+                }
+                return true
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (isDragging) {
+                    isDragging = false
+                    
+                    velocityTracker?.addMovement(event)
+                    velocityTracker?.computeCurrentVelocity(1000)
+                    val velocityX = velocityTracker?.xVelocity ?: 0f
+                    
+                    if (isHorizontalSwipe) {
+                        finishHorizontalSwipe(velocityX)
+                        isHorizontalSwipe = false
+                    }
+                    
+                    velocityTracker?.recycle()
+                    velocityTracker = null
+                }
+                return true
+            }
+        }
+        return false
+    }
+    
+    private fun removeNotificationPanelView() {
+        notificationPanelView?.let {
+            try {
+                windowManager?.removeView(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        notificationPanelView = null
+    }
+    
+    private fun addPageIndicator() {
+        if (pageIndicatorContainer != null) return
+        
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            PixelFormat.TRANSLUCENT
+        )
+        params.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        params.y = 80
+        
+        pageIndicatorContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(16, 8, 16, 8)
+            
+            for (i in 0..1) {
+                val dot = View(context).apply {
+                    val size = if (i == 0) 8 else 6
+                    layoutParams = LinearLayout.LayoutParams(
+                        (size * resources.displayMetrics.density).toInt(),
+                        (size * resources.displayMetrics.density).toInt()
+                    ).apply {
+                        marginStart = (4 * resources.displayMetrics.density).toInt()
+                        marginEnd = (4 * resources.displayMetrics.density).toInt()
+                    }
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        shape = android.graphics.drawable.GradientDrawable.OVAL
+                        setColor(if (i == 0) 0xFFFFFFFF.toInt() else 0x66FFFFFF.toInt())
+                    }
+                }
+                addView(dot)
+            }
+        }
+        
+        try {
+            windowManager?.addView(pageIndicatorContainer, params)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun updatePageIndicator(progress: Float) {
+        pageIndicatorContainer?.let { container ->
+            if (container.childCount >= 2) {
+                val dot1 = container.getChildAt(0)
+                val dot2 = container.getChildAt(1)
+                
+                val size1 = (8 - 2 * progress) * resources.displayMetrics.density
+                val size2 = (6 + 2 * progress) * resources.displayMetrics.density
+                
+                dot1.layoutParams = (dot1.layoutParams as LinearLayout.LayoutParams).apply {
+                    width = size1.toInt()
+                    height = size1.toInt()
+                }
+                dot2.layoutParams = (dot2.layoutParams as LinearLayout.LayoutParams).apply {
+                    width = size2.toInt()
+                    height = size2.toInt()
+                }
+                
+                (dot1.background as? android.graphics.drawable.GradientDrawable)?.setColor(
+                    blendColors(0xFFFFFFFF.toInt(), 0x66FFFFFF.toInt(), progress)
+                )
+                (dot2.background as? android.graphics.drawable.GradientDrawable)?.setColor(
+                    blendColors(0x66FFFFFF.toInt(), 0xFFFFFFFF.toInt(), progress)
+                )
+                
+                dot1.requestLayout()
+                dot2.requestLayout()
+            }
+        }
+    }
+    
+    private fun blendColors(color1: Int, color2: Int, ratio: Float): Int {
+        val inverseRatio = 1f - ratio
+        val a = (Color.alpha(color1) * inverseRatio + Color.alpha(color2) * ratio).toInt()
+        val r = (Color.red(color1) * inverseRatio + Color.red(color2) * ratio).toInt()
+        val g = (Color.green(color1) * inverseRatio + Color.green(color2) * ratio).toInt()
+        val b = (Color.blue(color1) * inverseRatio + Color.blue(color2) * ratio).toInt()
+        return Color.argb(a, r, g, b)
+    }
+    
+    private fun removePageIndicator() {
+        pageIndicatorContainer?.let {
+            try {
+                windowManager?.removeView(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        pageIndicatorContainer = null
     }
 
     private fun vibrate() {

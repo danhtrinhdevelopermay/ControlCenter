@@ -46,6 +46,34 @@ class MediaNotificationListener : NotificationListenerService() {
             return cachedNotifications
         }
         
+        fun getActiveNotifications(): List<StatusBarNotification> {
+            val liveNotifications = try {
+                instance?.activeNotifications?.toList()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error getting active notifications", e)
+                null
+            }
+            
+            if (liveNotifications != null) {
+                cachedNotifications = liveNotifications
+                return liveNotifications
+            }
+            
+            return cachedNotifications
+        }
+        
+        fun forceRefreshNotifications() {
+            instance?.refreshNotifications()
+        }
+        
+        fun cancelAllNotifications() {
+            try {
+                instance?.cancelAllNotifications()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error cancelling all notifications", e)
+            }
+        }
+        
         fun isNotificationAccessEnabled(context: Context): Boolean {
             val packageName = context.packageName
             val flat = Settings.Secure.getString(
