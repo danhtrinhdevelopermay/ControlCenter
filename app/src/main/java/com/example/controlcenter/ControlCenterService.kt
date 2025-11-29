@@ -321,7 +321,7 @@ class ControlCenterService : Service() {
         }
 
         backgroundView = View(this).apply {
-            setBackgroundColor(0x40000000.toInt())
+            setBackgroundColor(0x00000000.toInt())
             alpha = 0f
 
             setOnTouchListener { _, event ->
