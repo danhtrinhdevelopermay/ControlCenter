@@ -13,38 +13,42 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Row 1: Connectivity + Now Playing -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="10dp">
 
+            <!-- Connectivity Widget (2x2 grid) -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:background="@drawable/ios_connectivity_widget"
-                android:padding="12dp"
-                android:layout_marginEnd="5dp">
+                android:padding="14dp"
+                android:layout_marginEnd="6dp">
 
+                <!-- Row 1: Airplane + Cellular -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:layout_marginBottom="10dp">
 
                     <FrameLayout
                         android:id="@+id/airplaneButton"
                         android:layout_width="52dp"
                         android:layout_height="52dp"
-                        android:layout_margin="4dp"
+                        android:layout_marginEnd="10dp"
                         android:background="@drawable/control_item_background">
 
                         <ImageView
                             android:id="@+id/airplaneIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_airplane"
                             android:tint="#FFFFFF" />
@@ -54,19 +58,19 @@
                         android:id="@+id/cellularButton"
                         android:layout_width="52dp"
                         android:layout_height="52dp"
-                        android:layout_margin="4dp"
                         android:background="@drawable/control_item_background">
 
                         <ImageView
                             android:id="@+id/cellularIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_cellular"
                             android:tint="#FFFFFF" />
                     </FrameLayout>
                 </LinearLayout>
 
+                <!-- Row 2: WiFi + Bluetooth -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -77,29 +81,28 @@
                         android:id="@+id/wifiButton"
                         android:layout_width="52dp"
                         android:layout_height="52dp"
-                        android:layout_margin="4dp"
+                        android:layout_marginEnd="10dp"
                         android:background="@drawable/control_item_background_active">
 
                         <ImageView
                             android:id="@+id/wifiIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_wifi"
-                            android:tint="#007AFF" />
+                            android:tint="#FFFFFF" />
                     </FrameLayout>
 
                     <FrameLayout
                         android:id="@+id/bluetoothButton"
                         android:layout_width="52dp"
                         android:layout_height="52dp"
-                        android:layout_margin="4dp"
-                        android:background="@drawable/control_item_background_active">
+                        android:background="@drawable/control_item_background">
 
                         <ImageView
                             android:id="@+id/bluetoothIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_bluetooth"
                             android:tint="#007AFF" />
@@ -107,157 +110,146 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Now Playing Widget -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:background="@drawable/ios_now_playing_widget"
-                android:padding="12dp"
-                android:layout_marginStart="5dp">
+                android:padding="14dp"
+                android:layout_marginStart="6dp">
 
+                <!-- Header with title and AirPlay -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_volume"
-                        android:tint="#999999" />
+                    android:gravity="top">
 
                     <TextView
                         android:id="@+id/musicTitle"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="Not Playing"
                         android:textColor="#999999"
-                        android:textSize="12sp"
-                        android:layout_marginStart="6dp" />
+                        android:textSize="14sp" />
+
+                    <ImageView
+                        android:id="@+id/airplayButton"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_screen_mirror"
+                        android:tint="#999999" />
                 </LinearLayout>
 
+                <!-- Media controls -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center"
-                    android:layout_marginTop="8dp">
+                    android:gravity="center">
 
                     <ImageView
                         android:id="@+id/prevButton"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:padding="6dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:padding="4dp"
                         android:src="@drawable/ic_skip_previous"
-                        android:tint="#FFFFFF" />
+                        android:tint="#808080" />
 
                     <ImageView
                         android:id="@+id/playButton"
                         android:layout_width="36dp"
                         android:layout_height="36dp"
-                        android:padding="6dp"
+                        android:padding="4dp"
                         android:src="@drawable/ic_play"
-                        android:tint="#FFFFFF"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginEnd="16dp" />
+                        android:tint="#808080"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginEnd="20dp" />
 
                     <ImageView
                         android:id="@+id/nextButton"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:padding="6dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:padding="4dp"
                         android:src="@drawable/ic_skip_next"
-                        android:tint="#FFFFFF" />
+                        android:tint="#808080" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Row 2: Small buttons column + Focus + Brightness + Volume -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="10dp">
 
-            <FrameLayout
-                android:id="@+id/rotationButton"
-                android:layout_width="0dp"
-                android:layout_height="70dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/ios_widget_background">
+            <!-- Left column: Orientation Lock + Screen Mirror (stacked) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginEnd="10dp">
 
-                <ImageView
-                    android:id="@+id/rotationIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_orientation_lock"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
+                <!-- Orientation Lock (active with red arrow) -->
+                <FrameLayout
+                    android:id="@+id/rotationButton"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/ios_small_button_active">
 
-            <FrameLayout
-                android:id="@+id/dndButton"
-                android:layout_width="0dp"
-                android:layout_height="70dp"
-                android:layout_weight="1"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/ios_widget_background">
+                    <ImageView
+                        android:id="@+id/rotationIcon"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_orientation_lock"
+                        android:tint="#FF3B30" />
+                </FrameLayout>
 
-                <ImageView
-                    android:id="@+id/dndIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_do_not_disturb"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
+                <!-- Screen Mirror -->
+                <FrameLayout
+                    android:id="@+id/screenMirrorButton"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/ios_small_button">
 
-            <FrameLayout
+                    <ImageView
+                        android:id="@+id/screenMirrorIcon"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_screen_mirror"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
+            </LinearLayout>
+
+            <!-- Focus Widget -->
+            <LinearLayout
                 android:id="@+id/focusButton"
                 android:layout_width="0dp"
-                android:layout_height="70dp"
-                android:layout_weight="1"
-                android:layout_marginStart="5dp"
-                android:background="@drawable/ios_widget_background">
-
-                <ImageView
-                    android:id="@+id/focusIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_focus"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="10dp">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="70dp"
+                android:layout_height="122dp"
                 android:layout_weight="1"
                 android:orientation="horizontal"
                 android:background="@drawable/ios_widget_background"
-                android:padding="12dp"
-                android:layout_marginEnd="5dp"
+                android:padding="16dp"
+                android:layout_marginEnd="10dp"
                 android:gravity="center_vertical">
 
                 <FrameLayout
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:background="@drawable/control_item_background">
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/ios_focus_circle">
 
                     <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:id="@+id/focusIcon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_focus"
                         android:tint="#FFFFFF" />
@@ -268,40 +260,74 @@
                     android:layout_height="wrap_content"
                     android:text="Focus"
                     android:textColor="#FFFFFF"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
+                    android:textSize="15sp"
                     android:layout_marginStart="12dp" />
             </LinearLayout>
 
+            <!-- Brightness Slider -->
             <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="70dp"
-                android:layout_weight="1"
-                android:layout_marginStart="5dp"
-                android:background="@drawable/ios_widget_background">
+                android:id="@+id/brightnessSlider"
+                android:layout_width="56dp"
+                android:layout_height="122dp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/ios_slider_background"
+                android:clipChildren="true"
+                android:clipToPadding="true">
+
+                <View
+                    android:id="@+id/brightnessFill"
+                    android:layout_width="match_parent"
+                    android:layout_height="90dp"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/ios_slider_fill" />
 
                 <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:layout_marginBottom="14dp"
                     android:src="@drawable/ic_brightness"
-                    android:tint="#FFFFFF" />
+                    android:tint="#3C3C43" />
+            </FrameLayout>
+
+            <!-- Volume Slider -->
+            <FrameLayout
+                android:id="@+id/volumeSlider"
+                android:layout_width="56dp"
+                android:layout_height="122dp"
+                android:background="@drawable/ios_slider_background">
+
+                <View
+                    android:id="@+id/volumeFill"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/ios_slider_fill" />
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:layout_marginBottom="14dp"
+                    android:src="@drawable/ic_volume_mute"
+                    android:tint="#999999" />
             </FrameLayout>
         </LinearLayout>
 
+        <!-- Row 3: Flashlight, Calculator, Screen Recording, Display -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="4dp">
+            android:layout_marginBottom="10dp">
 
             <FrameLayout
                 android:id="@+id/flashlightButton"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:layout_margin="6dp"
-                android:background="@drawable/ios_circle_button">
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/ios_widget_background">
 
                 <ImageView
                     android:id="@+id/flashlightIcon"
@@ -313,43 +339,90 @@
             </FrameLayout>
 
             <FrameLayout
-                android:id="@+id/screenMirrorButton"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:layout_margin="6dp"
-                android:background="@drawable/ios_circle_button">
+                android:id="@+id/calculatorButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/ios_widget_background">
 
                 <ImageView
-                    android:id="@+id/screenMirrorIcon"
+                    android:id="@+id/calculatorIcon"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_screen_mirror"
+                    android:src="@drawable/ic_calculator"
                     android:tint="#FFFFFF" />
             </FrameLayout>
 
             <FrameLayout
-                android:id="@+id/cameraButton"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:layout_margin="6dp"
-                android:background="@drawable/ios_circle_button">
+                android:id="@+id/recordingButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/ios_widget_background">
 
                 <ImageView
-                    android:id="@+id/cameraIcon"
+                    android:id="@+id/recordingIcon"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_camera"
+                    android:src="@drawable/ic_screen_recording"
+                    android:tint="#FFFFFF" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/displayButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/ios_widget_background_active">
+
+                <ImageView
+                    android:id="@+id/displayIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_display"
+                    android:tint="#007AFF" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Row 4: Hearing, Timer, Battery, Accessibility -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:id="@+id/hearingButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/ios_widget_background">
+
+                <ImageView
+                    android:id="@+id/hearingIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_hearing"
                     android:tint="#FFFFFF" />
             </FrameLayout>
 
             <FrameLayout
                 android:id="@+id/timerButton"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:layout_margin="6dp"
-                android:background="@drawable/ios_circle_button">
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/ios_widget_background">
 
                 <ImageView
                     android:id="@+id/timerIcon"
@@ -359,14 +432,50 @@
                     android:src="@drawable/ic_timer"
                     android:tint="#FFFFFF" />
             </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/batteryButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/ios_widget_background">
+
+                <ImageView
+                    android:id="@+id/batteryIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_battery"
+                    android:tint="#FFFFFF" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/accessibilityButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/ios_widget_background_active">
+
+                <ImageView
+                    android:id="@+id/accessibilityIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_accessibility"
+                    android:tint="#007AFF" />
+            </FrameLayout>
         </LinearLayout>
 
+        <!-- Home Indicator -->
         <View
-            android:layout_width="40dp"
+            android:layout_width="135dp"
             android:layout_height="5dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="20dp"
-            android:background="@drawable/ios_widget_background" />
+            android:layout_marginTop="24dp"
+            android:background="@drawable/ios_home_indicator" />
 
     </LinearLayout>
 
