@@ -635,44 +635,6 @@
             </HorizontalScrollView>
         </LinearLayout>
 
-        <!-- Grid Button -->
-        <FrameLayout
-            android:id="@+id/gridButton"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="16dp">
-
-            <View
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:layout_gravity="center"
-                android:background="@drawable/miui_circle_button" />
-
-            <ImageView
-                android:id="@+id/gridIcon"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_grid"
-                android:tint="#FFFFFF" />
-        </FrameLayout>
-
-        <!-- Edit Button -->
-        <TextView
-            android:id="@+id/editButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="Sửa"
-            android:textColor="#AAAAAA"
-            android:textSize="16sp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:background="@drawable/miui_toggle_background" />
-
     </LinearLayout>
 
 </FrameLayout>
