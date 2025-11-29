@@ -646,6 +646,12 @@ class ControlCenterService : Service() {
             }
         }
         
+        controlCenterView?.findViewById<View>(R.id.bluetoothButton)?.setOnLongClickListener { button ->
+            vibrate()
+            showBluetoothListDialog()
+            true
+        }
+        
         controlCenterView?.findViewById<View>(R.id.cellularButton)?.setOnClickListener { button ->
             val currentState = SystemControlHelper.isMobileDataEnabled(this)
             val newState = !currentState
@@ -1086,6 +1092,11 @@ class ControlCenterService : Service() {
     private var wifiScannerHelper: WiFiScannerHelper? = null
     private var wifiDialog: AlertDialog? = null
     private var passwordDialog: AlertDialog? = null
+    private var bluetoothDialog: AlertDialog? = null
+    private var currentBluetoothAdapter: BluetoothDeviceAdapter? = null
+    private var currentBluetoothRecyclerView: RecyclerView? = null
+    private var currentBluetoothLoadingProgress: ProgressBar? = null
+    private var currentBluetoothEmptyText: TextView? = null
     
     private fun showWifiListDialog() {
         if (!SystemControlHelper.isWifiEnabled(this)) {
@@ -1276,12 +1287,168 @@ class ControlCenterService : Service() {
             }
         }
     }
+    
+    private fun showBluetoothListDialog() {
+        if (!SystemControlHelper.isBluetoothEnabled(this)) {
+            Toast.makeText(this, "Vui lòng bật Bluetooth trước", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_bluetooth_list, null)
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.bluetoothRecyclerView)
+        val loadingProgress = dialogView.findViewById<ProgressBar>(R.id.loadingProgress)
+        val emptyText = dialogView.findViewById<TextView>(R.id.emptyText)
+        val refreshButton = dialogView.findViewById<ImageView>(R.id.refreshButton)
+        val cancelButton = dialogView.findViewById<TextView>(R.id.cancelButton)
+        
+        // Store references for refresh functionality
+        currentBluetoothRecyclerView = recyclerView
+        currentBluetoothLoadingProgress = loadingProgress
+        currentBluetoothEmptyText = emptyText
+        
+        refreshButton.setImageResource(R.drawable.ic_refresh)
+        
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        
+        val scanBluetooth = {
+            loadingProgress.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+            emptyText.visibility = View.GONE
+            
+            refreshButton.animate()
+                .rotationBy(360f)
+                .setDuration(1000)
+                .start()
+            
+            ShizukuHelper.scanBluetoothDevices { devices ->
+                handler.post {
+                    loadingProgress.visibility = View.GONE
+                    
+                    if (devices.isEmpty()) {
+                        emptyText.visibility = View.VISIBLE
+                        recyclerView.visibility = View.GONE
+                    } else {
+                        emptyText.visibility = View.GONE
+                        recyclerView.visibility = View.VISIBLE
+                        
+                        if (currentBluetoothAdapter == null) {
+                            currentBluetoothAdapter = BluetoothDeviceAdapter(devices) { device ->
+                                onBluetoothDeviceSelected(device)
+                            }
+                            recyclerView.adapter = currentBluetoothAdapter
+                        } else {
+                            currentBluetoothAdapter?.updateDevices(devices)
+                        }
+                    }
+                }
+            }
+        }
+        
+        refreshButton.setOnClickListener {
+            scanBluetooth()
+        }
+        
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
+        builder.setView(dialogView)
+        
+        bluetoothDialog = builder.create()
+        bluetoothDialog?.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        bluetoothDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        bluetoothDialog?.setCanceledOnTouchOutside(true)
+        
+        cancelButton.setOnClickListener {
+            bluetoothDialog?.dismiss()
+        }
+        
+        bluetoothDialog?.setOnDismissListener {
+            // Clear references when dialog is dismissed
+            currentBluetoothAdapter = null
+            currentBluetoothRecyclerView = null
+            currentBluetoothLoadingProgress = null
+            currentBluetoothEmptyText = null
+        }
+        
+        bluetoothDialog?.show()
+        
+        scanBluetooth()
+    }
+    
+    private fun refreshBluetoothList() {
+        // Show loading indicator
+        currentBluetoothLoadingProgress?.visibility = View.VISIBLE
+        currentBluetoothRecyclerView?.visibility = View.GONE
+        currentBluetoothEmptyText?.visibility = View.GONE
+        
+        ShizukuHelper.scanBluetoothDevices { devices ->
+            handler.post {
+                // Check if dialog is still showing before updating UI
+                if (bluetoothDialog?.isShowing != true) {
+                    return@post
+                }
+                
+                currentBluetoothLoadingProgress?.visibility = View.GONE
+                
+                if (devices.isEmpty()) {
+                    currentBluetoothEmptyText?.visibility = View.VISIBLE
+                    currentBluetoothRecyclerView?.visibility = View.GONE
+                } else {
+                    currentBluetoothEmptyText?.visibility = View.GONE
+                    currentBluetoothRecyclerView?.visibility = View.VISIBLE
+                    currentBluetoothAdapter?.updateDevices(devices)
+                }
+            }
+        }
+    }
+    
+    private fun onBluetoothDeviceSelected(device: ShizukuBluetoothDevice) {
+        // Prevent dismiss while operation is in progress
+        bluetoothDialog?.setCanceledOnTouchOutside(false)
+        
+        if (device.isConnected) {
+            Toast.makeText(this, "Đang ngắt kết nối ${device.name}...", Toast.LENGTH_SHORT).show()
+            
+            ShizukuHelper.disconnectBluetoothDevice(device.macAddress) { success, message ->
+                handler.post {
+                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                    syncStateFromSystem()
+                    updateAllButtonStates()
+                    
+                    // Re-enable dismiss and refresh the list
+                    bluetoothDialog?.setCanceledOnTouchOutside(true)
+                    
+                    // Refresh the list if dialog is still showing
+                    if (bluetoothDialog?.isShowing == true) {
+                        refreshBluetoothList()
+                    }
+                }
+            }
+        } else {
+            Toast.makeText(this, "Đang kết nối với ${device.name}...", Toast.LENGTH_SHORT).show()
+            
+            ShizukuHelper.connectBluetoothDevice(device.macAddress) { success, message ->
+                handler.post {
+                    Toast.makeText(this, message, if (success) Toast.LENGTH_SHORT else Toast.LENGTH_LONG).show()
+                    syncStateFromSystem()
+                    updateAllButtonStates()
+                    
+                    // Re-enable dismiss and refresh the list
+                    bluetoothDialog?.setCanceledOnTouchOutside(true)
+                    
+                    // Refresh the list if dialog is still showing
+                    if (bluetoothDialog?.isShowing == true) {
+                        refreshBluetoothList()
+                    }
+                }
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
         wifiScannerHelper?.cleanup()
         wifiDialog?.dismiss()
         passwordDialog?.dismiss()
+        bluetoothDialog?.dismiss()
         removeViews()
     }
 }

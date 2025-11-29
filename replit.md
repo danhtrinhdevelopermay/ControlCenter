@@ -128,6 +128,8 @@ Cho phép người dùng thêm tối đa 8 phím tắt ứng dụng vào Control
 - **2025-11-29**: Sửa lỗi brightness và volume slider - thêm touch handling và đồng bộ với giá trị hệ thống
 - **2025-11-29**: Thêm tính năng Media Info - hiển thị thông tin bài hát đang phát (tên, nghệ sĩ, album art)
 - **2025-11-29**: Thêm tính năng WiFi Scanning - quét và kết nối mạng WiFi trực tiếp từ Control Center
+- **2025-11-29**: Sửa lỗi WiFi scanning với Shizuku - cải thiện parsing để hỗ trợ nhiều định dạng output
+- **2025-11-29**: Thêm tính năng Bluetooth Scanning - quét và kết nối thiết bị Bluetooth từ Control Center
 
 ## WiFi Scanning Feature (Cập nhật 2025-11-29)
 
@@ -183,6 +185,42 @@ Cho phép người dùng quét danh sách mạng WiFi khả dụng và kết n�
 3. Thực thi `cmd wifi list-scan-results` để lấy kết quả
 4. Nếu không có kết quả, thử `dumpsys wifi | grep -A 50 'Latest scan results'`
 5. Cuối cùng thử `wpa_cli -i wlan0 scan_results` (cho một số thiết bị)
+
+## Bluetooth Scanning Feature (Cập nhật 2025-11-29)
+
+### Mô tả:
+Cho phép người dùng xem danh sách thiết bị Bluetooth đã ghép đôi và kết nối/ngắt kết nối trực tiếp từ Control Center.
+
+### Files:
+- `ShizukuHelper.kt` - Thêm chức năng quét và kết nối Bluetooth qua Shizuku shell commands
+- `BluetoothDeviceAdapter.kt` - Adapter hiển thị danh sách thiết bị Bluetooth
+- `dialog_bluetooth_list.xml` - Layout popup danh sách thiết bị Bluetooth
+- `item_bluetooth_device.xml` - Layout item thiết bị Bluetooth trong danh sách
+
+### Cách sử dụng:
+1. **Nhấn giữ** nút Bluetooth trong Control Center
+2. Popup hiển thị danh sách thiết bị Bluetooth đã ghép đôi và khả dụng
+3. Nhấn vào thiết bị để kết nối hoặc ngắt kết nối
+4. Nhấn nút làm mới để quét lại danh sách
+
+### Tính năng:
+- Hiển thị danh sách thiết bị đã ghép đôi
+- Hiển thị trạng thái kết nối (Đã kết nối / Đã ghép đôi / Khả dụng)
+- Icon khác biệt cho thiết bị đã kết nối vs chưa kết nối
+- Kết nối/ngắt kết nối thiết bị bằng cách nhấn
+- Nút làm mới danh sách
+- Sắp xếp: Thiết bị đã kết nối > Đã ghép đôi > Khả dụng
+
+### Cách Shizuku quét Bluetooth:
+1. Thực thi `dumpsys bluetooth_manager | grep -A 20 'Bonded devices'` để lấy thiết bị đã ghép đôi
+2. Thực thi `dumpsys bluetooth_manager | grep -A 10 'Connected'` để kiểm tra thiết bị đang kết nối
+3. Phân tích output để lấy tên thiết bị và địa chỉ MAC
+4. Nếu cần, thử `cmd bluetooth enable-scan` để quét thiết bị khả dụng
+
+### Kết nối Bluetooth qua Shizuku:
+- Sử dụng `cmd bluetooth connect <MAC_ADDRESS>`
+- Fallback: `btmgmt connect <MAC_ADDRESS>`
+- Fallback cuối: Mở intent ghép đôi thiết bị
 
 ## Media Notification Listener Feature
 

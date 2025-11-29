@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "java-17"]
+modules = ["nodejs-20", "java-17", "java-graalvm22.3"]
 [agent]
 expertMode = true
 

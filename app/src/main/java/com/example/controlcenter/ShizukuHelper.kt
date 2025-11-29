@@ -107,6 +107,339 @@ object ShizukuHelper {
         executeShellCommandAsync(command, callback)
     }
     
+    fun scanBluetoothDevices(callback: (List<ShizukuBluetoothDevice>) -> Unit) {
+        executor.execute {
+            val devices = mutableListOf<ShizukuBluetoothDevice>()
+            
+            try {
+                // Get full bluetooth_manager dumpsys output (without using grep which may not be available)
+                val fullOutput = executeShellCommandWithOutput("dumpsys bluetooth_manager")
+                
+                if (fullOutput != null && fullOutput.isNotEmpty()) {
+                    Log.d(TAG, "Bluetooth dumpsys output length: ${fullOutput.length}")
+                    
+                    // Parse all devices from full dumpsys
+                    devices.addAll(parseFullBluetoothDumpsys(fullOutput))
+                    
+                    // Update connection status
+                    val connectedMacs = parseConnectedDevicesFromFull(fullOutput)
+                    for (i in devices.indices) {
+                        if (connectedMacs.contains(devices[i].macAddress)) {
+                            devices[i] = devices[i].copy(isConnected = true)
+                        }
+                    }
+                }
+                
+                // Try to start discovery for nearby devices (quick scan, don't block long)
+                executeShellCommand("cmd bluetooth enable-scan")
+                Thread.sleep(500)
+                
+                // Get updated output after scan
+                val updatedOutput = executeShellCommandWithOutput("dumpsys bluetooth_manager")
+                if (updatedOutput != null && updatedOutput.isNotEmpty()) {
+                    val discoveredDevices = parseDiscoveredDevicesFromFull(updatedOutput)
+                    for (discovered in discoveredDevices) {
+                        if (devices.none { it.macAddress == discovered.macAddress }) {
+                            devices.add(discovered)
+                        }
+                    }
+                }
+                
+                Log.d(TAG, "Found ${devices.size} Bluetooth devices via Shizuku")
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error scanning Bluetooth devices", e)
+            }
+            
+            mainHandler.post {
+                callback(devices.distinctBy { it.macAddress }.sortedWith(
+                    compareByDescending<ShizukuBluetoothDevice> { it.isConnected }
+                        .thenByDescending { it.isPaired }
+                        .thenBy { it.name }
+                ))
+            }
+        }
+    }
+    
+    private fun parseConnectedDevicesFromFull(output: String): Set<String> {
+        val connectedMacs = mutableSetOf<String>()
+        
+        try {
+            // Look for patterns that indicate connection
+            // e.g., "isActive=true", "state=connected", "Connected devices:", etc.
+            val lines = output.split("\n")
+            var inConnectedSection = false
+            
+            for (line in lines) {
+                val trimmed = line.trim()
+                
+                if (trimmed.contains("Connected", ignoreCase = true) && 
+                    (trimmed.contains("device", ignoreCase = true) || trimmed.contains(":"))) {
+                    inConnectedSection = true
+                }
+                
+                if (inConnectedSection || trimmed.contains("state=connected", ignoreCase = true) ||
+                    trimmed.contains("isActive=true", ignoreCase = true)) {
+                    val macMatch = Regex("([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})").find(trimmed)
+                    if (macMatch != null) {
+                        connectedMacs.add(macMatch.groupValues[1].uppercase())
+                    }
+                }
+                
+                // End of section detection
+                if (inConnectedSection && trimmed.isBlank()) {
+                    inConnectedSection = false
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing connected devices from full output", e)
+        }
+        
+        return connectedMacs
+    }
+    
+    private fun parseDiscoveredDevicesFromFull(output: String): List<ShizukuBluetoothDevice> {
+        val devices = mutableListOf<ShizukuBluetoothDevice>()
+        
+        try {
+            val lines = output.split("\n")
+            var inDiscoverySection = false
+            
+            for (line in lines) {
+                val trimmed = line.trim()
+                
+                if (trimmed.contains("Discovery", ignoreCase = true) || 
+                    trimmed.contains("Discovered", ignoreCase = true)) {
+                    inDiscoverySection = true
+                    continue
+                }
+                
+                if (inDiscoverySection) {
+                    val macMatch = Regex("([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})").find(trimmed)
+                    if (macMatch != null) {
+                        val mac = macMatch.groupValues[1].uppercase()
+                        
+                        var deviceName = "Unknown Device"
+                        val nameMatch = Regex("name[=:]\\s*([^,\\n\\]]+)", RegexOption.IGNORE_CASE).find(trimmed)
+                        if (nameMatch != null) {
+                            deviceName = nameMatch.groupValues[1].trim()
+                        }
+                        
+                        if (deviceName != "Unknown Device" && devices.none { it.macAddress == mac }) {
+                            devices.add(ShizukuBluetoothDevice(
+                                name = deviceName,
+                                macAddress = mac,
+                                isPaired = false,
+                                isConnected = false,
+                                deviceType = "other"
+                            ))
+                        }
+                    }
+                    
+                    // End section on blank line or new section
+                    if (trimmed.isBlank() || (trimmed.contains(":") && !trimmed.contains("="))) {
+                        inDiscoverySection = false
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing discovered devices", e)
+        }
+        
+        return devices
+    }
+    
+    private fun parseBluetoothDevices(output: String, isPaired: Boolean): List<ShizukuBluetoothDevice> {
+        val devices = mutableListOf<ShizukuBluetoothDevice>()
+        
+        try {
+            val lines = output.split("\n")
+            
+            for (line in lines) {
+                val trimmedLine = line.trim()
+                if (trimmedLine.isBlank()) continue
+                
+                // Skip headers and labels
+                if (trimmedLine.startsWith("Bonded") || 
+                    trimmedLine.startsWith("Connected") ||
+                    trimmedLine.startsWith("Discovery") ||
+                    trimmedLine.startsWith("---")) continue
+                
+                // Look for MAC address pattern
+                val macMatch = Regex("([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})").find(trimmedLine)
+                if (macMatch != null) {
+                    val macAddress = macMatch.groupValues[1].uppercase()
+                    
+                    // Try to extract device name
+                    var deviceName = "Unknown Device"
+                    
+                    // Format: "name: DeviceName" or "DeviceName (MAC)" or just after MAC
+                    val nameMatch = Regex("name[=:]\\s*([^,\\n]+)", RegexOption.IGNORE_CASE).find(trimmedLine)
+                    if (nameMatch != null) {
+                        deviceName = nameMatch.groupValues[1].trim()
+                    } else {
+                        // Try format "DeviceName MAC" or "MAC DeviceName"
+                        val beforeMac = trimmedLine.substringBefore(macAddress).trim()
+                        val afterMac = trimmedLine.substringAfter(macAddress).trim()
+                        
+                        if (beforeMac.isNotEmpty() && !beforeMac.matches(Regex("^[\\s\\d:]+$"))) {
+                            deviceName = beforeMac.trimEnd(':').trim()
+                        } else if (afterMac.isNotEmpty() && !afterMac.startsWith("(")) {
+                            deviceName = afterMac.trimStart(':').trim()
+                        }
+                    }
+                    
+                    // Extract device type if available
+                    val deviceType = when {
+                        trimmedLine.contains("HEADSET", ignoreCase = true) || 
+                        trimmedLine.contains("AUDIO", ignoreCase = true) -> "audio"
+                        trimmedLine.contains("PHONE", ignoreCase = true) -> "phone"
+                        trimmedLine.contains("COMPUTER", ignoreCase = true) || 
+                        trimmedLine.contains("LAPTOP", ignoreCase = true) -> "computer"
+                        trimmedLine.contains("KEYBOARD", ignoreCase = true) -> "keyboard"
+                        trimmedLine.contains("MOUSE", ignoreCase = true) -> "mouse"
+                        trimmedLine.contains("WATCH", ignoreCase = true) || 
+                        trimmedLine.contains("WEARABLE", ignoreCase = true) -> "watch"
+                        else -> "other"
+                    }
+                    
+                    if (deviceName.isNotEmpty() && deviceName != "Unknown Device") {
+                        devices.add(ShizukuBluetoothDevice(
+                            name = deviceName,
+                            macAddress = macAddress,
+                            isPaired = isPaired,
+                            isConnected = false,
+                            deviceType = deviceType
+                        ))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing Bluetooth devices", e)
+        }
+        
+        return devices
+    }
+    
+    private fun parseConnectedDevices(output: String): Set<String> {
+        val connectedMacs = mutableSetOf<String>()
+        
+        try {
+            val macPattern = Regex("([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})")
+            macPattern.findAll(output).forEach { match ->
+                connectedMacs.add(match.groupValues[1].uppercase())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing connected devices", e)
+        }
+        
+        return connectedMacs
+    }
+    
+    private fun parseFullBluetoothDumpsys(output: String): List<ShizukuBluetoothDevice> {
+        val devices = mutableListOf<ShizukuBluetoothDevice>()
+        
+        try {
+            // Parse bonded devices section
+            val bondedSection = Regex("Bonded devices:([\\s\\S]*?)(?=\\n\\w|$)").find(output)
+            if (bondedSection != null) {
+                devices.addAll(parseBluetoothDevices(bondedSection.groupValues[1], isPaired = true))
+            }
+            
+            // Parse individual device entries
+            // Format: Device{...name=DeviceName, address=XX:XX:XX:XX:XX:XX...}
+            val devicePattern = Regex("Device\\{[^}]*name=([^,}]+)[^}]*address=([0-9A-Fa-f:]{17})[^}]*\\}", RegexOption.IGNORE_CASE)
+            devicePattern.findAll(output).forEach { match ->
+                val name = match.groupValues[1].trim()
+                val mac = match.groupValues[2].uppercase()
+                
+                if (name.isNotEmpty() && devices.none { it.macAddress == mac }) {
+                    devices.add(ShizukuBluetoothDevice(
+                        name = name,
+                        macAddress = mac,
+                        isPaired = true,
+                        isConnected = false,
+                        deviceType = "other"
+                    ))
+                }
+            }
+            
+            // Try alternative format with reverse order
+            val devicePattern2 = Regex("Device\\{[^}]*address=([0-9A-Fa-f:]{17})[^}]*name=([^,}]+)[^}]*\\}", RegexOption.IGNORE_CASE)
+            devicePattern2.findAll(output).forEach { match ->
+                val mac = match.groupValues[1].uppercase()
+                val name = match.groupValues[2].trim()
+                
+                if (name.isNotEmpty() && devices.none { it.macAddress == mac }) {
+                    devices.add(ShizukuBluetoothDevice(
+                        name = name,
+                        macAddress = mac,
+                        isPaired = true,
+                        isConnected = false,
+                        deviceType = "other"
+                    ))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing full Bluetooth dumpsys", e)
+        }
+        
+        return devices
+    }
+    
+    fun connectBluetoothDevice(macAddress: String, callback: (Boolean, String) -> Unit) {
+        executor.execute {
+            try {
+                // Try to connect using cmd bluetooth
+                var success = executeShellCommand("cmd bluetooth connect $macAddress")
+                
+                if (!success) {
+                    // Try alternative: Use btmgmt
+                    success = executeShellCommand("btmgmt connect $macAddress")
+                }
+                
+                if (!success) {
+                    // Try using settings command
+                    success = executeShellCommand("am start -a android.bluetooth.device.action.PAIR -e android.bluetooth.device.extra.DEVICE $macAddress")
+                }
+                
+                mainHandler.post {
+                    if (success) {
+                        callback(true, "Đang kết nối...")
+                    } else {
+                        callback(false, "Không thể kết nối. Thử kết nối thủ công trong Cài đặt.")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error connecting Bluetooth device", e)
+                mainHandler.post {
+                    callback(false, "Lỗi: ${e.message}")
+                }
+            }
+        }
+    }
+    
+    fun disconnectBluetoothDevice(macAddress: String, callback: (Boolean, String) -> Unit) {
+        executor.execute {
+            try {
+                val success = executeShellCommand("cmd bluetooth disconnect $macAddress")
+                
+                mainHandler.post {
+                    if (success) {
+                        callback(true, "Đã ngắt kết nối")
+                    } else {
+                        callback(false, "Không thể ngắt kết nối")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error disconnecting Bluetooth device", e)
+                mainHandler.post {
+                    callback(false, "Lỗi: ${e.message}")
+                }
+            }
+        }
+    }
+    
     fun toggleAirplaneMode(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
         executor.execute {
             val value = if (enable) "1" else "0"
@@ -626,4 +959,12 @@ data class ShizukuWifiNetwork(
     val signalLevel: Int,
     val isSecured: Boolean,
     val securityType: String
+)
+
+data class ShizukuBluetoothDevice(
+    val name: String,
+    val macAddress: String,
+    val isPaired: Boolean,
+    val isConnected: Boolean,
+    val deviceType: String = "other"
 )
