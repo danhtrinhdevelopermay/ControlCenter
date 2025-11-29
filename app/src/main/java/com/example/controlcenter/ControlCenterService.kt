@@ -1167,17 +1167,35 @@ class ControlCenterService : Service() {
     }
     
     private fun onWifiNetworkSelected(network: WiFiNetwork) {
-        wifiDialog?.dismiss()
-        
         if (network.isConnected) {
             Toast.makeText(this, "Đã kết nối với ${network.ssid}", Toast.LENGTH_SHORT).show()
             return
         }
         
+        wifiDialog?.dismiss()
+        
         if (network.isSecured) {
             showWifiPasswordDialog(network)
         } else {
-            connectToWifiNetwork(network, null)
+            connectToOpenWifiNetwork(network)
+        }
+    }
+    
+    private fun connectToOpenWifiNetwork(network: WiFiNetwork) {
+        Toast.makeText(this, "Đang kết nối với ${network.ssid}...", Toast.LENGTH_SHORT).show()
+        
+        val scanner = wifiScannerHelper ?: WiFiScannerHelper(this).also { wifiScannerHelper = it }
+        
+        scanner.connectToNetwork(network.ssid, null, false, network.securityType) { success, message ->
+            handler.post {
+                Toast.makeText(this, message, if (success) Toast.LENGTH_SHORT else Toast.LENGTH_LONG).show()
+                
+                if (success) {
+                    updateWifiStatus()
+                    syncStateFromSystem()
+                    updateAllButtonStates()
+                }
+            }
         }
     }
     
@@ -1230,29 +1248,31 @@ class ControlCenterService : Service() {
             statusText.setTextColor(Color.parseColor("#AAAAAA"))
             statusText.visibility = View.VISIBLE
             
-            connectToWifiNetwork(network, password)
+            connectToWifiNetwork(network, password, statusText, connectingProgress, buttonsContainer)
         }
         
         passwordDialog?.show()
     }
     
-    private fun connectToWifiNetwork(network: WiFiNetwork, password: String?) {
-        val scanner = wifiScannerHelper ?: WiFiScannerHelper(this)
+    private fun connectToWifiNetwork(network: WiFiNetwork, password: String?, statusText: TextView?, connectingProgress: ProgressBar?, buttonsContainer: LinearLayout?) {
+        val scanner = wifiScannerHelper ?: WiFiScannerHelper(this).also { wifiScannerHelper = it }
         
-        scanner.connectToNetwork(network.ssid, password, network.isSecured) { success, message ->
+        scanner.connectToNetwork(network.ssid, password, network.isSecured, network.securityType) { success, message ->
             handler.post {
-                passwordDialog?.dismiss()
+                connectingProgress?.visibility = View.GONE
                 
                 if (success) {
+                    passwordDialog?.dismiss()
                     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                     updateWifiStatus()
                     syncStateFromSystem()
                     updateAllButtonStates()
                 } else {
-                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                    statusText?.text = message
+                    statusText?.setTextColor(Color.parseColor("#FF5722"))
+                    statusText?.visibility = View.VISIBLE
+                    buttonsContainer?.visibility = View.VISIBLE
                 }
-                
-                scanner.cleanup()
             }
         }
     }

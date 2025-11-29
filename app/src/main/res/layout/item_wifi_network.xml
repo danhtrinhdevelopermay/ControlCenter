@@ -44,7 +44,7 @@
         android:id="@+id/wifiLockIcon"
         android:layout_width="18dp"
         android:layout_height="18dp"
-        android:src="@drawable/ic_flashlight"
+        android:src="@drawable/ic_lock"
         android:tint="#888888"
         android:visibility="gone" />
 

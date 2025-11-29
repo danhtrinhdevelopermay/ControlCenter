@@ -14,7 +14,6 @@ import android.net.wifi.ScanResult
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiNetworkSpecifier
-import android.net.wifi.WifiNetworkSuggestion
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -38,6 +37,7 @@ class WiFiScannerHelper(private val context: Context) {
     private var scanResultsReceiver: BroadcastReceiver? = null
     private var onScanCompleteListener: ((List<WiFiNetwork>) -> Unit)? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var isCallbackRegistered = false
     
     fun isWifiEnabled(): Boolean = wifiManager.isWifiEnabled
     
@@ -82,7 +82,11 @@ class WiFiScannerHelper(private val context: Context) {
         }
         
         val intentFilter = IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
-        context.registerReceiver(scanResultsReceiver, intentFilter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(scanResultsReceiver, intentFilter, Context.RECEIVER_EXPORTED)
+        } else {
+            context.registerReceiver(scanResultsReceiver, intentFilter)
+        }
         
         val scanStarted = wifiManager.startScan()
         if (!scanStarted) {
@@ -177,62 +181,80 @@ class WiFiScannerHelper(private val context: Context) {
         }
     }
     
-    fun connectToNetwork(ssid: String, password: String?, isSecured: Boolean, onResult: (Boolean, String) -> Unit) {
+    fun connectToNetwork(ssid: String, password: String?, isSecured: Boolean, securityType: String = "WPA2", onResult: (Boolean, String) -> Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            connectWithNetworkSpecifier(ssid, password, isSecured, onResult)
+            connectWithNetworkSpecifier(ssid, password, isSecured, securityType, onResult)
         } else {
-            connectLegacy(ssid, password, isSecured, onResult)
+            connectLegacy(ssid, password, isSecured, securityType, onResult)
         }
     }
     
-    private fun connectWithNetworkSpecifier(ssid: String, password: String?, isSecured: Boolean, onResult: (Boolean, String) -> Unit) {
+    private fun connectWithNetworkSpecifier(ssid: String, password: String?, isSecured: Boolean, securityType: String, onResult: (Boolean, String) -> Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
+                unregisterNetworkCallback()
+                
                 val specifierBuilder = WifiNetworkSpecifier.Builder()
                     .setSsid(ssid)
                 
                 if (isSecured && !password.isNullOrEmpty()) {
-                    specifierBuilder.setWpa2Passphrase(password)
+                    when {
+                        securityType == "WPA3" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+                            specifierBuilder.setWpa3Passphrase(password)
+                        }
+                        securityType == "WPA2" || securityType == "WPA" || securityType.contains("PSK") -> {
+                            specifierBuilder.setWpa2Passphrase(password)
+                        }
+                        else -> {
+                            specifierBuilder.setWpa2Passphrase(password)
+                        }
+                    }
                 }
                 
                 val specifier = specifierBuilder.build()
                 
                 val request = NetworkRequest.Builder()
                     .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                    .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                     .setNetworkSpecifier(specifier)
                     .build()
                 
-                networkCallback?.let {
-                    try {
-                        connectivityManager.unregisterNetworkCallback(it)
-                    } catch (e: Exception) { }
-                }
+                var callbackInvoked = false
                 
                 networkCallback = object : ConnectivityManager.NetworkCallback() {
                     override fun onAvailable(network: Network) {
                         super.onAvailable(network)
-                        connectivityManager.bindProcessToNetwork(network)
-                        handler.post {
-                            onResult(true, "Đã kết nối với $ssid")
+                        if (!callbackInvoked) {
+                            callbackInvoked = true
+                            handler.post {
+                                onResult(true, "Đã kết nối với $ssid")
+                            }
                         }
                     }
                     
                     override fun onUnavailable() {
                         super.onUnavailable()
-                        handler.post {
-                            onResult(false, "Không thể kết nối với $ssid")
+                        if (!callbackInvoked) {
+                            callbackInvoked = true
+                            handler.post {
+                                onResult(false, "Không thể kết nối với $ssid")
+                            }
+                            unregisterNetworkCallback()
                         }
+                    }
+                    
+                    override fun onLost(network: Network) {
+                        super.onLost(network)
                     }
                 }
                 
+                isCallbackRegistered = true
                 connectivityManager.requestNetwork(request, networkCallback!!)
                 
                 handler.postDelayed({
-                    networkCallback?.let {
-                        try {
-                            connectivityManager.unregisterNetworkCallback(it)
-                        } catch (e: Exception) { }
+                    if (!callbackInvoked) {
+                        callbackInvoked = true
+                        onResult(false, "Hết thời gian kết nối")
+                        unregisterNetworkCallback()
                     }
                 }, 30000)
                 
@@ -244,16 +266,46 @@ class WiFiScannerHelper(private val context: Context) {
     }
     
     @Suppress("DEPRECATION")
-    private fun connectLegacy(ssid: String, password: String?, isSecured: Boolean, onResult: (Boolean, String) -> Unit) {
+    private fun connectLegacy(ssid: String, password: String?, isSecured: Boolean, securityType: String, onResult: (Boolean, String) -> Unit) {
         try {
             val wifiConfig = WifiConfiguration()
             wifiConfig.SSID = "\"$ssid\""
             
             if (isSecured && !password.isNullOrEmpty()) {
-                wifiConfig.preSharedKey = "\"$password\""
-                wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
+                when (securityType) {
+                    "WEP" -> {
+                        wifiConfig.wepKeys[0] = "\"$password\""
+                        wifiConfig.wepTxKeyIndex = 0
+                        wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
+                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40)
+                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104)
+                    }
+                    "WPA", "WPA2", "WPA3" -> {
+                        wifiConfig.preSharedKey = "\"$password\""
+                        wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
+                        wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN)
+                        wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA)
+                        wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP)
+                        wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP)
+                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP)
+                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP)
+                    }
+                    else -> {
+                        wifiConfig.preSharedKey = "\"$password\""
+                        wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
+                    }
+                }
             } else {
                 wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
+                wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN)
+                wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA)
+                wifiConfig.allowedAuthAlgorithms.clear()
+                wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP)
+                wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP)
+                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP)
+                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP)
+                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40)
+                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104)
             }
             
             val existingConfig = wifiManager.configuredNetworks?.find { 
@@ -268,9 +320,11 @@ class WiFiScannerHelper(private val context: Context) {
             }
             
             if (networkId == -1) {
-                onResult(false, "Không thể thêm mạng")
+                onResult(false, "Không thể thêm mạng. Kiểm tra quyền ứng dụng.")
                 return
             }
+            
+            wifiManager.saveConfiguration()
             
             wifiManager.disconnect()
             val enabled = wifiManager.enableNetwork(networkId, true)
@@ -286,23 +340,33 @@ class WiFiScannerHelper(private val context: Context) {
                     }
                 }, 5000)
             } else {
-                onResult(false, "Không thể kết nối")
+                onResult(false, "Không thể kết nối. Vui lòng thử lại.")
             }
             
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+            onResult(false, "Không có quyền thay đổi cấu hình WiFi")
         } catch (e: Exception) {
             e.printStackTrace()
             onResult(false, "Lỗi: ${e.message}")
         }
     }
     
-    fun disconnectFromNetwork() {
-        networkCallback?.let {
+    private fun unregisterNetworkCallback() {
+        if (isCallbackRegistered && networkCallback != null) {
             try {
-                connectivityManager.unregisterNetworkCallback(it)
-                connectivityManager.bindProcessToNetwork(null)
+                connectivityManager.unregisterNetworkCallback(networkCallback!!)
             } catch (e: Exception) { }
+            isCallbackRegistered = false
         }
         networkCallback = null
+    }
+    
+    fun disconnectFromNetwork() {
+        unregisterNetworkCallback()
+        try {
+            connectivityManager.bindProcessToNetwork(null)
+        } catch (e: Exception) { }
     }
     
     private fun unregisterReceiver() {
@@ -316,7 +380,7 @@ class WiFiScannerHelper(private val context: Context) {
     
     fun cleanup() {
         unregisterReceiver()
-        disconnectFromNetwork()
+        unregisterNetworkCallback()
         handler.removeCallbacksAndMessages(null)
     }
 }
