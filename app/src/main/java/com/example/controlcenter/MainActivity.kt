@@ -3,6 +3,7 @@ package com.example.controlcenter
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,12 +17,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import rikka.shizuku.Shizuku
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListener {
 
     private lateinit var statusText: TextView
     private lateinit var overlayPermissionBtn: Button
     private lateinit var accessibilityPermissionBtn: Button
+    private lateinit var shizukuPermissionBtn: Button
     private lateinit var startServiceBtn: Button
     private lateinit var swipeZoneSettingsContainer: LinearLayout
     private lateinit var zoneXSeekBar: SeekBar
@@ -38,6 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val OVERLAY_PERMISSION_REQUEST_CODE = 1001
+        private const val SHIZUKU_PERMISSION_REQUEST_CODE = 1002
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,11 +51,30 @@ class MainActivity : AppCompatActivity() {
         initViews()
         setupClickListeners()
         loadSwipeZoneSettings()
+        
+        Shizuku.addRequestPermissionResultListener(this)
     }
 
     override fun onResume() {
         super.onResume()
         updateUI()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        Shizuku.removeRequestPermissionResultListener(this)
+    }
+    
+    override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
+        val granted = grantResult == PackageManager.PERMISSION_GRANTED
+        if (requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
+            if (granted) {
+                Toast.makeText(this, "Shizuku permission granted!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Shizuku permission denied", Toast.LENGTH_SHORT).show()
+            }
+            updateUI()
+        }
     }
 
     override fun onPause() {
@@ -68,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         overlayPermissionBtn = findViewById(R.id.overlayPermissionBtn)
         accessibilityPermissionBtn = findViewById(R.id.accessibilityPermissionBtn)
+        shizukuPermissionBtn = findViewById(R.id.shizukuPermissionBtn)
         startServiceBtn = findViewById(R.id.startServiceBtn)
         swipeZoneSettingsContainer = findViewById(R.id.swipeZoneSettingsContainer)
         zoneXSeekBar = findViewById(R.id.zoneXSeekBar)
@@ -88,6 +112,10 @@ class MainActivity : AppCompatActivity() {
 
         accessibilityPermissionBtn.setOnClickListener {
             openAccessibilitySettings()
+        }
+        
+        shizukuPermissionBtn.setOnClickListener {
+            requestShizukuPermission()
         }
 
         startServiceBtn.setOnClickListener {
@@ -212,6 +240,8 @@ class MainActivity : AppCompatActivity() {
     private fun updateUI() {
         val hasOverlayPermission = hasOverlayPermission()
         val hasAccessibilityPermission = isAccessibilityServiceEnabled()
+        val hasShizukuPermission = ShizukuHelper.checkShizukuPermission()
+        val isShizukuAvailable = ShizukuHelper.isShizukuAvailable()
 
         overlayPermissionBtn.apply {
             isEnabled = !hasOverlayPermission
@@ -230,6 +260,22 @@ class MainActivity : AppCompatActivity() {
                 else ContextCompat.getColor(context, R.color.control_item_inactive)
             )
         }
+        
+        shizukuPermissionBtn.apply {
+            isEnabled = isShizukuAvailable && !hasShizukuPermission
+            text = when {
+                !isShizukuAvailable -> "⚠ Shizuku Not Running"
+                hasShizukuPermission -> "✓ Shizuku Permission Granted"
+                else -> "Grant Shizuku Permission"
+            }
+            setBackgroundColor(
+                when {
+                    !isShizukuAvailable -> ContextCompat.getColor(context, android.R.color.darker_gray)
+                    hasShizukuPermission -> ContextCompat.getColor(context, R.color.control_item_active)
+                    else -> ContextCompat.getColor(context, R.color.control_item_inactive)
+                }
+            )
+        }
 
         val allPermissionsGranted = hasOverlayPermission && hasAccessibilityPermission
         startServiceBtn.apply {
@@ -242,7 +288,9 @@ class MainActivity : AppCompatActivity() {
         statusText.text = when {
             !hasOverlayPermission -> "Step 1: Grant overlay permission to display Control Center over other apps"
             !hasAccessibilityPermission -> "Step 2: Enable accessibility service to detect swipe gestures"
-            else -> "All set! Control Center is active.\n\nSwipe down from the configured zone to open."
+            !isShizukuAvailable -> "Step 3 (Optional): Install and start Shizuku app for advanced features (WiFi, Bluetooth toggles)\n\nYou can still use Control Center without Shizuku, but some features will be limited."
+            !hasShizukuPermission -> "Step 3 (Optional): Grant Shizuku permission for advanced system control\n\nThis enables WiFi, Bluetooth, DND, and Airplane Mode toggles."
+            else -> "All set! Control Center is active.\n\nSwipe down from the configured zone to open.\n\n✓ Shizuku enabled for full system control!"
         }
 
         if (allPermissionsGranted) {
@@ -290,6 +338,24 @@ class MainActivity : AppCompatActivity() {
             "Find 'Control Center' in the list and enable it",
             Toast.LENGTH_LONG
         ).show()
+    }
+    
+    private fun requestShizukuPermission() {
+        if (!ShizukuHelper.isShizukuAvailable()) {
+            Toast.makeText(
+                this,
+                "Shizuku is not running. Please install and start Shizuku app first.\n\nShizuku enables WiFi, Bluetooth, and other system toggles.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        
+        if (ShizukuHelper.checkShizukuPermission()) {
+            Toast.makeText(this, "Shizuku permission already granted!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        ShizukuHelper.requestShizukuPermission()
     }
 
     private fun startControlCenterService() {

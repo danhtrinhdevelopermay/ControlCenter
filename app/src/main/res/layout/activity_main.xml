@@ -72,6 +72,16 @@
             android:layout_marginBottom="16dp" />
 
         <Button
+            android:id="@+id/shizukuPermissionBtn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Grant Shizuku Permission (Optional)"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:background="@drawable/control_item_background"
+            android:layout_marginBottom="16dp" />
+
+        <Button
             android:id="@+id/startServiceBtn"
             android:layout_width="match_parent"
             android:layout_height="56dp"

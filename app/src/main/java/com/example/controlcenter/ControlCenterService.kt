@@ -587,29 +587,104 @@ class ControlCenterService : Service() {
     }
 
     private fun setupControlButtons() {
-        setupControlButton(R.id.wifiButton, "wifi")
-        setupControlButton(R.id.bluetoothButton, "bluetooth")
-        setupControlButton(R.id.airplaneButton, "airplane")
-        setupControlButton(R.id.cellularButton, "cellular")
-        setupControlButton(R.id.flashlightButton, "flashlight")
-        setupControlButton(R.id.dndButton, "dnd")
-        setupControlButton(R.id.rotationButton, "rotation")
-        setupControlButton(R.id.focusButton, "focus")
-        setupControlButton(R.id.screenMirrorButton, "screenMirror")
-        setupControlButton(R.id.timerButton, "timer")
-        setupControlButton(R.id.cameraButton, "camera")
-
-        updateAllButtonStates()
-    }
-
-    private fun setupControlButton(viewId: Int, key: String) {
-        val button = controlCenterView?.findViewById<View>(viewId)
-        button?.setOnClickListener {
-            controlStates[key] = !(controlStates[key] ?: false)
-            updateButtonState(viewId, controlStates[key] ?: false)
+        syncStateFromSystem()
+        
+        controlCenterView?.findViewById<View>(R.id.wifiButton)?.setOnClickListener { button ->
+            val newState = !SystemControlHelper.isWifiEnabled(this)
+            ShizukuHelper.toggleWifi(newState)
+            controlStates["wifi"] = newState
+            updateButtonState(R.id.wifiButton, newState)
             animateButtonPress(button)
             vibrate()
         }
+        
+        controlCenterView?.findViewById<View>(R.id.bluetoothButton)?.setOnClickListener { button ->
+            val newState = !SystemControlHelper.isBluetoothEnabled(this)
+            ShizukuHelper.toggleBluetooth(newState)
+            controlStates["bluetooth"] = newState
+            updateButtonState(R.id.bluetoothButton, newState)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.airplaneButton)?.setOnClickListener { button ->
+            val newState = !SystemControlHelper.isAirplaneModeOn(this)
+            ShizukuHelper.toggleAirplaneMode(newState)
+            controlStates["airplane"] = newState
+            updateButtonState(R.id.airplaneButton, newState)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.cellularButton)?.setOnClickListener { button ->
+            val newState = !(controlStates["cellular"] ?: true)
+            ShizukuHelper.toggleMobileData(newState)
+            controlStates["cellular"] = newState
+            updateButtonState(R.id.cellularButton, newState)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.flashlightButton)?.setOnClickListener { button ->
+            val newState = !SystemControlHelper.isFlashlightOn()
+            SystemControlHelper.toggleFlashlight(this, newState)
+            controlStates["flashlight"] = newState
+            updateButtonState(R.id.flashlightButton, newState)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.dndButton)?.setOnClickListener { button ->
+            val newState = !SystemControlHelper.isDoNotDisturbOn(this)
+            ShizukuHelper.toggleDoNotDisturb(newState)
+            controlStates["dnd"] = newState
+            updateButtonState(R.id.dndButton, newState)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.rotationButton)?.setOnClickListener { button ->
+            val newState = !(controlStates["rotation"] ?: false)
+            ShizukuHelper.setRotationLock(newState)
+            controlStates["rotation"] = newState
+            updateButtonState(R.id.rotationButton, newState)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.focusButton)?.setOnClickListener { button ->
+            SystemControlHelper.openFocusSettings(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.screenMirrorButton)?.setOnClickListener { button ->
+            SystemControlHelper.openScreenMirroring(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.timerButton)?.setOnClickListener { button ->
+            SystemControlHelper.openTimer(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.cameraButton)?.setOnClickListener { button ->
+            SystemControlHelper.openCamera(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        updateAllButtonStates()
+    }
+    
+    private fun syncStateFromSystem() {
+        controlStates["wifi"] = SystemControlHelper.isWifiEnabled(this)
+        controlStates["bluetooth"] = SystemControlHelper.isBluetoothEnabled(this)
+        controlStates["airplane"] = SystemControlHelper.isAirplaneModeOn(this)
+        controlStates["flashlight"] = SystemControlHelper.isFlashlightOn()
+        controlStates["dnd"] = SystemControlHelper.isDoNotDisturbOn(this)
     }
 
     private fun updateAllButtonStates() {
