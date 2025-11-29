@@ -75,3 +75,27 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 - UI design theo MIUI Control Center với frosted glass blur effect (giữ nguyên từ version trước)
 - Background blur effects: `FLAG_BLUR_BEHIND` với `blurBehindRadius` động theo animation
 - Media controls hoạt động qua system media key events
+
+## Chức năng các nút (Cập nhật 2025-11-29)
+
+### Đã hoạt động:
+- ✅ WiFi toggle - Bật/tắt WiFi qua Shizuku
+- ✅ Cellular data toggle - Bật/tắt dữ liệu di động qua Shizuku
+- ✅ Bluetooth - Bật/tắt Bluetooth qua Shizuku
+- ✅ Flashlight - Bật/tắt đèn pin
+- ✅ Rotation lock - Khóa/mở khóa xoay màn hình
+- ✅ Screen Mirror - Chức năng phản chiếu màn hình
+- ✅ Camera - Mở camera
+- ✅ Media controls - Play/Pause, Next, Previous
+- ✅ Brightness slider - Điều chỉnh độ sáng màn hình
+- ✅ Volume slider - Điều chỉnh âm lượng
+
+### Placeholder (chưa implement):
+- 🔲 Notification - Chế độ thông báo (hiện tại chỉ có animation)
+- 🔲 Video - Chức năng video (hiện tại chỉ có animation)
+- 🔲 Location - GPS/định vị (hiện tại chỉ có animation)
+- 🔲 Grid button - Menu grid (hiện tại chỉ có animation)
+
+## Lịch sử thay đổi
+- **2025-11-29**: Redesign từ iOS 17 sang MIUI Control Center
+- **2025-11-29**: Sửa lỗi build - xóa tham chiếu đến airplaneButton từ layout cũ

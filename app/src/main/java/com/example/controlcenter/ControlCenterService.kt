@@ -623,22 +623,6 @@ class ControlCenterService : Service() {
             }
         }
         
-        controlCenterView?.findViewById<View>(R.id.airplaneButton)?.setOnClickListener { button ->
-            val currentState = SystemControlHelper.isAirplaneModeOn(this)
-            val newState = !currentState
-            animateButtonPress(button)
-            vibrate()
-            ShizukuHelper.toggleAirplaneMode(newState) { success ->
-                if (success) {
-                    controlStates["airplane"] = newState
-                    updateButtonState(R.id.airplaneButton, newState)
-                } else {
-                    controlStates["airplane"] = SystemControlHelper.isAirplaneModeOn(this)
-                    updateButtonState(R.id.airplaneButton, controlStates["airplane"] ?: false)
-                }
-            }
-        }
-        
         controlCenterView?.findViewById<View>(R.id.cellularButton)?.setOnClickListener { button ->
             val currentState = SystemControlHelper.isMobileDataEnabled(this)
             val newState = !currentState
