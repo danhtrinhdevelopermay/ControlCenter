@@ -12,34 +12,18 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Project Info"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "iOS Control Center"
+args = "Build Info"
 
 [[workflows.workflow]]
-name = "Project Info"
+name = "Build Info"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash show_info.sh"
+args = "echo \"Control Center Android App\"; echo \"\"; echo \"Build with: ./gradlew assembleDebug\"; echo \"APK output: app/build/outputs/apk/debug/app-debug.apk\"; echo \"\"; ls -la app/src/main/res/layout/*.xml 2>/dev/null | head -5"
 
 [workflows.workflow.metadata]
 outputType = "console"
-
-[[workflows.workflow]]
-name = "iOS Control Center"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node web/server.js"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[ports]]
 localPort = 5000
