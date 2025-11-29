@@ -14,10 +14,12 @@ This is an Android Kotlin application that provides a system-wide Control Center
 ## Architecture
 
 ### Components
-1. **MainActivity** - Setup UI, permission handling
-2. **GestureAccessibilityService** - Gesture detection via Accessibility API
+1. **MainActivity** - Setup UI, permission handling, swipe zone settings
+2. **GestureAccessibilityService** - Gesture detection via Accessibility API with customizable zone
 3. **ControlCenterService** - Foreground service managing floating overlay
 4. **BootReceiver** - Auto-start on device boot
+5. **SwipeZoneSettings** - SharedPreferences helper for zone configuration
+6. **SwipeZoneOverlayManager** - Visual preview overlay for zone configuration
 
 ### Flow
 ```
@@ -33,7 +35,9 @@ app/src/main/
 │   ├── MainActivity.kt
 │   ├── GestureAccessibilityService.kt
 │   ├── ControlCenterService.kt
-│   └── BootReceiver.kt
+│   ├── BootReceiver.kt
+│   ├── SwipeZoneSettings.kt
+│   └── SwipeZoneOverlayManager.kt
 ├── res/
 │   ├── layout/
 │   ├── drawable/
@@ -54,6 +58,8 @@ app/src/main/
 3. Download APK from Artifacts
 
 ## Recent Changes
+- Nov 29, 2025: Added customizable swipe zone settings with visual preview overlay
+- Nov 29, 2025: Fixed control center flashing issue when closing (added isHiding flag and visibility control)
 - Nov 29, 2025: Added immersive mode to hide navigation bar and status bar when Control Center is open
 - Nov 29, 2025: Improved touch gestures with velocity tracking for smoother show/hide animations
 - Nov 29, 2025: Redesigned UI to match iOS Control Center exactly with connectivity widget, now playing, sliders, and bottom controls
@@ -64,7 +70,9 @@ app/src/main/
 - Minimum SDK: 31 (Android 12)
 - Target SDK: 34
 - Uses WindowManager for overlay
-- Accessibility service for gesture detection
+- Accessibility service for gesture detection with customizable zone (position, width, height)
 - Spring animations via DynamicAnimation
 - Backdrop blur using FLAG_BLUR_BEHIND (Android 12+) with dynamic blur radius animation
 - iOS-style UI with rounded widgets, circular buttons, and vertical sliders
+- SwipeZoneSettings stores zone configuration in SharedPreferences
+- Visual preview overlay (green semi-transparent) shows when configuring zone, auto-hides when leaving app
