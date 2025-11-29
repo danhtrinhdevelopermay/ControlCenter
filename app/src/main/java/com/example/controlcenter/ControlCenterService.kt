@@ -317,7 +317,7 @@ class ControlCenterService : Service() {
 
         try {
             windowManager?.addView(backgroundView, params)
-            hideSystemBars(backgroundView)
+            showTransparentSystemBars(backgroundView)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -364,26 +364,27 @@ class ControlCenterService : Service() {
 
         try {
             windowManager?.addView(controlCenterView, params)
-            hideSystemBars(controlCenterView)
+            showTransparentSystemBars(controlCenterView)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
     
-    private fun hideSystemBars(view: View?) {
+    private fun showTransparentSystemBars(view: View?) {
         view?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 it.windowInsetsController?.let { controller ->
-                    controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    controller.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                    controller.setSystemBarsAppearance(
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                    )
                 }
             } else {
                 @Suppress("DEPRECATION")
-                it.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+                it.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
             }
         }
     }
