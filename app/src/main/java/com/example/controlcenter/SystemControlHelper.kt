@@ -7,6 +7,10 @@ import android.content.Intent
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
@@ -109,8 +113,30 @@ object SystemControlHelper {
             if (!wifiManager.isWifiEnabled) {
                 return null
             }
-            val wifiInfo = wifiManager.connectionInfo
-            var ssid = wifiInfo?.ssid
+            
+            var ssid: String? = null
+            
+            // Use ConnectivityManager for Android 10+ (more reliable)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                val network = connectivityManager.activeNetwork
+                if (network != null) {
+                    val capabilities = connectivityManager.getNetworkCapabilities(network)
+                    if (capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        // Try to get SSID from WifiInfo via NetworkCapabilities (Android 12+)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            val wifiInfo = capabilities.transportInfo as? WifiInfo
+                            ssid = wifiInfo?.ssid
+                        }
+                    }
+                }
+            }
+            
+            // Fallback to legacy method
+            if (ssid == null || ssid == "<unknown ssid>") {
+                val wifiInfo = wifiManager.connectionInfo
+                ssid = wifiInfo?.ssid
+            }
             
             // Remove quotes if present
             if (ssid != null && ssid.startsWith("\"") && ssid.endsWith("\"")) {
