@@ -4,57 +4,28 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="12dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
     android:background="?android:attr/selectableItemBackground">
 
     <ImageView
         android:id="@+id/bluetoothDeviceIcon"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:src="@drawable/ic_bluetooth"
-        android:tint="#FFFFFF" />
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_device_phone"
+        android:tint="#8E8E93" />
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/deviceNameText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginStart="12dp">
-
-        <TextView
-            android:id="@+id/deviceNameText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/deviceStatusText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#888888"
-            android:textSize="12sp"
-            android:visibility="gone" />
-
-    </LinearLayout>
-
-    <ImageView
-        android:id="@+id/pairedIcon"
-        android:layout_width="18dp"
-        android:layout_height="18dp"
-        android:src="@drawable/ic_check"
-        android:tint="#4CAF50"
-        android:visibility="gone" />
-
-    <ImageView
-        android:id="@+id/connectedIcon"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="8dp"
-        android:src="@drawable/ic_check"
-        android:tint="#2196F3"
-        android:visibility="gone" />
+        android:layout_marginStart="14dp"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
 </LinearLayout>

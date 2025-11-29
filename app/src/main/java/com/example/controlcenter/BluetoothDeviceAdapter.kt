@@ -15,9 +15,6 @@ class BluetoothDeviceAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val deviceIcon: ImageView = view.findViewById(R.id.bluetoothDeviceIcon)
         val deviceNameText: TextView = view.findViewById(R.id.deviceNameText)
-        val deviceStatusText: TextView = view.findViewById(R.id.deviceStatusText)
-        val pairedIcon: ImageView = view.findViewById(R.id.pairedIcon)
-        val connectedIcon: ImageView = view.findViewById(R.id.connectedIcon)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -31,26 +28,34 @@ class BluetoothDeviceAdapter(
         
         holder.deviceNameText.text = device.name
         
-        val statusText = when {
-            device.isConnected -> "Đã kết nối"
-            device.isPaired -> "Đã ghép đôi"
-            else -> "Khả dụng"
-        }
-        holder.deviceStatusText.text = statusText
-        holder.deviceStatusText.visibility = View.VISIBLE
-        
-        holder.pairedIcon.visibility = if (device.isPaired && !device.isConnected) View.VISIBLE else View.GONE
-        holder.connectedIcon.visibility = if (device.isConnected) View.VISIBLE else View.GONE
-        
-        val iconTint = when {
-            device.isConnected -> 0xFF2196F3.toInt()
-            device.isPaired -> 0xFF4CAF50.toInt()
-            else -> 0xFFFFFFFF.toInt()
-        }
-        holder.deviceIcon.setColorFilter(iconTint)
+        val iconResId = getDeviceIcon(device.name, device.deviceType)
+        holder.deviceIcon.setImageResource(iconResId)
+        holder.deviceIcon.setColorFilter(0xFF8E8E93.toInt())
         
         holder.itemView.setOnClickListener {
             onDeviceClick(device)
+        }
+    }
+
+    private fun getDeviceIcon(name: String, deviceType: Int): Int {
+        val nameLower = name.lowercase()
+        
+        return when {
+            nameLower.contains("tv") || nameLower.contains("television") -> R.drawable.ic_device_tv
+            nameLower.contains("headphone") || nameLower.contains("airpod") || 
+            nameLower.contains("buds") || nameLower.contains("earphone") ||
+            nameLower.contains("tws") || nameLower.contains("earbuds") -> R.drawable.ic_device_headphone
+            nameLower.contains("car") || nameLower.contains("wrx") || 
+            nameLower.contains("auto") || nameLower.contains("vehicle") -> R.drawable.ic_device_car
+            nameLower.contains("speaker") || nameLower.contains("soundbar") ||
+            nameLower.contains("zqs") || nameLower.contains("jbl") ||
+            nameLower.contains("bose") || nameLower.contains("sony") -> R.drawable.ic_device_speaker
+            nameLower.contains("keyboard") || nameLower.contains("key") -> R.drawable.ic_device_keyboard
+            nameLower.contains("phone") || nameLower.contains("iphone") ||
+            nameLower.contains("samsung") || nameLower.contains("xiaomi") ||
+            nameLower.contains("oppo") || nameLower.contains("vivo") ||
+            nameLower.contains("realme") || nameLower.contains("huawei") -> R.drawable.ic_device_phone
+            else -> R.drawable.ic_device_phone
         }
     }
 

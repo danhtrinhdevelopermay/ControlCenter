@@ -1110,19 +1110,17 @@ class ControlCenterService : Service() {
     private var currentBluetoothEmptyText: TextView? = null
     
     private fun showWifiListDialog() {
-        if (!SystemControlHelper.isWifiEnabled(this)) {
-            Toast.makeText(this, "Vui lòng bật Wi-Fi trước", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_wifi_list, null)
         val recyclerView = dialogView.findViewById<RecyclerView>(R.id.wifiRecyclerView)
         val loadingProgress = dialogView.findViewById<ProgressBar>(R.id.loadingProgress)
         val emptyText = dialogView.findViewById<TextView>(R.id.emptyText)
-        val refreshButton = dialogView.findViewById<ImageView>(R.id.refreshButton)
-        val cancelButton = dialogView.findViewById<TextView>(R.id.cancelButton)
-        
-        refreshButton.setImageResource(R.drawable.ic_refresh)
+        val wifiSwitch = dialogView.findViewById<android.widget.Switch>(R.id.wifiSwitch)
+        val settingsButton = dialogView.findViewById<TextView>(R.id.settingsButton)
+        val connectedSection = dialogView.findViewById<LinearLayout>(R.id.connectedSection)
+        val connectedWifiItem = dialogView.findViewById<LinearLayout>(R.id.connectedWifiItem)
+        val connectedWifiName = dialogView.findViewById<TextView>(R.id.connectedWifiName)
+        val connectedWifiLock = dialogView.findViewById<ImageView>(R.id.connectedWifiLock)
+        val savedNetworksLabel = dialogView.findViewById<TextView>(R.id.savedNetworksLabel)
         
         recyclerView.layoutManager = LinearLayoutManager(this)
         
@@ -1130,54 +1128,108 @@ class ControlCenterService : Service() {
         
         wifiScannerHelper = WiFiScannerHelper(this)
         
-        val scanWifi = {
-            loadingProgress.visibility = View.VISIBLE
-            recyclerView.visibility = View.GONE
-            emptyText.visibility = View.GONE
-            
-            refreshButton.animate()
-                .rotationBy(360f)
-                .setDuration(1000)
-                .start()
-            
-            wifiScannerHelper?.startScan { networks ->
-                loadingProgress.visibility = View.GONE
+        val isWifiEnabled = SystemControlHelper.isWifiEnabled(this)
+        wifiSwitch.isChecked = isWifiEnabled
+        
+        val updateWifiUI: (Boolean) -> Unit = { enabled ->
+            if (enabled) {
+                loadingProgress.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+                emptyText.visibility = View.GONE
+                connectedSection.visibility = View.GONE
+                savedNetworksLabel.visibility = View.GONE
                 
-                if (networks.isEmpty()) {
-                    emptyText.visibility = View.VISIBLE
-                    recyclerView.visibility = View.GONE
-                } else {
-                    emptyText.visibility = View.GONE
-                    recyclerView.visibility = View.VISIBLE
+                wifiScannerHelper?.startScan { networks ->
+                    loadingProgress.visibility = View.GONE
                     
-                    if (adapter == null) {
-                        adapter = WiFiNetworkAdapter(networks) { network ->
-                            onWifiNetworkSelected(network)
+                    val connectedNetwork = networks.find { it.isConnected }
+                    val otherNetworks = networks.filter { !it.isConnected }
+                    
+                    if (connectedNetwork != null) {
+                        connectedSection.visibility = View.VISIBLE
+                        connectedWifiName.text = connectedNetwork.ssid
+                        connectedWifiLock.visibility = if (connectedNetwork.isSecured) View.VISIBLE else View.GONE
+                        
+                        connectedWifiItem.setOnClickListener {
+                            onWifiNetworkSelected(connectedNetwork)
                         }
-                        recyclerView.adapter = adapter
                     } else {
-                        adapter?.updateNetworks(networks)
+                        connectedSection.visibility = View.GONE
                     }
+                    
+                    if (otherNetworks.isEmpty() && connectedNetwork == null) {
+                        emptyText.visibility = View.VISIBLE
+                        recyclerView.visibility = View.GONE
+                        savedNetworksLabel.visibility = View.GONE
+                    } else if (otherNetworks.isNotEmpty()) {
+                        emptyText.visibility = View.GONE
+                        recyclerView.visibility = View.VISIBLE
+                        savedNetworksLabel.visibility = View.VISIBLE
+                        
+                        if (adapter == null) {
+                            adapter = WiFiNetworkAdapter(otherNetworks) { network ->
+                                onWifiNetworkSelected(network)
+                            }
+                            recyclerView.adapter = adapter
+                        } else {
+                            adapter?.updateNetworks(otherNetworks)
+                        }
+                    } else {
+                        recyclerView.visibility = View.GONE
+                        savedNetworksLabel.visibility = View.GONE
+                    }
+                }
+            } else {
+                loadingProgress.visibility = View.GONE
+                recyclerView.visibility = View.GONE
+                connectedSection.visibility = View.GONE
+                savedNetworksLabel.visibility = View.GONE
+                emptyText.text = "Wi-Fi đã tắt"
+                emptyText.visibility = View.VISIBLE
+            }
+        }
+        
+        wifiSwitch.setOnCheckedChangeListener { _, isChecked ->
+            vibrate()
+            ShizukuHelper.toggleWifi(isChecked) { success ->
+                if (success) {
+                    controlStates["wifi"] = isChecked
+                    updateButtonState(R.id.wifiButton, isChecked)
+                    updateWifiStatus()
+                    handler.postDelayed({
+                        updateWifiUI(isChecked)
+                    }, 500)
+                } else {
+                    wifiSwitch.isChecked = !isChecked
                 }
             }
         }
         
-        refreshButton.setOnClickListener {
-            scanWifi()
+        settingsButton.setOnClickListener {
+            try {
+                val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                wifiDialog?.dismiss()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Không thể mở cài đặt Wi-Fi", Toast.LENGTH_SHORT).show()
+            }
         }
         
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
         builder.setView(dialogView)
         
         wifiDialog = builder.create()
-        wifiDialog?.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-        wifiDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        wifiDialog?.setCanceledOnTouchOutside(true)
-        
-        cancelButton.setOnClickListener {
-            wifiDialog?.dismiss()
-            wifiScannerHelper?.cleanup()
+        wifiDialog?.window?.apply {
+            setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+            setBackgroundDrawableResource(android.R.color.transparent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                setDimAmount(0.3f)
+                addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                attributes = attributes.also { it.blurBehindRadius = 30 }
+            }
         }
+        wifiDialog?.setCanceledOnTouchOutside(true)
         
         wifiDialog?.setOnDismissListener {
             wifiScannerHelper?.cleanup()
@@ -1185,7 +1237,7 @@ class ControlCenterService : Service() {
         
         wifiDialog?.show()
         
-        scanWifi()
+        updateWifiUI(isWifiEnabled)
     }
     
     private fun onWifiNetworkSelected(network: WiFiNetwork) {
@@ -1300,79 +1352,105 @@ class ControlCenterService : Service() {
     }
     
     private fun showBluetoothListDialog() {
-        if (!SystemControlHelper.isBluetoothEnabled(this)) {
-            Toast.makeText(this, "Vui lòng bật Bluetooth trước", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_bluetooth_list, null)
         val recyclerView = dialogView.findViewById<RecyclerView>(R.id.bluetoothRecyclerView)
         val loadingProgress = dialogView.findViewById<ProgressBar>(R.id.loadingProgress)
         val emptyText = dialogView.findViewById<TextView>(R.id.emptyText)
-        val refreshButton = dialogView.findViewById<ImageView>(R.id.refreshButton)
-        val cancelButton = dialogView.findViewById<TextView>(R.id.cancelButton)
+        val bluetoothSwitch = dialogView.findViewById<android.widget.Switch>(R.id.bluetoothSwitch)
+        val settingsButton = dialogView.findViewById<TextView>(R.id.settingsButton)
+        val pairedDevicesLabel = dialogView.findViewById<TextView>(R.id.pairedDevicesLabel)
         
-        // Store references for refresh functionality
         currentBluetoothRecyclerView = recyclerView
         currentBluetoothLoadingProgress = loadingProgress
         currentBluetoothEmptyText = emptyText
         
-        refreshButton.setImageResource(R.drawable.ic_refresh)
-        
         recyclerView.layoutManager = LinearLayoutManager(this)
         
-        val scanBluetooth = {
-            loadingProgress.visibility = View.VISIBLE
-            recyclerView.visibility = View.GONE
-            emptyText.visibility = View.GONE
-            
-            refreshButton.animate()
-                .rotationBy(360f)
-                .setDuration(1000)
-                .start()
-            
-            ShizukuHelper.scanBluetoothDevices { devices ->
-                handler.post {
-                    loadingProgress.visibility = View.GONE
-                    
-                    if (devices.isEmpty()) {
-                        emptyText.visibility = View.VISIBLE
-                        recyclerView.visibility = View.GONE
-                    } else {
-                        emptyText.visibility = View.GONE
-                        recyclerView.visibility = View.VISIBLE
+        val isBluetoothEnabled = SystemControlHelper.isBluetoothEnabled(this)
+        bluetoothSwitch.isChecked = isBluetoothEnabled
+        
+        val updateBluetoothUI: (Boolean) -> Unit = { enabled ->
+            if (enabled) {
+                loadingProgress.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+                emptyText.visibility = View.GONE
+                pairedDevicesLabel.visibility = View.GONE
+                
+                ShizukuHelper.scanBluetoothDevices { devices ->
+                    handler.post {
+                        loadingProgress.visibility = View.GONE
                         
-                        if (currentBluetoothAdapter == null) {
-                            currentBluetoothAdapter = BluetoothDeviceAdapter(devices) { device ->
-                                onBluetoothDeviceSelected(device)
-                            }
-                            recyclerView.adapter = currentBluetoothAdapter
+                        if (devices.isEmpty()) {
+                            emptyText.visibility = View.VISIBLE
+                            recyclerView.visibility = View.GONE
+                            pairedDevicesLabel.visibility = View.GONE
                         } else {
-                            currentBluetoothAdapter?.updateDevices(devices)
+                            emptyText.visibility = View.GONE
+                            recyclerView.visibility = View.VISIBLE
+                            pairedDevicesLabel.visibility = View.VISIBLE
+                            
+                            if (currentBluetoothAdapter == null) {
+                                currentBluetoothAdapter = BluetoothDeviceAdapter(devices) { device ->
+                                    onBluetoothDeviceSelected(device)
+                                }
+                                recyclerView.adapter = currentBluetoothAdapter
+                            } else {
+                                currentBluetoothAdapter?.updateDevices(devices)
+                            }
                         }
                     }
+                }
+            } else {
+                loadingProgress.visibility = View.GONE
+                recyclerView.visibility = View.GONE
+                pairedDevicesLabel.visibility = View.GONE
+                emptyText.text = "Bluetooth đã tắt"
+                emptyText.visibility = View.VISIBLE
+            }
+        }
+        
+        bluetoothSwitch.setOnCheckedChangeListener { _, isChecked ->
+            vibrate()
+            ShizukuHelper.toggleBluetooth(isChecked) { success ->
+                if (success) {
+                    controlStates["bluetooth"] = isChecked
+                    updateButtonState(R.id.bluetoothButton, isChecked)
+                    handler.postDelayed({
+                        updateBluetoothUI(isChecked)
+                    }, 500)
+                } else {
+                    bluetoothSwitch.isChecked = !isChecked
                 }
             }
         }
         
-        refreshButton.setOnClickListener {
-            scanBluetooth()
+        settingsButton.setOnClickListener {
+            try {
+                val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                bluetoothDialog?.dismiss()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Không thể mở cài đặt Bluetooth", Toast.LENGTH_SHORT).show()
+            }
         }
         
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
         builder.setView(dialogView)
         
         bluetoothDialog = builder.create()
-        bluetoothDialog?.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-        bluetoothDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        bluetoothDialog?.window?.apply {
+            setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+            setBackgroundDrawableResource(android.R.color.transparent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                setDimAmount(0.3f)
+                addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                attributes = attributes.also { it.blurBehindRadius = 30 }
+            }
+        }
         bluetoothDialog?.setCanceledOnTouchOutside(true)
         
-        cancelButton.setOnClickListener {
-            bluetoothDialog?.dismiss()
-        }
-        
         bluetoothDialog?.setOnDismissListener {
-            // Clear references when dialog is dismissed
             currentBluetoothAdapter = null
             currentBluetoothRecyclerView = null
             currentBluetoothLoadingProgress = null
@@ -1381,7 +1459,7 @@ class ControlCenterService : Service() {
         
         bluetoothDialog?.show()
         
-        scanBluetooth()
+        updateBluetoothUI(isBluetoothEnabled)
     }
     
     private fun refreshBluetoothList() {

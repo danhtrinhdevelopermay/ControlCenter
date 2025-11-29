@@ -15,9 +15,7 @@ class WiFiNetworkAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val wifiSignalIcon: ImageView = view.findViewById(R.id.wifiSignalIcon)
         val wifiSsidText: TextView = view.findViewById(R.id.wifiSsidText)
-        val wifiStatusText: TextView = view.findViewById(R.id.wifiStatusText)
         val wifiLockIcon: ImageView = view.findViewById(R.id.wifiLockIcon)
-        val wifiConnectedIcon: ImageView = view.findViewById(R.id.wifiConnectedIcon)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -32,32 +30,13 @@ class WiFiNetworkAdapter(
         holder.wifiSsidText.text = network.ssid
         
         holder.wifiSignalIcon.setImageResource(R.drawable.ic_wifi)
-        val signalAlpha = when (network.signalLevel) {
-            4 -> 1.0f
-            3 -> 0.85f
-            2 -> 0.7f
-            1 -> 0.55f
-            else -> 0.4f
-        }
-        holder.wifiSignalIcon.alpha = signalAlpha
+        holder.wifiSignalIcon.setColorFilter(0xFF8E8E93.toInt())
         
         if (network.isSecured) {
             holder.wifiLockIcon.visibility = View.VISIBLE
             holder.wifiLockIcon.setImageResource(R.drawable.ic_lock)
         } else {
             holder.wifiLockIcon.visibility = View.GONE
-        }
-        
-        if (network.isConnected) {
-            holder.wifiConnectedIcon.visibility = View.VISIBLE
-            holder.wifiConnectedIcon.setImageResource(R.drawable.ic_check)
-            holder.wifiStatusText.visibility = View.VISIBLE
-            holder.wifiStatusText.text = "Đã kết nối"
-            holder.wifiSignalIcon.setColorFilter(0xFF3B82F6.toInt())
-        } else {
-            holder.wifiConnectedIcon.visibility = View.GONE
-            holder.wifiStatusText.visibility = View.GONE
-            holder.wifiSignalIcon.setColorFilter(0xFFFFFFFF.toInt())
         }
         
         holder.itemView.setOnClickListener {
