@@ -125,3 +125,21 @@ Cho phép người dùng thêm tối đa 8 phím tắt ứng dụng vào Control
 - **2025-11-29**: Thêm hiển thị tên WiFi (SSID) khi kết nối thành công
 - **2025-11-29**: Thêm tính năng App Shortcuts - cho phép thêm phím tắt ứng dụng tùy chọn
 - **2025-11-29**: Navigation bar và status bar hiện với background trong suốt khi Control Center mở
+- **2025-11-29**: Sửa lỗi brightness và volume slider - thêm touch handling và đồng bộ với giá trị hệ thống
+
+## Ghi chú về Brightness/Volume Sliders
+
+### Brightness Slider:
+- Sử dụng `Settings.System.SCREEN_BRIGHTNESS` để đọc/ghi độ sáng
+- Yêu cầu quyền `WRITE_SETTINGS` để thay đổi độ sáng
+- Phạm vi: 0-255
+
+### Volume Slider:
+- Sử dụng `AudioManager.STREAM_MUSIC` để điều khiển âm lượng media
+- Không cần quyền đặc biệt
+- Phạm vi: 0 đến maxVolume (thường là 15)
+
+### Touch Handling:
+- Vuốt từ dưới lên để tăng giá trị
+- Vuốt từ trên xuống để giảm giá trị
+- Visual feedback cập nhật real-time khi vuốt
