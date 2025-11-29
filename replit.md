@@ -1,37 +1,52 @@
-# Control Center - iOS Style Android App
+# Control Center - iOS Style Android App (System Overlay)
 
 ## Overview
-This is an Android Kotlin application that replicates the iOS Control Center with:
-- Blur effect for background content using RenderEffect API (Android 12+)
-- Swipe down gesture from top-right corner to open
-- GitHub Actions workflow for building APK
+This is an Android Kotlin application that provides a system-wide Control Center overlay similar to iOS. Key features:
+- **System Overlay** - Displays on top of all apps
+- **Swipe Gesture** - Open by swiping down from top-right corner
+- **Accessibility Service** - Detects gestures system-wide
+- **Foreground Service** - Runs continuously in background
+- **GitHub Actions** - Automated APK building
 
 ## Project Type
-**Android Native Application** - This project cannot run directly on Replit as it requires Android SDK and emulator. It is designed to be built using GitHub Actions.
+**Android Native Application** - Cannot run on Replit (requires Android device). Build using GitHub Actions.
 
-## Project Architecture
+## Architecture
+
+### Components
+1. **MainActivity** - Setup UI, permission handling
+2. **GestureAccessibilityService** - Gesture detection via Accessibility API
+3. **ControlCenterService** - Foreground service managing floating overlay
+4. **BootReceiver** - Auto-start on device boot
+
+### Flow
+```
+User swipe → GestureAccessibilityService detects → 
+ControlCenterService shows overlay → User interacts → 
+Dismiss gesture → Overlay hides
+```
 
 ### Structure
 ```
-ControlCenter/
-├── app/src/main/
-│   ├── java/com/example/controlcenter/
-│   │   └── MainActivity.kt        # Main logic with blur & gestures
-│   ├── res/
-│   │   ├── layout/               # XML layouts
-│   │   ├── drawable/             # Icons and backgrounds
-│   │   └── values/               # Colors, strings, themes
-│   └── AndroidManifest.xml
-├── .github/workflows/
-│   └── build-apk.yml             # GitHub Actions CI/CD
-└── gradle files
+app/src/main/
+├── java/com/example/controlcenter/
+│   ├── MainActivity.kt
+│   ├── GestureAccessibilityService.kt
+│   ├── ControlCenterService.kt
+│   └── BootReceiver.kt
+├── res/
+│   ├── layout/
+│   ├── drawable/
+│   ├── xml/accessibility_service_config.xml
+│   └── values/
+└── AndroidManifest.xml
 ```
 
-### Key Components
-1. **MainActivity.kt** - Handles gesture detection, blur effects, and control toggling
-2. **RenderEffect API** - Android 12+ blur implementation
-3. **SpringAnimation** - Natural bouncy animations
-4. **GitHub Actions** - Automated APK building
+## Permissions Required
+- SYSTEM_ALERT_WINDOW (overlay)
+- FOREGROUND_SERVICE (background running)
+- BIND_ACCESSIBILITY_SERVICE (gesture detection)
+- VIBRATE (haptic feedback)
 
 ## How to Build
 1. Push to GitHub repository
@@ -39,10 +54,11 @@ ControlCenter/
 3. Download APK from Artifacts
 
 ## Recent Changes
-- Nov 29, 2025: Initial project creation with full Control Center UI
+- Nov 29, 2025: Converted to system-wide overlay with accessibility service
 
 ## Technical Notes
 - Minimum SDK: 31 (Android 12)
 - Target SDK: 34
-- Kotlin version: 1.9.20
-- Gradle: 8.2
+- Uses WindowManager for overlay
+- Accessibility service for gesture detection
+- Spring animations via DynamicAnimation
