@@ -124,8 +124,7 @@ class ControlCenterService : Service() {
         R.id.cameraButton,
         R.id.screenMirrorButton,
         R.id.videoButton,
-        R.id.locationButton,
-        R.id.gridButton
+        R.id.locationButton
     )
     
     private val toggleButtons = setOf(
@@ -734,17 +733,6 @@ class ControlCenterService : Service() {
             vibrate()
             controlStates["location"] = newState
             updateButtonState(R.id.locationButton, newState)
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.gridButton)?.setOnClickListener { button ->
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.editButton)?.setOnClickListener { button ->
-            animateButtonPress(button)
-            vibrate()
-            openAppPicker()
         }
         
         controlCenterView?.findViewById<View>(R.id.playButton)?.setOnClickListener { button ->
