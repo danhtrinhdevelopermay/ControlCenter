@@ -130,6 +130,7 @@ Cho phép người dùng thêm tối đa 8 phím tắt ứng dụng vào Control
 - **2025-11-29**: Thêm tính năng WiFi Scanning - quét và kết nối mạng WiFi trực tiếp từ Control Center
 - **2025-11-29**: Sửa lỗi WiFi scanning với Shizuku - cải thiện parsing để hỗ trợ nhiều định dạng output
 - **2025-11-29**: Thêm tính năng Bluetooth Scanning - quét và kết nối thiết bị Bluetooth từ Control Center
+- **2025-11-29**: Thêm hiệu ứng mượt mà cho popup WiFi và Bluetooth với blur animation
 
 ## WiFi Scanning Feature (Cập nhật 2025-11-29)
 
@@ -261,3 +262,28 @@ Hiển thị thông tin bài hát đang phát trong Control Center (tên bài, n
 - Vuốt từ dưới lên để tăng giá trị
 - Vuốt từ trên xuống để giảm giá trị
 - Visual feedback cập nhật real-time khi vuốt
+
+## Popup Animation Feature (Cập nhật 2025-11-29)
+
+### Mô tả:
+Hiệu ứng mượt mà khi mở popup WiFi và Bluetooth bằng cách nhấn giữ nút.
+
+### Hiệu ứng bao gồm:
+1. **Blur Control Center**: Khi popup mở, toàn bộ Control Center sẽ được làm mờ (RenderEffect blur)
+2. **Blur Flash Transition**: Hiệu ứng nháy sáng/blur giữa Control Center và popup
+3. **Popup Unblur Animation**: Popup xuất hiện với blur rồi từ từ hết blur dần
+4. **Scale Animation**: Popup scale từ 85% lên 100% với OvershootInterpolator
+5. **Alpha Animation**: Popup fade in mượt mà
+
+### Technical Details:
+- Sử dụng `RenderEffect.createBlurEffect()` (Android 12+) cho blur
+- Fallback alpha dimming cho Android < 12
+- `ValueAnimator` để animate blur radius
+- `AnimatorSet` để kết hợp nhiều animation
+- Thời gian animation: ~350ms cho popup entrance, ~200ms cho popup exit
+
+### Code Flow:
+1. Gọi `applyControlCenterBlur(true)` để blur Control Center
+2. Show dialog với `setWindowAnimations(0)` để disable default animation
+3. `animatePopupEntrance(dialogView)` được gọi trong `onShowListener`
+4. Khi dismiss, `applyControlCenterBlur(false)` được gọi để unblur Control Center

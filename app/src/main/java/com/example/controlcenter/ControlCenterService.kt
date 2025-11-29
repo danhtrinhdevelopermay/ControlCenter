@@ -47,6 +47,9 @@ import androidx.dynamicanimation.animation.SpringForce
 import android.view.VelocityTracker
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.view.animation.OvershootInterpolator
 
 class ControlCenterService : Service() {
 
@@ -1109,6 +1112,249 @@ class ControlCenterService : Service() {
     private var currentBluetoothLoadingProgress: ProgressBar? = null
     private var currentBluetoothEmptyText: TextView? = null
     
+    private var popupBlurAnimator: ValueAnimator? = null
+    private var controlCenterBlurAnimator: ValueAnimator? = null
+    private var flashAnimator: ValueAnimator? = null
+    private var isPopupAnimating = false
+    private var baseBlurRadius = 0f
+    
+    private fun applyControlCenterBlur(blur: Boolean, onComplete: (() -> Unit)? = null) {
+        flashAnimator?.cancel()
+        controlCenterBlurAnimator?.cancel()
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val startBlur = if (blur) 0f else baseBlurRadius.coerceAtLeast(25f)
+            val endBlur = if (blur) 25f else 0f
+            
+            controlCenterBlurAnimator = ValueAnimator.ofFloat(startBlur, endBlur).apply {
+                duration = 200
+                interpolator = DecelerateInterpolator()
+                
+                addUpdateListener { animator ->
+                    val blurValue = animator.animatedValue as Float
+                    baseBlurRadius = blurValue
+                    controlCenterView?.let { view ->
+                        if (blurValue > 0.1f) {
+                            view.setRenderEffect(
+                                RenderEffect.createBlurEffect(blurValue, blurValue, Shader.TileMode.CLAMP)
+                            )
+                        } else {
+                            view.setRenderEffect(null)
+                        }
+                    }
+                }
+                
+                addListener(object : android.animation.Animator.AnimatorListener {
+                    override fun onAnimationStart(animation: android.animation.Animator) {}
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        baseBlurRadius = endBlur
+                        onComplete?.invoke()
+                    }
+                    override fun onAnimationCancel(animation: android.animation.Animator) {
+                        baseBlurRadius = endBlur
+                    }
+                    override fun onAnimationRepeat(animation: android.animation.Animator) {}
+                })
+                
+                start()
+            }
+        } else {
+            controlCenterView?.animate()
+                ?.alpha(if (blur) 0.5f else 1f)
+                ?.setDuration(200)
+                ?.withEndAction { onComplete?.invoke() }
+                ?.start()
+        }
+    }
+    
+    private fun animatePopupEntrance(dialogView: View, onComplete: (() -> Unit)? = null) {
+        isPopupAnimating = true
+        flashAnimator?.cancel()
+        
+        dialogView.alpha = 0f
+        dialogView.scaleX = 0.85f
+        dialogView.scaleY = 0.85f
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            dialogView.setRenderEffect(
+                RenderEffect.createBlurEffect(30f, 30f, Shader.TileMode.CLAMP)
+            )
+            
+            flashAnimator = ValueAnimator.ofFloat(0f, 20f, 0f).apply {
+                duration = 350
+                startDelay = 50
+                interpolator = DecelerateInterpolator()
+                
+                addUpdateListener { animator ->
+                    val additionalBlur = animator.animatedValue as Float
+                    val totalBlur = (baseBlurRadius + additionalBlur).coerceIn(0.1f, 60f)
+                    controlCenterView?.setRenderEffect(
+                        RenderEffect.createBlurEffect(totalBlur, totalBlur, Shader.TileMode.CLAMP)
+                    )
+                }
+                
+                addListener(object : android.animation.Animator.AnimatorListener {
+                    override fun onAnimationStart(animation: android.animation.Animator) {}
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        controlCenterView?.setRenderEffect(
+                            RenderEffect.createBlurEffect(baseBlurRadius.coerceAtLeast(0.1f), baseBlurRadius.coerceAtLeast(0.1f), Shader.TileMode.CLAMP)
+                        )
+                    }
+                    override fun onAnimationCancel(animation: android.animation.Animator) {
+                        controlCenterView?.setRenderEffect(
+                            RenderEffect.createBlurEffect(baseBlurRadius.coerceAtLeast(0.1f), baseBlurRadius.coerceAtLeast(0.1f), Shader.TileMode.CLAMP)
+                        )
+                    }
+                    override fun onAnimationRepeat(animation: android.animation.Animator) {}
+                })
+                
+                start()
+            }
+        } else {
+            flashAnimator = ValueAnimator.ofFloat(0f, 0.2f, 0f).apply {
+                duration = 350
+                startDelay = 50
+                interpolator = DecelerateInterpolator()
+                
+                addUpdateListener { animator ->
+                    val additionalDim = animator.animatedValue as Float
+                    controlCenterView?.alpha = (0.5f - additionalDim).coerceIn(0.2f, 0.5f)
+                }
+                
+                addListener(object : android.animation.Animator.AnimatorListener {
+                    override fun onAnimationStart(animation: android.animation.Animator) {}
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        controlCenterView?.alpha = 0.5f
+                    }
+                    override fun onAnimationCancel(animation: android.animation.Animator) {
+                        controlCenterView?.alpha = 0.5f
+                    }
+                    override fun onAnimationRepeat(animation: android.animation.Animator) {}
+                })
+                
+                start()
+            }
+        }
+        
+        val alphaAnimator = ObjectAnimator.ofFloat(dialogView, "alpha", 0f, 1f).apply {
+            duration = 300
+            startDelay = 50
+            interpolator = DecelerateInterpolator()
+        }
+        
+        val scaleXAnimator = ObjectAnimator.ofFloat(dialogView, "scaleX", 0.85f, 1f).apply {
+            duration = 350
+            startDelay = 50
+            interpolator = OvershootInterpolator(0.8f)
+        }
+        
+        val scaleYAnimator = ObjectAnimator.ofFloat(dialogView, "scaleY", 0.85f, 1f).apply {
+            duration = 350
+            startDelay = 50
+            interpolator = OvershootInterpolator(0.8f)
+        }
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            popupBlurAnimator?.cancel()
+            popupBlurAnimator = ValueAnimator.ofFloat(30f, 0f).apply {
+                duration = 400
+                startDelay = 100
+                interpolator = DecelerateInterpolator()
+                
+                addUpdateListener { animator ->
+                    val blurValue = animator.animatedValue as Float
+                    if (blurValue > 0.1f) {
+                        dialogView.setRenderEffect(
+                            RenderEffect.createBlurEffect(blurValue, blurValue, Shader.TileMode.CLAMP)
+                        )
+                    } else {
+                        dialogView.setRenderEffect(null)
+                    }
+                }
+                
+                addListener(object : android.animation.Animator.AnimatorListener {
+                    override fun onAnimationStart(animation: android.animation.Animator) {}
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        isPopupAnimating = false
+                        onComplete?.invoke()
+                    }
+                    override fun onAnimationCancel(animation: android.animation.Animator) {
+                        isPopupAnimating = false
+                        dialogView.setRenderEffect(null)
+                    }
+                    override fun onAnimationRepeat(animation: android.animation.Animator) {}
+                })
+                
+                start()
+            }
+        } else {
+            handler.postDelayed({
+                isPopupAnimating = false
+                onComplete?.invoke()
+            }, 400)
+        }
+        
+        AnimatorSet().apply {
+            playTogether(alphaAnimator, scaleXAnimator, scaleYAnimator)
+            start()
+        }
+    }
+    
+    private fun animatePopupExit(dialogView: View, onComplete: () -> Unit) {
+        isPopupAnimating = true
+        
+        val alphaAnimator = ObjectAnimator.ofFloat(dialogView, "alpha", 1f, 0f).apply {
+            duration = 200
+            interpolator = AccelerateDecelerateInterpolator()
+        }
+        
+        val scaleXAnimator = ObjectAnimator.ofFloat(dialogView, "scaleX", 1f, 0.9f).apply {
+            duration = 200
+            interpolator = AccelerateDecelerateInterpolator()
+        }
+        
+        val scaleYAnimator = ObjectAnimator.ofFloat(dialogView, "scaleY", 1f, 0.9f).apply {
+            duration = 200
+            interpolator = AccelerateDecelerateInterpolator()
+        }
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            popupBlurAnimator?.cancel()
+            popupBlurAnimator = ValueAnimator.ofFloat(0f, 15f).apply {
+                duration = 200
+                interpolator = AccelerateDecelerateInterpolator()
+                
+                addUpdateListener { animator ->
+                    val blurValue = animator.animatedValue as Float
+                    if (blurValue > 0.1f) {
+                        dialogView.setRenderEffect(
+                            RenderEffect.createBlurEffect(blurValue, blurValue, Shader.TileMode.CLAMP)
+                        )
+                    }
+                }
+                
+                start()
+            }
+        }
+        
+        AnimatorSet().apply {
+            playTogether(alphaAnimator, scaleXAnimator, scaleYAnimator)
+            addListener(object : android.animation.Animator.AnimatorListener {
+                override fun onAnimationStart(animation: android.animation.Animator) {}
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    isPopupAnimating = false
+                    onComplete()
+                }
+                override fun onAnimationCancel(animation: android.animation.Animator) {
+                    isPopupAnimating = false
+                    onComplete()
+                }
+                override fun onAnimationRepeat(animation: android.animation.Animator) {}
+            })
+            start()
+        }
+    }
+    
     private fun showWifiListDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_wifi_list, null)
         val recyclerView = dialogView.findViewById<RecyclerView>(R.id.wifiRecyclerView)
@@ -1216,6 +1462,8 @@ class ControlCenterService : Service() {
             }
         }
         
+        applyControlCenterBlur(true)
+        
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
         builder.setView(dialogView)
         
@@ -1224,15 +1472,23 @@ class ControlCenterService : Service() {
             setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
             setBackgroundDrawableResource(android.R.color.transparent)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                setDimAmount(0.3f)
+                setDimAmount(0.4f)
                 addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                attributes = attributes.also { it.blurBehindRadius = 30 }
+                attributes = attributes.also { it.blurBehindRadius = 40 }
             }
+            setWindowAnimations(0)
         }
         wifiDialog?.setCanceledOnTouchOutside(true)
         
+        wifiDialog?.setOnShowListener {
+            dialogView.post {
+                animatePopupEntrance(dialogView)
+            }
+        }
+        
         wifiDialog?.setOnDismissListener {
             wifiScannerHelper?.cleanup()
+            applyControlCenterBlur(false)
         }
         
         wifiDialog?.show()
@@ -1435,6 +1691,8 @@ class ControlCenterService : Service() {
             }
         }
         
+        applyControlCenterBlur(true)
+        
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
         builder.setView(dialogView)
         
@@ -1443,18 +1701,26 @@ class ControlCenterService : Service() {
             setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
             setBackgroundDrawableResource(android.R.color.transparent)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                setDimAmount(0.3f)
+                setDimAmount(0.4f)
                 addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                attributes = attributes.also { it.blurBehindRadius = 30 }
+                attributes = attributes.also { it.blurBehindRadius = 40 }
             }
+            setWindowAnimations(0)
         }
         bluetoothDialog?.setCanceledOnTouchOutside(true)
+        
+        bluetoothDialog?.setOnShowListener {
+            dialogView.post {
+                animatePopupEntrance(dialogView)
+            }
+        }
         
         bluetoothDialog?.setOnDismissListener {
             currentBluetoothAdapter = null
             currentBluetoothRecyclerView = null
             currentBluetoothLoadingProgress = null
             currentBluetoothEmptyText = null
+            applyControlCenterBlur(false)
         }
         
         bluetoothDialog?.show()
@@ -1534,6 +1800,9 @@ class ControlCenterService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        popupBlurAnimator?.cancel()
+        controlCenterBlurAnimator?.cancel()
+        flashAnimator?.cancel()
         wifiScannerHelper?.cleanup()
         wifiDialog?.dismiss()
         passwordDialog?.dismiss()
