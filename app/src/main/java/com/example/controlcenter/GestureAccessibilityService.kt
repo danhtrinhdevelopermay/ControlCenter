@@ -18,6 +18,7 @@ class GestureAccessibilityService : AccessibilityService() {
 
     private var windowManager: WindowManager? = null
     private var gestureDetectorView: View? = null
+    private var notificationGestureView: View? = null
     private var screenWidth = 0
     private var screenHeight = 0
 
@@ -25,6 +26,11 @@ class GestureAccessibilityService : AccessibilityService() {
     private var startX = 0f
     private var isDragging = false
     private var velocityTracker: VelocityTracker? = null
+
+    private var notificationStartY = 0f
+    private var notificationStartX = 0f
+    private var isNotificationDragging = false
+    private var notificationVelocityTracker: VelocityTracker? = null
 
     companion object {
         var instance: GestureAccessibilityService? = null
@@ -37,11 +43,14 @@ class GestureAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         setupGestureDetector()
+        setupNotificationGestureDetector()
     }
 
     fun refreshGestureDetector() {
         removeGestureDetector()
+        removeNotificationGestureDetector()
         setupGestureDetector()
+        setupNotificationGestureDetector()
     }
 
     private fun removeGestureDetector() {
@@ -53,6 +62,17 @@ class GestureAccessibilityService : AccessibilityService() {
             }
         }
         gestureDetectorView = null
+    }
+
+    private fun removeNotificationGestureDetector() {
+        notificationGestureView?.let {
+            try {
+                windowManager?.removeView(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        notificationGestureView = null
     }
 
     private fun setupGestureDetector() {
@@ -105,10 +125,62 @@ class GestureAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun setupNotificationGestureDetector() {
+        if (!NotificationZoneSettings.isEnabled(this)) return
+
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+
+        val displayMetrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        screenWidth = displayMetrics.widthPixels
+        screenHeight = displayMetrics.heightPixels
+
+        val xPercent = NotificationZoneSettings.getZoneXPercent(this)
+        val widthPercent = NotificationZoneSettings.getZoneWidthPercent(this)
+        val zoneHeight = NotificationZoneSettings.getZoneHeight(this)
+
+        val gestureAreaX = (screenWidth * xPercent / 100f).toInt()
+        val gestureAreaWidth = (screenWidth * widthPercent / 100f).toInt().coerceAtLeast(50)
+
+        val params = WindowManager.LayoutParams(
+            gestureAreaWidth,
+            zoneHeight,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+            else
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT
+        )
+
+        params.gravity = Gravity.TOP or Gravity.START
+        params.x = gestureAreaX
+        params.y = 0
+
+        notificationGestureView = View(this).apply {
+            setBackgroundColor(0x00000000)
+
+            setOnTouchListener { _, event ->
+                handleNotificationTouch(event)
+                true
+            }
+        }
+
+        try {
+            windowManager?.addView(notificationGestureView, params)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun handleTouch(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                if (ControlCenterService.isShowing) return true
+                if (ControlCenterService.isShowing || NotificationCenterService.isShowing) return true
                 
                 startX = event.rawX
                 startY = event.rawY
@@ -148,6 +220,49 @@ class GestureAccessibilityService : AccessibilityService() {
         return true
     }
 
+    private fun handleNotificationTouch(event: MotionEvent): Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                if (ControlCenterService.isShowing || NotificationCenterService.isShowing) return true
+                
+                notificationStartX = event.rawX
+                notificationStartY = event.rawY
+                isNotificationDragging = true
+                
+                notificationVelocityTracker?.recycle()
+                notificationVelocityTracker = VelocityTracker.obtain()
+                notificationVelocityTracker?.addMovement(event)
+                
+                sendNotificationDragStart()
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (isNotificationDragging) {
+                    notificationVelocityTracker?.addMovement(event)
+                    
+                    val dragY = event.rawY - notificationStartY
+                    if (dragY > 0) {
+                        sendNotificationDragUpdate(dragY)
+                    }
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (isNotificationDragging) {
+                    isNotificationDragging = false
+                    
+                    notificationVelocityTracker?.addMovement(event)
+                    notificationVelocityTracker?.computeCurrentVelocity(1000)
+                    val velocityY = notificationVelocityTracker?.yVelocity ?: 0f
+                    
+                    sendNotificationDragEnd(velocityY)
+                    
+                    notificationVelocityTracker?.recycle()
+                    notificationVelocityTracker = null
+                }
+            }
+        }
+        return true
+    }
+
     private fun sendDragStart() {
         val intent = Intent(this, ControlCenterService::class.java)
         intent.action = ControlCenterService.ACTION_DRAG_START
@@ -180,6 +295,38 @@ class GestureAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun sendNotificationDragStart() {
+        val intent = Intent(this, NotificationCenterService::class.java)
+        intent.action = NotificationCenterService.ACTION_DRAG_START
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun sendNotificationDragUpdate(dragY: Float) {
+        val intent = Intent(this, NotificationCenterService::class.java)
+        intent.action = NotificationCenterService.ACTION_DRAG_UPDATE
+        intent.putExtra(NotificationCenterService.EXTRA_DRAG_Y, dragY)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun sendNotificationDragEnd(velocityY: Float) {
+        val intent = Intent(this, NotificationCenterService::class.java)
+        intent.action = NotificationCenterService.ACTION_DRAG_END
+        intent.putExtra(NotificationCenterService.EXTRA_VELOCITY_Y, velocityY)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
     }
 
@@ -191,6 +338,9 @@ class GestureAccessibilityService : AccessibilityService() {
         instance = null
         velocityTracker?.recycle()
         velocityTracker = null
+        notificationVelocityTracker?.recycle()
+        notificationVelocityTracker = null
         removeGestureDetector()
+        removeNotificationGestureDetector()
     }
 }
