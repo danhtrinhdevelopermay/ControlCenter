@@ -24,7 +24,10 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.animation.ValueAnimator
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.ImageView
+import android.graphics.Color
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
@@ -57,13 +60,50 @@ class ControlCenterService : Service() {
 
     private val controlStates = mutableMapOf(
         "wifi" to true,
-        "bluetooth" to false,
+        "bluetooth" to true,
         "airplane" to false,
         "cellular" to true,
         "flashlight" to false,
         "dnd" to false,
-        "rotation" to false
+        "rotation" to false,
+        "focus" to false,
+        "screenMirror" to false,
+        "timer" to false,
+        "calculator" to false,
+        "camera" to false
     )
+    
+    private val buttonIconMap = mapOf(
+        R.id.wifiButton to R.id.wifiIcon,
+        R.id.bluetoothButton to R.id.bluetoothIcon,
+        R.id.airplaneButton to R.id.airplaneIcon,
+        R.id.cellularButton to R.id.cellularIcon,
+        R.id.flashlightButton to R.id.flashlightIcon,
+        R.id.dndButton to R.id.dndIcon,
+        R.id.rotationButton to R.id.rotationIcon,
+        R.id.focusButton to R.id.focusIcon,
+        R.id.screenMirrorButton to R.id.screenMirrorIcon,
+        R.id.timerButton to R.id.timerIcon,
+        R.id.calculatorButton to R.id.calculatorIcon,
+        R.id.cameraButton to R.id.cameraIcon
+    )
+    
+    private val bottomCircularButtons = setOf(
+        R.id.flashlightButton,
+        R.id.timerButton,
+        R.id.calculatorButton,
+        R.id.cameraButton,
+        R.id.dndButton
+    )
+    
+    private val smallOvalButtons = setOf(
+        R.id.focusButton,
+        R.id.screenMirrorButton,
+        R.id.rotationButton
+    )
+    
+    private val activeColor = Color.parseColor("#007AFF")
+    private val inactiveColor = Color.WHITE
 
     override fun onCreate() {
         super.onCreate()
@@ -355,6 +395,11 @@ class ControlCenterService : Service() {
         setupControlButton(R.id.flashlightButton, "flashlight")
         setupControlButton(R.id.dndButton, "dnd")
         setupControlButton(R.id.rotationButton, "rotation")
+        setupControlButton(R.id.focusButton, "focus")
+        setupControlButton(R.id.screenMirrorButton, "screenMirror")
+        setupControlButton(R.id.timerButton, "timer")
+        setupControlButton(R.id.calculatorButton, "calculator")
+        setupControlButton(R.id.cameraButton, "camera")
 
         updateAllButtonStates()
     }
@@ -363,26 +408,49 @@ class ControlCenterService : Service() {
         val button = controlCenterView?.findViewById<View>(viewId)
         button?.setOnClickListener {
             controlStates[key] = !(controlStates[key] ?: false)
-            updateButtonState(button, controlStates[key] ?: false)
+            updateButtonState(viewId, controlStates[key] ?: false)
             animateButtonPress(button)
             vibrate()
         }
     }
 
     private fun updateAllButtonStates() {
-        updateButtonState(controlCenterView?.findViewById(R.id.wifiButton), controlStates["wifi"] ?: false)
-        updateButtonState(controlCenterView?.findViewById(R.id.bluetoothButton), controlStates["bluetooth"] ?: false)
-        updateButtonState(controlCenterView?.findViewById(R.id.airplaneButton), controlStates["airplane"] ?: false)
-        updateButtonState(controlCenterView?.findViewById(R.id.cellularButton), controlStates["cellular"] ?: false)
-        updateButtonState(controlCenterView?.findViewById(R.id.flashlightButton), controlStates["flashlight"] ?: false)
-        updateButtonState(controlCenterView?.findViewById(R.id.dndButton), controlStates["dnd"] ?: false)
-        updateButtonState(controlCenterView?.findViewById(R.id.rotationButton), controlStates["rotation"] ?: false)
+        updateButtonState(R.id.wifiButton, controlStates["wifi"] ?: false)
+        updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
+        updateButtonState(R.id.airplaneButton, controlStates["airplane"] ?: false)
+        updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
+        updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
+        updateButtonState(R.id.dndButton, controlStates["dnd"] ?: false)
+        updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: false)
+        updateButtonState(R.id.focusButton, controlStates["focus"] ?: false)
+        updateButtonState(R.id.screenMirrorButton, controlStates["screenMirror"] ?: false)
+        updateButtonState(R.id.timerButton, controlStates["timer"] ?: false)
+        updateButtonState(R.id.calculatorButton, controlStates["calculator"] ?: false)
+        updateButtonState(R.id.cameraButton, controlStates["camera"] ?: false)
     }
 
-    private fun updateButtonState(button: View?, isActive: Boolean) {
-        button?.setBackgroundResource(
-            if (isActive) R.drawable.control_item_background_active
-            else R.drawable.control_item_background
+    private fun updateButtonState(buttonId: Int, isActive: Boolean) {
+        val button = controlCenterView?.findViewById<View>(buttonId)
+        val iconId = buttonIconMap[buttonId]
+        val icon = iconId?.let { controlCenterView?.findViewById<ImageView>(it) }
+        
+        val backgroundRes = when {
+            bottomCircularButtons.contains(buttonId) -> {
+                if (isActive) R.drawable.ios_circle_button_active else R.drawable.ios_circle_button
+            }
+            smallOvalButtons.contains(buttonId) -> {
+                if (isActive) R.drawable.ios_small_button_active else R.drawable.ios_small_button
+            }
+            else -> {
+                if (isActive) R.drawable.control_item_background_active else R.drawable.control_item_background
+            }
+        }
+        
+        button?.setBackgroundResource(backgroundRes)
+        
+        icon?.setColorFilter(
+            if (isActive) activeColor else inactiveColor,
+            android.graphics.PorterDuff.Mode.SRC_IN
         )
     }
 

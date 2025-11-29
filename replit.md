@@ -54,6 +54,7 @@ app/src/main/
 3. Download APK from Artifacts
 
 ## Recent Changes
+- Nov 29, 2025: Redesigned UI to match iOS Control Center exactly with connectivity widget, now playing, sliders, and bottom controls
 - Nov 29, 2025: Added backdrop blur effect using FLAG_BLUR_BEHIND and blurBehindRadius (Android 12+)
 - Nov 29, 2025: Converted to system-wide overlay with accessibility service
 
@@ -64,3 +65,4 @@ app/src/main/
 - Accessibility service for gesture detection
 - Spring animations via DynamicAnimation
 - Backdrop blur using FLAG_BLUR_BEHIND (Android 12+) with dynamic blur radius animation
+- iOS-style UI with rounded widgets, circular buttons, and vertical sliders
