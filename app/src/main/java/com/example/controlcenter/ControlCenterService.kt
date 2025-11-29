@@ -8,8 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
-import android.graphics.RenderEffect
-import android.graphics.Shader
 import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
@@ -22,7 +20,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
