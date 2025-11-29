@@ -418,20 +418,20 @@
                 <FrameLayout
                     android:id="@+id/bluetoothButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/bluetoothBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/bluetoothIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_bluetooth"
                         android:tint="#FFFFFF" />
@@ -440,20 +440,20 @@
                 <FrameLayout
                     android:id="@+id/notificationButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/notificationBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/notificationIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_notification"
                         android:tint="#FFFFFF" />
@@ -462,20 +462,20 @@
                 <FrameLayout
                     android:id="@+id/flashlightButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/flashlightBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/flashlightIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_flashlight"
                         android:tint="#FFFFFF" />
@@ -484,20 +484,20 @@
                 <FrameLayout
                     android:id="@+id/rotationButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/rotationBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/rotationIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_screen_rotation"
                         android:tint="#FFFFFF" />
@@ -514,20 +514,20 @@
                 <FrameLayout
                     android:id="@+id/cameraButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/cameraBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/cameraIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_camera"
                         android:tint="#FFFFFF" />
@@ -536,20 +536,20 @@
                 <FrameLayout
                     android:id="@+id/screenMirrorButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/screenMirrorBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/screenMirrorIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_screen_mirror"
                         android:tint="#FFFFFF" />
@@ -558,20 +558,20 @@
                 <FrameLayout
                     android:id="@+id/videoButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/videoBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/videoIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_video"
                         android:tint="#FFFFFF" />
@@ -580,20 +580,20 @@
                 <FrameLayout
                     android:id="@+id/locationButton"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1">
 
                     <View
                         android:id="@+id/locationBackground"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
                         android:layout_gravity="center"
                         android:background="@drawable/miui_circle_button" />
 
                     <ImageView
                         android:id="@+id/locationIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_location"
                         android:tint="#FFFFFF" />
