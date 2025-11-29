@@ -20,6 +20,9 @@ class MediaNotificationListener : NotificationListenerService() {
     companion object {
         private const val TAG = "MediaNotificationListener"
         
+        var instance: MediaNotificationListener? = null
+            private set
+        
         var currentMediaInfo: MediaInfo? = null
             private set
         
@@ -27,9 +30,20 @@ class MediaNotificationListener : NotificationListenerService() {
         private var activeController: MediaController? = null
         private var mediaCallback: MediaController.Callback? = null
         private var onMediaChangedListener: ((MediaInfo?) -> Unit)? = null
+        private var onNotificationChangedListener: ((List<StatusBarNotification>) -> Unit)? = null
+        
+        private var cachedNotifications: List<StatusBarNotification> = emptyList()
         
         fun setOnMediaChangedListener(listener: ((MediaInfo?) -> Unit)?) {
             onMediaChangedListener = listener
+        }
+        
+        fun setOnNotificationChangedListener(listener: ((List<StatusBarNotification>) -> Unit)?) {
+            onNotificationChangedListener = listener
+        }
+        
+        fun getCachedNotifications(): List<StatusBarNotification> {
+            return cachedNotifications
         }
         
         fun isNotificationAccessEnabled(context: Context): Boolean {
@@ -174,22 +188,40 @@ class MediaNotificationListener : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         Log.d(TAG, "Notification listener connected")
+        instance = this
         initMediaSessionManager(this)
+        updateCachedNotifications()
     }
     
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
         Log.d(TAG, "Notification listener disconnected")
+        instance = null
     }
     
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         refreshMediaInfo(this)
+        updateCachedNotifications()
     }
     
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
         refreshMediaInfo(this)
+        updateCachedNotifications()
+    }
+    
+    private fun updateCachedNotifications() {
+        try {
+            cachedNotifications = activeNotifications?.toList() ?: emptyList()
+            onNotificationChangedListener?.invoke(cachedNotifications)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating cached notifications", e)
+        }
+    }
+    
+    fun refreshNotifications() {
+        updateCachedNotifications()
     }
 }
 

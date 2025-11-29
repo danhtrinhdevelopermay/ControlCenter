@@ -16,7 +16,8 @@ import android.view.accessibility.AccessibilityEvent
 
 class GestureAccessibilityService : AccessibilityService() {
 
-    private var windowManager: WindowManager? = null
+    private var controlCenterWindowManager: WindowManager? = null
+    private var notificationWindowManager: WindowManager? = null
     private var gestureDetectorView: View? = null
     private var notificationGestureView: View? = null
     private var screenWidth = 0
@@ -56,7 +57,7 @@ class GestureAccessibilityService : AccessibilityService() {
     private fun removeGestureDetector() {
         gestureDetectorView?.let {
             try {
-                windowManager?.removeView(it)
+                controlCenterWindowManager?.removeView(it)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -67,7 +68,7 @@ class GestureAccessibilityService : AccessibilityService() {
     private fun removeNotificationGestureDetector() {
         notificationGestureView?.let {
             try {
-                windowManager?.removeView(it)
+                notificationWindowManager?.removeView(it)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -76,11 +77,11 @@ class GestureAccessibilityService : AccessibilityService() {
     }
 
     private fun setupGestureDetector() {
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        controlCenterWindowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
         val displayMetrics = DisplayMetrics()
         @Suppress("DEPRECATION")
-        windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        controlCenterWindowManager?.defaultDisplay?.getMetrics(displayMetrics)
         screenWidth = displayMetrics.widthPixels
         screenHeight = displayMetrics.heightPixels
 
@@ -119,7 +120,7 @@ class GestureAccessibilityService : AccessibilityService() {
         }
 
         try {
-            windowManager?.addView(gestureDetectorView, params)
+            controlCenterWindowManager?.addView(gestureDetectorView, params)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -128,11 +129,11 @@ class GestureAccessibilityService : AccessibilityService() {
     private fun setupNotificationGestureDetector() {
         if (!NotificationZoneSettings.isEnabled(this)) return
 
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        notificationWindowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
         val displayMetrics = DisplayMetrics()
         @Suppress("DEPRECATION")
-        windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        notificationWindowManager?.defaultDisplay?.getMetrics(displayMetrics)
         screenWidth = displayMetrics.widthPixels
         screenHeight = displayMetrics.heightPixels
 
@@ -171,7 +172,7 @@ class GestureAccessibilityService : AccessibilityService() {
         }
 
         try {
-            windowManager?.addView(notificationGestureView, params)
+            notificationWindowManager?.addView(notificationGestureView, params)
         } catch (e: Exception) {
             e.printStackTrace()
         }

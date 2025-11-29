@@ -96,12 +96,20 @@ class NotificationCenterService : Service() {
 
     private val notifications = mutableListOf<NotificationData>()
 
+    private val notificationChangedListener: ((List<android.service.notification.StatusBarNotification>) -> Unit) = { _ ->
+        handler.post {
+            loadNotifications()
+            refreshNotificationList()
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         getScreenDimensions()
         createNotificationChannel()
         loadNotifications()
+        MediaNotificationListener.setOnNotificationChangedListener(notificationChangedListener)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -182,11 +190,10 @@ class NotificationCenterService : Service() {
     private fun loadNotifications() {
         notifications.clear()
         
-        val listener = MediaNotificationListener.instance
-        if (listener != null) {
+        val cachedNotifications = MediaNotificationListener.getCachedNotifications()
+        if (cachedNotifications.isNotEmpty()) {
             try {
-                val activeNotifications = listener.activeNotifications
-                for (sbn in activeNotifications) {
+                for (sbn in cachedNotifications) {
                     val notification = sbn.notification
                     val extras = notification.extras
                     
@@ -291,20 +298,32 @@ class NotificationCenterService : Service() {
         updateBlurRadius(0f)
         
         addNotificationCenterView()
-        notificationCenterView?.translationY = -screenHeight.toFloat()
+        panelHeight = screenHeight
+        notificationCenterView?.translationY = -panelHeight.toFloat()
         
-        notificationCenterView?.post {
-            panelHeight = screenHeight
-            panelMeasured = true
-            notificationCenterView?.translationY = -panelHeight.toFloat()
-        }
+        notificationCenterView?.viewTreeObserver?.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                notificationCenterView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
+                val measuredHeight = notificationCenterView?.height ?: 0
+                if (measuredHeight > 0) {
+                    panelHeight = measuredHeight
+                }
+                panelMeasured = true
+                notificationCenterView?.translationY = -panelHeight.toFloat()
+            }
+        })
     }
 
     private fun handleDragUpdate(dragY: Float) {
         if (!isShowing || !isInteractiveDragging) return
         if (!panelMeasured || panelHeight == 0) {
             notificationCenterView?.post {
-                panelHeight = screenHeight
+                val measuredHeight = notificationCenterView?.height ?: 0
+                if (measuredHeight > 0) {
+                    panelHeight = measuredHeight
+                } else if (panelHeight == 0) {
+                    panelHeight = screenHeight
+                }
                 panelMeasured = true
                 handleDragUpdate(dragY)
             }
@@ -348,13 +367,21 @@ class NotificationCenterService : Service() {
         addBackgroundView()
         addNotificationCenterView()
 
-        notificationCenterView?.post {
-            panelHeight = screenHeight
-            panelMeasured = true
-            notificationCenterView?.translationY = -panelHeight.toFloat()
+        panelHeight = screenHeight
+        
+        notificationCenterView?.viewTreeObserver?.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                notificationCenterView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
+                val measuredHeight = notificationCenterView?.height ?: 0
+                if (measuredHeight > 0) {
+                    panelHeight = measuredHeight
+                }
+                panelMeasured = true
+                notificationCenterView?.translationY = -panelHeight.toFloat()
 
-            animateShow()
-        }
+                animateShow()
+            }
+        })
     }
 
     private fun addBackgroundView() {
@@ -769,6 +796,7 @@ class NotificationCenterService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        MediaNotificationListener.setOnNotificationChangedListener(null)
         removeViews()
     }
 }
