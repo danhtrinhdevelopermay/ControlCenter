@@ -600,9 +600,11 @@ class ControlCenterService : Service() {
                 if (success) {
                     controlStates["wifi"] = newState
                     updateButtonState(R.id.wifiButton, newState)
+                    updateWifiStatus()
                 } else {
                     controlStates["wifi"] = SystemControlHelper.isWifiEnabled(this)
                     updateButtonState(R.id.wifiButton, controlStates["wifi"] ?: false)
+                    updateWifiStatus()
                 }
             }
         }
@@ -742,6 +744,7 @@ class ControlCenterService : Service() {
 
     private fun updateAllButtonStates() {
         updateButtonState(R.id.wifiButton, controlStates["wifi"] ?: false)
+        updateWifiStatus()
         updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
         updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
         updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
@@ -774,6 +777,18 @@ class ControlCenterService : Service() {
             if (isActive) activeColor else inactiveColor,
             android.graphics.PorterDuff.Mode.SRC_IN
         )
+    }
+    
+    private fun updateWifiStatus() {
+        val wifiStatusText = controlCenterView?.findViewById<android.widget.TextView>(R.id.wifiStatusText)
+        val isEnabled = controlStates["wifi"] ?: false
+        
+        if (!isEnabled) {
+            wifiStatusText?.text = "Tắt"
+        } else {
+            val ssid = SystemControlHelper.getWifiSSID(this)
+            wifiStatusText?.text = ssid ?: "Không kết nối"
+        }
     }
 
     private fun animateButtonPress(button: View) {

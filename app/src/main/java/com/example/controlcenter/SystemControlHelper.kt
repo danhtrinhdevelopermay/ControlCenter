@@ -102,6 +102,32 @@ object SystemControlHelper {
         }
     }
     
+    fun getWifiSSID(context: Context): String? {
+        return try {
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            if (!wifiManager.isWifiEnabled) {
+                return null
+            }
+            val wifiInfo = wifiManager.connectionInfo
+            var ssid = wifiInfo?.ssid
+            
+            // Remove quotes if present
+            if (ssid != null && ssid.startsWith("\"") && ssid.endsWith("\"")) {
+                ssid = ssid.substring(1, ssid.length - 1)
+            }
+            
+            // Return null if SSID is <unknown ssid> (not connected)
+            if (ssid == "<unknown ssid>" || ssid.isNullOrBlank()) {
+                return null
+            }
+            
+            ssid
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting WiFi SSID", e)
+            null
+        }
+    }
+    
     fun isBluetoothEnabled(context: Context): Boolean {
         return try {
             val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager

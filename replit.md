@@ -27,6 +27,7 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 ## Permissions
 - `moe.shizuku.manager.permission.API_V23` - Shizuku API permission
 - `WRITE_SETTINGS`, `ACCESS_NOTIFICATION_POLICY` - Các quyền hệ thống
+- `ACCESS_FINE_LOCATION` - Cần thiết để lấy tên WiFi (SSID) trên Android 10+
 - Bluetooth, WiFi, Camera permissions
 
 ## Layout MIUI Style (Cập nhật 2025-11-29)
@@ -99,3 +100,4 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 ## Lịch sử thay đổi
 - **2025-11-29**: Redesign từ iOS 17 sang MIUI Control Center
 - **2025-11-29**: Sửa lỗi build - xóa tham chiếu đến airplaneButton từ layout cũ
+- **2025-11-29**: Thêm hiển thị tên WiFi (SSID) khi kết nối thành công
