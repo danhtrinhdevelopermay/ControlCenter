@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
+import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
@@ -233,6 +234,69 @@ object SystemControlHelper {
         } catch (e: Exception) {
             Log.e(TAG, "Error opening accessibility settings", e)
             Toast.makeText(context, "Cannot open accessibility settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    fun getBrightness(context: Context): Int {
+        return try {
+            Settings.System.getInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS,
+                128
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting brightness", e)
+            128
+        }
+    }
+    
+    fun setBrightness(context: Context, brightness: Int): Boolean {
+        return try {
+            val value = brightness.coerceIn(0, 255)
+            Settings.System.putInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS,
+                value
+            )
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting brightness", e)
+            false
+        }
+    }
+    
+    fun getMaxBrightness(): Int = 255
+    
+    fun getVolume(context: Context): Int {
+        return try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting volume", e)
+            0
+        }
+    }
+    
+    fun setVolume(context: Context, volume: Int): Boolean {
+        return try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val value = volume.coerceIn(0, maxVolume)
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting volume", e)
+            false
+        }
+    }
+    
+    fun getMaxVolume(context: Context): Int {
+        return try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting max volume", e)
+            15
         }
     }
 }

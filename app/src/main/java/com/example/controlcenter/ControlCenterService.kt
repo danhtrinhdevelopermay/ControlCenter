@@ -742,6 +742,88 @@ class ControlCenterService : Service() {
         updateAllButtonStates()
         updateMediaPlayerState()
         setupAppShortcuts()
+        setupBrightnessSlider()
+        setupVolumeSlider()
+    }
+    
+    private fun setupBrightnessSlider() {
+        val brightnessSlider = controlCenterView?.findViewById<View>(R.id.brightnessSlider)
+        val brightnessFill = controlCenterView?.findViewById<View>(R.id.brightnessFill)
+        
+        val currentBrightness = SystemControlHelper.getBrightness(this)
+        val maxBrightness = SystemControlHelper.getMaxBrightness()
+        val initialProgress = currentBrightness.toFloat() / maxBrightness
+        
+        brightnessSlider?.post {
+            val sliderHeight = brightnessSlider.height
+            val fillHeight = (sliderHeight * initialProgress).toInt()
+            brightnessFill?.layoutParams?.height = fillHeight
+            brightnessFill?.requestLayout()
+        }
+        
+        brightnessSlider?.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                    val sliderHeight = view.height.toFloat()
+                    val touchY = event.y.coerceIn(0f, sliderHeight)
+                    val progress = 1f - (touchY / sliderHeight)
+                    
+                    val fillHeight = (sliderHeight * progress).toInt()
+                    brightnessFill?.layoutParams?.height = fillHeight
+                    brightnessFill?.requestLayout()
+                    
+                    val brightness = (progress * maxBrightness).toInt()
+                    SystemControlHelper.setBrightness(this, brightness)
+                    
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    vibrate()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+    
+    private fun setupVolumeSlider() {
+        val volumeSlider = controlCenterView?.findViewById<View>(R.id.volumeSlider)
+        val volumeFill = controlCenterView?.findViewById<View>(R.id.volumeFill)
+        
+        val currentVolume = SystemControlHelper.getVolume(this)
+        val maxVolume = SystemControlHelper.getMaxVolume(this)
+        val initialProgress = if (maxVolume > 0) currentVolume.toFloat() / maxVolume else 0f
+        
+        volumeSlider?.post {
+            val sliderHeight = volumeSlider.height
+            val fillHeight = (sliderHeight * initialProgress).toInt()
+            volumeFill?.layoutParams?.height = fillHeight
+            volumeFill?.requestLayout()
+        }
+        
+        volumeSlider?.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                    val sliderHeight = view.height.toFloat()
+                    val touchY = event.y.coerceIn(0f, sliderHeight)
+                    val progress = 1f - (touchY / sliderHeight)
+                    
+                    val fillHeight = (sliderHeight * progress).toInt()
+                    volumeFill?.layoutParams?.height = fillHeight
+                    volumeFill?.requestLayout()
+                    
+                    val volume = (progress * maxVolume).toInt()
+                    SystemControlHelper.setVolume(this, volume)
+                    
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    vibrate()
+                    true
+                }
+                else -> false
+            }
+        }
     }
     
     private fun setupAppShortcuts() {
