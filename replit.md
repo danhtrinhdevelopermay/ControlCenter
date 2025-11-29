@@ -54,6 +54,7 @@ app/src/main/
 3. Download APK from Artifacts
 
 ## Recent Changes
+- Nov 29, 2025: Added backdrop blur effect using FLAG_BLUR_BEHIND and blurBehindRadius (Android 12+)
 - Nov 29, 2025: Converted to system-wide overlay with accessibility service
 
 ## Technical Notes
@@ -62,3 +63,4 @@ app/src/main/
 - Uses WindowManager for overlay
 - Accessibility service for gesture detection
 - Spring animations via DynamicAnimation
+- Backdrop blur using FLAG_BLUR_BEHIND (Android 12+) with dynamic blur radius animation

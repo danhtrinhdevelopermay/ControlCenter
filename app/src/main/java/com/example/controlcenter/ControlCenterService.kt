@@ -8,6 +8,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
@@ -20,6 +22,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
+import android.animation.ValueAnimator
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.core.app.NotificationCompat
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
@@ -40,6 +44,7 @@ class ControlCenterService : Service() {
     private var windowManager: WindowManager? = null
     private var controlCenterView: View? = null
     private var backgroundView: View? = null
+    private var blurAnimator: ValueAnimator? = null
 
     private var screenWidth = 0
     private var screenHeight = 0
@@ -47,6 +52,8 @@ class ControlCenterService : Service() {
 
     private var startY = 0f
     private var currentTranslationY = 0f
+    
+    private val maxBlurRadius = 25f
 
     private val controlStates = mutableMapOf(
         "wifi" to true,
@@ -152,14 +159,19 @@ class ControlCenterService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_DIM_BEHIND,
+                    WindowManager.LayoutParams.FLAG_DIM_BEHIND or
+                    WindowManager.LayoutParams.FLAG_BLUR_BEHIND,
             PixelFormat.TRANSLUCENT
         )
-        params.dimAmount = 0.5f
+        params.dimAmount = 0.3f
         params.gravity = Gravity.TOP or Gravity.START
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            params.blurBehindRadius = maxBlurRadius.toInt()
+        }
 
         backgroundView = View(this).apply {
-            setBackgroundColor(0x80000000.toInt())
+            setBackgroundColor(0x40000000.toInt())
             alpha = 0f
 
             setOnClickListener {
@@ -171,6 +183,23 @@ class ControlCenterService : Service() {
             windowManager?.addView(backgroundView, params)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+    
+    private fun updateBlurRadius(progress: Float) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            backgroundView?.let { view ->
+                val blurRadius = (maxBlurRadius * progress).coerceIn(0.1f, maxBlurRadius)
+                try {
+                    val params = view.layoutParams as? WindowManager.LayoutParams
+                    params?.let {
+                        it.blurBehindRadius = blurRadius.toInt()
+                        windowManager?.updateViewLayout(view, it)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
@@ -223,6 +252,7 @@ class ControlCenterService : Service() {
 
                     val progress = 1f - (kotlin.math.abs(newTranslation) / panelHeight.toFloat())
                     backgroundView?.alpha = progress
+                    updateBlurRadius(progress)
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -246,6 +276,7 @@ class ControlCenterService : Service() {
             springAnimation.addUpdateListener { _, value, _ ->
                 val progress = 1f - (kotlin.math.abs(value) / panelHeight.toFloat())
                 backgroundView?.alpha = progress.coerceIn(0f, 1f)
+                updateBlurRadius(progress.coerceIn(0f, 1f))
             }
             springAnimation.start()
         }
@@ -265,6 +296,7 @@ class ControlCenterService : Service() {
             springAnimation.addUpdateListener { _, value, _ ->
                 val progress = 1f - (kotlin.math.abs(value) / panelHeight.toFloat())
                 backgroundView?.alpha = progress.coerceIn(0f, 1f)
+                updateBlurRadius(progress.coerceIn(0f, 1f))
             }
             springAnimation.addEndListener { _, _, _, _ ->
                 removeViews()
@@ -275,6 +307,9 @@ class ControlCenterService : Service() {
 
     private fun removeViews() {
         isShowing = false
+        
+        blurAnimator?.cancel()
+        blurAnimator = null
 
         controlCenterView?.let {
             try {
