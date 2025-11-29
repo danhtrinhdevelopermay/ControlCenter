@@ -591,22 +591,6 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Custom Shortcuts Section -->
-        <LinearLayout
-            android:id="@+id/customShortcutsContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="12dp"
-            android:visibility="gone">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/customShortcutsGrid"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
-        </LinearLayout>
-
         <!-- App Shortcuts Section -->
         <LinearLayout
             android:id="@+id/appShortcutsContainer"

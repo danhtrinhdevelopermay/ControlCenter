@@ -80,8 +80,3 @@ lint/tmp/
 
 # Mac OS
 .DS_Store
-
-# Keystore files and credentials
-keystore.properties
-*.jks
-*.keystore

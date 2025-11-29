@@ -47,9 +47,6 @@ import androidx.dynamicanimation.animation.SpringForce
 import android.view.VelocityTracker
 import android.view.WindowInsets
 import android.view.WindowInsetsController
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class ControlCenterService : Service() {
 
@@ -747,7 +744,7 @@ class ControlCenterService : Service() {
         controlCenterView?.findViewById<View>(R.id.editButton)?.setOnClickListener { button ->
             animateButtonPress(button)
             vibrate()
-            openEditShortcuts()
+            openAppPicker()
         }
         
         controlCenterView?.findViewById<View>(R.id.playButton)?.setOnClickListener { button ->
@@ -875,66 +872,18 @@ class ControlCenterService : Service() {
         
         if (shortcuts.isEmpty()) {
             container?.visibility = View.GONE
-        } else {
-            container?.visibility = View.VISIBLE
-            row?.removeAllViews()
-            
-            for (packageName in shortcuts) {
-                val appInfo = AppShortcutManager.getAppInfo(this, packageName)
-                if (appInfo != null) {
-                    val shortcutView = createShortcutView(appInfo)
-                    row?.addView(shortcutView)
-                }
-            }
+            return
         }
         
-        setupCustomShortcuts()
-    }
-    
-    private fun setupCustomShortcuts() {
-        val customShortcutsContainer = controlCenterView?.findViewById<LinearLayout>(R.id.customShortcutsContainer)
-        val customShortcutsGrid = controlCenterView?.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.customShortcutsGrid)
+        container?.visibility = View.VISIBLE
+        row?.removeAllViews()
         
-        val repository = com.example.controlcenter.shortcuts.ShortcutRepository(this)
-        
-        CoroutineScope(Dispatchers.Main).launch {
-            val shortcuts = repository.getActiveShortcutsList()
-            
-            if (shortcuts.isEmpty()) {
-                customShortcutsContainer?.visibility = View.GONE
-                return@launch
+        for (packageName in shortcuts) {
+            val appInfo = AppShortcutManager.getAppInfo(this, packageName)
+            if (appInfo != null) {
+                val shortcutView = createShortcutView(appInfo)
+                row?.addView(shortcutView)
             }
-            
-            customShortcutsContainer?.visibility = View.VISIBLE
-            
-            val adapter = com.example.controlcenter.shortcuts.CustomShortcutAdapter { shortcut ->
-                vibrate()
-                hideControlCenter()
-                
-                when (shortcut.type) {
-                    com.example.controlcenter.shortcuts.ShortcutType.SYSTEM -> {
-                        shortcut.action?.let { action ->
-                            com.example.controlcenter.shortcuts.SystemControlHelper.executeSystemShortcut(this@ControlCenterService, action)
-                        }
-                    }
-                    com.example.controlcenter.shortcuts.ShortcutType.APP -> {
-                        shortcut.packageName?.let { packageName ->
-                            com.example.controlcenter.shortcuts.SystemControlHelper.launchApp(
-                                this@ControlCenterService,
-                                packageName,
-                                shortcut.activityName
-                            )
-                        }
-                    }
-                }
-            }
-            
-            customShortcutsGrid?.apply {
-                layoutManager = androidx.recyclerview.widget.GridLayoutManager(this@ControlCenterService, 4)
-                this.adapter = adapter
-            }
-            
-            adapter.submitList(shortcuts)
         }
     }
     
@@ -992,13 +941,6 @@ class ControlCenterService : Service() {
     private fun openAppPicker() {
         hideControlCenter()
         val intent = Intent(this, AppPickerActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-    }
-    
-    private fun openEditShortcuts() {
-        hideControlCenter()
-        val intent = Intent(this, com.example.controlcenter.shortcuts.EditShortcutsActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
