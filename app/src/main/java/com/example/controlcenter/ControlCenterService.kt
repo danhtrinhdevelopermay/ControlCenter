@@ -978,17 +978,26 @@ class ControlCenterService : Service() {
                 val circleView = (button as? android.view.ViewGroup)?.getChildAt(0)
                 val backgroundRes = if (isActive) R.drawable.miui_circle_button_active else R.drawable.miui_circle_button
                 circleView?.setBackgroundResource(backgroundRes)
+                icon?.setColorFilter(
+                    if (isActive) inactiveColor else inactiveColor,
+                    android.graphics.PorterDuff.Mode.SRC_IN
+                )
             }
             toggleButtons.contains(buttonId) -> {
                 val backgroundRes = if (isActive) R.drawable.miui_toggle_background_active else R.drawable.miui_toggle_background
                 button?.setBackgroundResource(backgroundRes)
+                icon?.setColorFilter(
+                    inactiveColor,
+                    android.graphics.PorterDuff.Mode.SRC_IN
+                )
+            }
+            else -> {
+                icon?.setColorFilter(
+                    if (isActive) activeColor else inactiveColor,
+                    android.graphics.PorterDuff.Mode.SRC_IN
+                )
             }
         }
-        
-        icon?.setColorFilter(
-            if (isActive) activeColor else inactiveColor,
-            android.graphics.PorterDuff.Mode.SRC_IN
-        )
     }
     
     private fun updateWifiStatus() {
