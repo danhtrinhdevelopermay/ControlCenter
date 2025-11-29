@@ -32,6 +32,8 @@ import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import android.view.VelocityTracker
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 
 class ControlCenterService : Service() {
 
@@ -200,11 +202,12 @@ class ControlCenterService : Service() {
             else
                 @Suppress("DEPRECATION")
                 WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
                     WindowManager.LayoutParams.FLAG_DIM_BEHIND or
-                    WindowManager.LayoutParams.FLAG_BLUR_BEHIND,
+                    WindowManager.LayoutParams.FLAG_BLUR_BEHIND or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS,
             PixelFormat.TRANSLUCENT
         )
         params.dimAmount = 0.3f
@@ -225,6 +228,7 @@ class ControlCenterService : Service() {
 
         try {
             windowManager?.addView(backgroundView, params)
+            hideSystemBars(backgroundView)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -256,8 +260,9 @@ class ControlCenterService : Service() {
             else
                 @Suppress("DEPRECATION")
                 WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT
         )
         params.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
@@ -270,8 +275,27 @@ class ControlCenterService : Service() {
 
         try {
             windowManager?.addView(controlCenterView, params)
+            hideSystemBars(controlCenterView)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+    
+    private fun hideSystemBars(view: View?) {
+        view?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                it.windowInsetsController?.let { controller ->
+                    controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                it.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+            }
         }
     }
 
