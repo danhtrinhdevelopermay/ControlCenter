@@ -86,7 +86,7 @@ class ControlCenterService : Service() {
     private var isHiding = false
     private var currentAnimation: SpringAnimation? = null
     
-    private val maxBlurRadius = 500f
+    private val maxBlurRadius = 250f
     private val minFlingVelocity = 1000f
     private val openThreshold = 0.35f
 
