@@ -60,6 +60,8 @@ class ControlCenterService : Service() {
     private var currentTranslationY = 0f
     private var velocityTracker: VelocityTracker? = null
     private var isDragging = false
+    private var isHiding = false
+    private var currentAnimation: SpringAnimation? = null
     
     private val maxBlurRadius = 25f
     private val minFlingVelocity = 1000f
@@ -372,6 +374,10 @@ class ControlCenterService : Service() {
     }
     
     private fun animateShowWithVelocity(velocity: Float) {
+        if (isHiding) return
+        
+        currentAnimation?.cancel()
+        
         controlCenterView?.let { panel ->
             val springAnimation = SpringAnimation(panel, DynamicAnimation.TRANSLATION_Y, 0f)
             springAnimation.spring.apply {
@@ -388,6 +394,8 @@ class ControlCenterService : Service() {
                 backgroundView?.alpha = progress.coerceIn(0f, 1f)
                 updateBlurRadius(progress.coerceIn(0f, 1f))
             }
+            
+            currentAnimation = springAnimation
             springAnimation.start()
         }
     }
@@ -397,6 +405,11 @@ class ControlCenterService : Service() {
     }
     
     private fun hideControlCenterWithVelocity(velocity: Float) {
+        if (isHiding) return
+        isHiding = true
+        
+        currentAnimation?.cancel()
+        
         controlCenterView?.let { panel ->
             val springAnimation = SpringAnimation(
                 panel,
@@ -413,6 +426,7 @@ class ControlCenterService : Service() {
             }
             
             springAnimation.addUpdateListener { _, value, _ ->
+                if (!isHiding) return@addUpdateListener
                 val progress = 1f - (kotlin.math.abs(value) / panelHeight.toFloat())
                 backgroundView?.alpha = progress.coerceIn(0f, 1f)
                 updateBlurRadius(progress.coerceIn(0f, 1f))
@@ -420,13 +434,21 @@ class ControlCenterService : Service() {
             springAnimation.addEndListener { _, _, _, _ ->
                 removeViews()
             }
+            
+            currentAnimation = springAnimation
             springAnimation.start()
+        } ?: run {
+            isHiding = false
         }
     }
 
     private fun removeViews() {
         isShowing = false
         isDragging = false
+        isHiding = false
+        
+        currentAnimation?.cancel()
+        currentAnimation = null
         
         blurAnimator?.cancel()
         blurAnimator = null
@@ -435,6 +457,7 @@ class ControlCenterService : Service() {
         velocityTracker = null
 
         controlCenterView?.let {
+            it.visibility = View.INVISIBLE
             try {
                 windowManager?.removeView(it)
             } catch (e: Exception) {
@@ -444,6 +467,7 @@ class ControlCenterService : Service() {
         controlCenterView = null
 
         backgroundView?.let {
+            it.visibility = View.INVISIBLE
             try {
                 windowManager?.removeView(it)
             } catch (e: Exception) {
