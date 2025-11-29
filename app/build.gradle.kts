@@ -3,6 +3,9 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val keystoreFile = rootProject.file("release-keystore.jks")
+val useReleaseSigning = keystoreFile.exists() && keystoreFile.length() > 0
+
 android {
     namespace = "com.example.controlcenter"
     compileSdk = 34
@@ -15,19 +18,23 @@ android {
         versionName = "1.0"
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("../release-keystore.jks")
-            storePassword = "android123"
-            keyAlias = "release"
-            keyPassword = "android123"
+    if (useReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = "android123"
+                keyAlias = "release"
+                keyPassword = "android123"
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            if (useReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
