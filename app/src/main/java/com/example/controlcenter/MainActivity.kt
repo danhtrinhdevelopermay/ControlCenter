@@ -16,6 +16,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import rikka.shizuku.Shizuku
 
@@ -37,8 +38,22 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     private lateinit var previewZoneBtn: Button
     private lateinit var resetZoneBtn: Button
     private lateinit var applyZoneBtn: Button
+    
+    private lateinit var notificationZoneSettingsContainer: LinearLayout
+    private lateinit var notificationZoneSwitch: SwitchCompat
+    private lateinit var notificationZoneControls: LinearLayout
+    private lateinit var notifZoneXSeekBar: SeekBar
+    private lateinit var notifZoneWidthSeekBar: SeekBar
+    private lateinit var notifZoneHeightSeekBar: SeekBar
+    private lateinit var notifZoneXValue: TextView
+    private lateinit var notifZoneWidthValue: TextView
+    private lateinit var notifZoneHeightValue: TextView
+    private lateinit var previewNotifZoneBtn: Button
+    private lateinit var resetNotifZoneBtn: Button
+    private lateinit var applyNotifZoneBtn: Button
 
     private var isPreviewingZone = false
+    private var isPreviewingNotifZone = false
 
     companion object {
         private const val OVERLAY_PERMISSION_REQUEST_CODE = 1001
@@ -52,6 +67,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         initViews()
         setupClickListeners()
         loadSwipeZoneSettings()
+        loadNotificationZoneSettings()
         
         Shizuku.addRequestPermissionResultListener(this)
     }
@@ -81,11 +97,13 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     override fun onPause() {
         super.onPause()
         hideZonePreview()
+        hideNotifZonePreview()
     }
 
     override fun onStop() {
         super.onStop()
         hideZonePreview()
+        hideNotifZonePreview()
     }
 
     private fun initViews() {
@@ -105,6 +123,19 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         previewZoneBtn = findViewById(R.id.previewZoneBtn)
         resetZoneBtn = findViewById(R.id.resetZoneBtn)
         applyZoneBtn = findViewById(R.id.applyZoneBtn)
+        
+        notificationZoneSettingsContainer = findViewById(R.id.notificationZoneSettingsContainer)
+        notificationZoneSwitch = findViewById(R.id.notificationZoneSwitch)
+        notificationZoneControls = findViewById(R.id.notificationZoneControls)
+        notifZoneXSeekBar = findViewById(R.id.notifZoneXSeekBar)
+        notifZoneWidthSeekBar = findViewById(R.id.notifZoneWidthSeekBar)
+        notifZoneHeightSeekBar = findViewById(R.id.notifZoneHeightSeekBar)
+        notifZoneXValue = findViewById(R.id.notifZoneXValue)
+        notifZoneWidthValue = findViewById(R.id.notifZoneWidthValue)
+        notifZoneHeightValue = findViewById(R.id.notifZoneHeightValue)
+        previewNotifZoneBtn = findViewById(R.id.previewNotifZoneBtn)
+        resetNotifZoneBtn = findViewById(R.id.resetNotifZoneBtn)
+        applyNotifZoneBtn = findViewById(R.id.applyNotifZoneBtn)
     }
 
     private fun setupClickListeners() {
@@ -130,6 +161,8 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
 
         setupSeekBarListeners()
         setupZoneSettingsButtons()
+        setupNotificationZoneListeners()
+        setupNotificationZoneButtons()
     }
 
     private fun setupSeekBarListeners() {
@@ -218,6 +251,126 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
             SwipeZoneOverlayManager.hide()
         }
     }
+    
+    private fun setupNotificationZoneListeners() {
+        notificationZoneSwitch.setOnCheckedChangeListener { _, isChecked ->
+            NotificationZoneSettings.setEnabled(this, isChecked)
+            notificationZoneControls.visibility = if (isChecked) View.VISIBLE else View.GONE
+            if (!isChecked) {
+                hideNotifZonePreview()
+            }
+            restartGestureService()
+        }
+        
+        notifZoneXSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                notifZoneXValue.text = "${progress}%"
+                if (fromUser && isPreviewingNotifZone) {
+                    NotificationZoneSettings.setZoneXPercent(this@MainActivity, progress)
+                    NotificationZoneOverlayManager.update(this@MainActivity)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        notifZoneWidthSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val actualProgress = progress.coerceAtLeast(NotificationZoneSettings.MIN_WIDTH_PERCENT)
+                notifZoneWidthValue.text = "${actualProgress}%"
+                if (fromUser && isPreviewingNotifZone) {
+                    NotificationZoneSettings.setZoneWidthPercent(this@MainActivity, actualProgress)
+                    NotificationZoneOverlayManager.update(this@MainActivity)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        notifZoneHeightSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val actualProgress = progress.coerceAtLeast(NotificationZoneSettings.MIN_HEIGHT)
+                notifZoneHeightValue.text = "${actualProgress}px"
+                if (fromUser && isPreviewingNotifZone) {
+                    NotificationZoneSettings.setZoneHeight(this@MainActivity, actualProgress)
+                    NotificationZoneOverlayManager.update(this@MainActivity)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
+    
+    private fun setupNotificationZoneButtons() {
+        previewNotifZoneBtn.setOnClickListener {
+            if (isPreviewingNotifZone) {
+                hideNotifZonePreview()
+            } else {
+                showNotifZonePreview()
+            }
+        }
+
+        resetNotifZoneBtn.setOnClickListener {
+            NotificationZoneSettings.resetToDefaults(this)
+            loadNotificationZoneSettings()
+            if (isPreviewingNotifZone) {
+                NotificationZoneOverlayManager.update(this)
+            }
+            Toast.makeText(this, "Reset to default settings", Toast.LENGTH_SHORT).show()
+        }
+
+        applyNotifZoneBtn.setOnClickListener {
+            saveNotificationZoneSettings()
+            hideNotifZonePreview()
+            restartGestureService()
+            Toast.makeText(this, "Settings applied", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun showNotifZonePreview() {
+        if (!hasOverlayPermission()) {
+            Toast.makeText(this, "Overlay permission required", Toast.LENGTH_SHORT).show()
+            return
+        }
+        saveNotificationZoneSettings()
+        isPreviewingNotifZone = true
+        previewNotifZoneBtn.text = "Hide Preview"
+        previewNotifZoneBtn.setBackgroundResource(R.drawable.control_item_background_active)
+        NotificationZoneOverlayManager.show(this)
+    }
+
+    private fun hideNotifZonePreview() {
+        if (isPreviewingNotifZone) {
+            isPreviewingNotifZone = false
+            previewNotifZoneBtn.text = "Preview Zone"
+            previewNotifZoneBtn.setBackgroundResource(R.drawable.control_item_background)
+            NotificationZoneOverlayManager.hide()
+        }
+    }
+    
+    private fun loadNotificationZoneSettings() {
+        val enabled = NotificationZoneSettings.isEnabled(this)
+        val xPercent = NotificationZoneSettings.getZoneXPercent(this)
+        val widthPercent = NotificationZoneSettings.getZoneWidthPercent(this)
+        val height = NotificationZoneSettings.getZoneHeight(this)
+
+        notificationZoneSwitch.isChecked = enabled
+        notificationZoneControls.visibility = if (enabled) View.VISIBLE else View.GONE
+        
+        notifZoneXSeekBar.progress = xPercent
+        notifZoneWidthSeekBar.progress = widthPercent
+        notifZoneHeightSeekBar.progress = height
+
+        notifZoneXValue.text = "${xPercent}%"
+        notifZoneWidthValue.text = "${widthPercent}%"
+        notifZoneHeightValue.text = "${height}px"
+    }
+
+    private fun saveNotificationZoneSettings() {
+        NotificationZoneSettings.setZoneXPercent(this, notifZoneXSeekBar.progress)
+        NotificationZoneSettings.setZoneWidthPercent(this, notifZoneWidthSeekBar.progress.coerceAtLeast(10))
+        NotificationZoneSettings.setZoneHeight(this, notifZoneHeightSeekBar.progress.coerceAtLeast(50))
+    }
 
     private fun loadSwipeZoneSettings() {
         val xPercent = SwipeZoneSettings.getZoneXPercent(this)
@@ -300,6 +453,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         }
 
         swipeZoneSettingsContainer.visibility = if (allPermissionsGranted) View.VISIBLE else View.GONE
+        notificationZoneSettingsContainer.visibility = if (allPermissionsGranted) View.VISIBLE else View.GONE
 
         statusText.text = when {
             !hasOverlayPermission -> "Step 1: Grant overlay permission to display Control Center over other apps"

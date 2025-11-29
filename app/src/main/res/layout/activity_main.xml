@@ -261,11 +261,200 @@
                 android:layout_marginTop="8dp" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/notificationZoneSettingsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            android:padding="16dp"
+            android:background="@drawable/control_panel_background"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Notification Zone Settings"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/notificationZoneSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/notificationZoneControls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Horizontal Position"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <SeekBar
+                        android:id="@+id/notifZoneXSeekBar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="#FF9500"
+                        android:thumbTint="#FF9500" />
+
+                    <TextView
+                        android:id="@+id/notifZoneXValue"
+                        android:layout_width="50dp"
+                        android:layout_height="wrap_content"
+                        android:text="0%"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:textAlignment="textEnd" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Zone Width"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <SeekBar
+                        android:id="@+id/notifZoneWidthSeekBar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:max="100"
+                        android:progress="34"
+                        android:progressTint="#FF9500"
+                        android:thumbTint="#FF9500" />
+
+                    <TextView
+                        android:id="@+id/notifZoneWidthValue"
+                        android:layout_width="50dp"
+                        android:layout_height="wrap_content"
+                        android:text="34%"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:textAlignment="textEnd" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Zone Height"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <SeekBar
+                        android:id="@+id/notifZoneHeightSeekBar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:max="300"
+                        android:progress="100"
+                        android:progressTint="#FF9500"
+                        android:thumbTint="#FF9500" />
+
+                    <TextView
+                        android:id="@+id/notifZoneHeightValue"
+                        android:layout_width="50dp"
+                        android:layout_height="wrap_content"
+                        android:text="100px"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:textAlignment="textEnd" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/previewNotifZoneBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="Preview Zone"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:background="@drawable/control_item_background"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/resetNotifZoneBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="Reset Default"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:background="@drawable/control_item_background"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/applyNotifZoneBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Apply Settings"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:background="@drawable/control_item_background_active"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Swipe down from the left zone to open notification panel"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="After setup, swipe down from\nthe configured zone to open"
+            android:text="After setup, swipe down from\nthe configured zones to open"
             android:textColor="#888888"
             android:textSize="12sp"
             android:textAlignment="center"
