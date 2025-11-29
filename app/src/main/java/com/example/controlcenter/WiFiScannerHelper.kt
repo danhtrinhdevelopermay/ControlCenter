@@ -182,6 +182,16 @@ class WiFiScannerHelper(private val context: Context) {
     }
     
     fun connectToNetwork(ssid: String, password: String?, isSecured: Boolean, securityType: String = "WPA2", onResult: (Boolean, String) -> Unit) {
+        if (!hasLocationPermission()) {
+            onResult(false, "Cần cấp quyền vị trí để kết nối WiFi")
+            return
+        }
+        
+        if (securityType == "EAP") {
+            onResult(false, "Mạng doanh nghiệp (EAP) không được hỗ trợ")
+            return
+        }
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             connectWithNetworkSpecifier(ssid, password, isSecured, securityType, onResult)
         } else {
@@ -199,11 +209,8 @@ class WiFiScannerHelper(private val context: Context) {
                 
                 if (isSecured && !password.isNullOrEmpty()) {
                     when {
-                        securityType == "WPA3" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+                        securityType == "WPA3" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
                             specifierBuilder.setWpa3Passphrase(password)
-                        }
-                        securityType == "WPA2" || securityType == "WPA" || securityType.contains("PSK") -> {
-                            specifierBuilder.setWpa2Passphrase(password)
                         }
                         else -> {
                             specifierBuilder.setWpa2Passphrase(password)
@@ -236,7 +243,7 @@ class WiFiScannerHelper(private val context: Context) {
                         if (!callbackInvoked) {
                             callbackInvoked = true
                             handler.post {
-                                onResult(false, "Không thể kết nối với $ssid")
+                                onResult(false, "Không thể kết nối với $ssid. Kiểm tra mật khẩu.")
                             }
                             unregisterNetworkCallback()
                         }
@@ -244,6 +251,7 @@ class WiFiScannerHelper(private val context: Context) {
                     
                     override fun onLost(network: Network) {
                         super.onLost(network)
+                        unregisterNetworkCallback()
                     }
                 }
                 
@@ -271,49 +279,45 @@ class WiFiScannerHelper(private val context: Context) {
             val wifiConfig = WifiConfiguration()
             wifiConfig.SSID = "\"$ssid\""
             
-            if (isSecured && !password.isNullOrEmpty()) {
-                when (securityType) {
-                    "WEP" -> {
-                        wifiConfig.wepKeys[0] = "\"$password\""
-                        wifiConfig.wepTxKeyIndex = 0
-                        wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
-                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40)
-                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104)
-                    }
-                    "WPA", "WPA2", "WPA3" -> {
-                        wifiConfig.preSharedKey = "\"$password\""
-                        wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
-                        wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN)
-                        wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA)
-                        wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP)
-                        wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP)
-                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP)
-                        wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP)
-                    }
-                    else -> {
-                        wifiConfig.preSharedKey = "\"$password\""
-                        wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
-                    }
+            when {
+                !isSecured || password.isNullOrEmpty() -> {
+                    wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
                 }
-            } else {
-                wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
-                wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN)
-                wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA)
-                wifiConfig.allowedAuthAlgorithms.clear()
-                wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP)
-                wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP)
-                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP)
-                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP)
-                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40)
-                wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104)
+                securityType == "WEP" -> {
+                    if (password.length == 10 || password.length == 26 || password.length == 58) {
+                        wifiConfig.wepKeys[0] = password
+                    } else {
+                        wifiConfig.wepKeys[0] = "\"$password\""
+                    }
+                    wifiConfig.wepTxKeyIndex = 0
+                    wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
+                    wifiConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN)
+                    wifiConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED)
+                    wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40)
+                    wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104)
+                }
+                else -> {
+                    wifiConfig.preSharedKey = "\"$password\""
+                    wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
+                    wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN)
+                    wifiConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA)
+                    wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP)
+                    wifiConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP)
+                    wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP)
+                    wifiConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP)
+                }
             }
             
-            val existingConfig = wifiManager.configuredNetworks?.find { 
-                it.SSID == "\"$ssid\"" 
+            val existingConfig = try {
+                wifiManager.configuredNetworks?.find { it.SSID == "\"$ssid\"" }
+            } catch (e: SecurityException) {
+                null
             }
             
             val networkId = if (existingConfig != null) {
-                wifiManager.removeNetwork(existingConfig.networkId)
+                try {
+                    wifiManager.removeNetwork(existingConfig.networkId)
+                } catch (e: Exception) { }
                 wifiManager.addNetwork(wifiConfig)
             } else {
                 wifiManager.addNetwork(wifiConfig)
@@ -324,24 +328,28 @@ class WiFiScannerHelper(private val context: Context) {
                 return
             }
             
-            wifiManager.saveConfiguration()
+            try {
+                wifiManager.saveConfiguration()
+            } catch (e: Exception) { }
             
             wifiManager.disconnect()
             val enabled = wifiManager.enableNetwork(networkId, true)
-            val reconnect = wifiManager.reconnect()
             
-            if (enabled && reconnect) {
-                handler.postDelayed({
-                    val currentSsid = getCurrentConnectedSsid()
-                    if (currentSsid == ssid) {
-                        onResult(true, "Đã kết nối với $ssid")
-                    } else {
-                        onResult(false, "Không thể kết nối - kiểm tra mật khẩu")
-                    }
-                }, 5000)
-            } else {
-                onResult(false, "Không thể kết nối. Vui lòng thử lại.")
+            if (!enabled) {
+                onResult(false, "Không thể bật mạng. Vui lòng thử lại.")
+                return
             }
+            
+            wifiManager.reconnect()
+            
+            handler.postDelayed({
+                val currentSsid = getCurrentConnectedSsid()
+                if (currentSsid == ssid) {
+                    onResult(true, "Đã kết nối với $ssid")
+                } else {
+                    onResult(false, "Không thể kết nối. Kiểm tra mật khẩu.")
+                }
+            }, 6000)
             
         } catch (e: SecurityException) {
             e.printStackTrace()
