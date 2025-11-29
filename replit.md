@@ -90,6 +90,8 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 - ✅ Media controls - Play/Pause, Next, Previous
 - ✅ Brightness slider - Điều chỉnh độ sáng màn hình
 - ✅ Volume slider - Điều chỉnh âm lượng
+- ✅ App Shortcuts - Thêm phím tắt ứng dụng tùy chọn (tối đa 8 ứng dụng)
+- ✅ Edit button - Mở màn hình chọn ứng dụng
 
 ### Placeholder (chưa implement):
 - 🔲 Notification - Chế độ thông báo (hiện tại chỉ có animation)
@@ -97,7 +99,29 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 - 🔲 Location - GPS/định vị (hiện tại chỉ có animation)
 - 🔲 Grid button - Menu grid (hiện tại chỉ có animation)
 
+## App Shortcuts Feature (Cập nhật 2025-11-29)
+
+### Mô tả:
+Cho phép người dùng thêm tối đa 8 phím tắt ứng dụng vào Control Center.
+
+### Files mới:
+- `AppShortcutManager.kt` - Quản lý danh sách ứng dụng và shortcuts đã lưu
+- `AppPickerActivity.kt` - Activity chọn ứng dụng với tính năng tìm kiếm
+- `activity_app_picker.xml` - Layout cho màn hình chọn ứng dụng
+- `item_app_list.xml` - Layout cho item ứng dụng trong danh sách
+
+### Cách sử dụng:
+1. Nhấn nút "Sửa" trong Control Center
+2. Chọn các ứng dụng muốn thêm vào phím tắt (tối đa 8 ứng dụng)
+3. Quay lại Control Center, các phím tắt sẽ hiển thị
+4. Nhấn vào icon ứng dụng để mở nhanh
+
+### Permissions:
+- `QUERY_ALL_PACKAGES` - Cần thiết để lấy danh sách ứng dụng đã cài đặt
+
 ## Lịch sử thay đổi
 - **2025-11-29**: Redesign từ iOS 17 sang MIUI Control Center
 - **2025-11-29**: Sửa lỗi build - xóa tham chiếu đến airplaneButton từ layout cũ
 - **2025-11-29**: Thêm hiển thị tên WiFi (SSID) khi kết nối thành công
+- **2025-11-29**: Thêm tính năng App Shortcuts - cho phép thêm phím tắt ứng dụng tùy chọn
+- **2025-11-29**: Navigation bar và status bar hiện với background trong suốt khi Control Center mở
