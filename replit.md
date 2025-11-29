@@ -71,6 +71,39 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 - Không cần Notification Listener permission
 - Hoạt động với mọi music app (Spotify, YouTube Music, Zalo, v.v.)
 
+## Web-based iOS Control Center (2025-11-29)
+**Giao diện web mô phỏng iOS 17 Control Center:**
+
+**Cấu trúc files:**
+- `web/index.html` - HTML structure với tất cả widgets
+- `web/styles.css` - CSS styling (blur effects, colors, responsive)
+- `web/script.js` - JavaScript cho tương tác
+- `web/server.js` - Node.js server (port 5000)
+
+**Các thành phần UI:**
+1. ✅ Status bar với System Services, carrier info, battery
+2. ✅ Connectivity widget (Airplane, Cellular, WiFi, Bluetooth)
+3. ✅ Now Playing widget với media controls
+4. ✅ Orientation lock và Screen mirror buttons
+5. ✅ Focus mode widget
+6. ✅ Brightness và Volume sliders (interactive)
+7. ✅ Bottom controls (Flashlight, Calculator, Screen Recording, Display)
+8. ✅ Extra controls (Hearing, Timer, Battery, Accessibility)
+
+**Tính năng:**
+- Frosted glass blur effect
+- Interactive toggle buttons
+- Draggable sliders
+- Touch/click haptic feedback
+- Responsive design
+- Secure server (path traversal protection)
+
+**Chạy server:**
+```bash
+node web/server.js
+```
+Server sẽ chạy tại http://0.0.0.0:5000
+
 ## Ghi chú kỹ thuật
 - Shizuku `newProcess()` đã bị deprecated nhưng vẫn có thể dùng qua reflection
 - App cần cấp quyền Shizuku và các quyền runtime khác để hoạt động đầy đủ
