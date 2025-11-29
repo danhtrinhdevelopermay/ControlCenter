@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
-    android:paddingTop="50dp"
+    android:paddingTop="40dp"
     android:paddingBottom="24dp">
 
     <LinearLayout
@@ -13,128 +13,182 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Row 1: Connectivity + Now Playing -->
+        <!-- Header: Date/Time and User Name -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="10dp">
+            android:gravity="center_vertical"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:layout_marginBottom="16dp">
 
-            <!-- Connectivity Widget (2x2 grid) -->
-            <LinearLayout
+            <TextView
+                android:id="@+id/dateTimeText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:background="@drawable/ios_connectivity_widget"
-                android:padding="14dp"
-                android:layout_marginEnd="6dp">
+                android:text="Th 7, 29 Thg 11"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:alpha="0.9" />
 
-                <!-- Row 1: Airplane + Cellular -->
-                <LinearLayout
-                    android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/userNameText"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:layout_marginBottom="10dp">
+                    android:text="Saymee"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:layout_marginEnd="8dp"
+                    android:alpha="0.9" />
 
-                    <FrameLayout
-                        android:id="@+id/airplaneButton"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginEnd="10dp"
-                        android:background="@drawable/control_item_background">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_cellular"
+                    android:tint="#FFFFFF"
+                    android:layout_marginEnd="4dp"
+                    android:alpha="0.7" />
 
-                        <ImageView
-                            android:id="@+id/airplaneIcon"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_airplane"
-                            android:tint="#FFFFFF" />
-                    </FrameLayout>
-
-                    <FrameLayout
-                        android:id="@+id/cellularButton"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:background="@drawable/control_item_background">
-
-                        <ImageView
-                            android:id="@+id/cellularIcon"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_cellular"
-                            android:tint="#FFFFFF" />
-                    </FrameLayout>
-                </LinearLayout>
-
-                <!-- Row 2: WiFi + Bluetooth -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center">
-
-                    <FrameLayout
-                        android:id="@+id/wifiButton"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginEnd="10dp"
-                        android:background="@drawable/control_item_background_active">
-
-                        <ImageView
-                            android:id="@+id/wifiIcon"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_wifi"
-                            android:tint="#FFFFFF" />
-                    </FrameLayout>
-
-                    <FrameLayout
-                        android:id="@+id/bluetoothButton"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:background="@drawable/control_item_background">
-
-                        <ImageView
-                            android:id="@+id/bluetoothIcon"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_bluetooth"
-                            android:tint="#007AFF" />
-                    </FrameLayout>
-                </LinearLayout>
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_battery"
+                    android:tint="#FFFFFF"
+                    android:alpha="0.7" />
             </LinearLayout>
+        </LinearLayout>
 
-            <!-- Now Playing Widget -->
+        <!-- Row 1: WiFi and Data Toggle Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <FrameLayout
+                android:id="@+id/wifiButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/miui_toggle_background"
+                android:padding="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_gravity="center_vertical">
+
+                    <ImageView
+                        android:id="@+id/wifiIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_wifi"
+                        android:tint="#FFFFFF"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/wifiText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Wi-Fi"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/wifiStatusText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tắt"
+                        android:textColor="#CCCCCC"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/cellularButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/miui_toggle_background"
+                android:padding="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_gravity="center_vertical">
+
+                    <ImageView
+                        android:id="@+id/cellularIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_cellular"
+                        android:tint="#FFFFFF"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/cellularText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dữ liệu di độc"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/cellularStatusText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tắt"
+                        android:textColor="#CCCCCC"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Row 2: Media Control + Brightness & Volume Sliders -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <!-- Media Control Widget -->
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="160dp"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:background="@drawable/ios_now_playing_widget"
+                android:background="@drawable/miui_media_background"
                 android:padding="14dp"
-                android:layout_marginStart="6dp">
+                android:layout_marginEnd="8dp">
 
-                <!-- Header with title and AirPlay -->
+                <!-- Header with AirPlay -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="top">
+                    android:layout_marginBottom="8dp">
 
                     <TextView
                         android:id="@+id/musicTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Not Playing"
-                        android:textColor="#999999"
+                        android:text="Không phát"
+                        android:textColor="#AAAAAA"
                         android:textSize="14sp" />
 
                     <ImageView
@@ -142,8 +196,13 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_screen_mirror"
-                        android:tint="#999999" />
+                        android:tint="#AAAAAA" />
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
 
                 <!-- Media controls -->
                 <LinearLayout
@@ -154,328 +213,322 @@
 
                     <ImageView
                         android:id="@+id/prevButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:padding="4dp"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:padding="6dp"
                         android:src="@drawable/ic_skip_previous"
-                        android:tint="#808080" />
+                        android:tint="#FFFFFF" />
 
                     <ImageView
                         android:id="@+id/playButton"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:padding="4dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="6dp"
                         android:src="@drawable/ic_play"
-                        android:tint="#808080"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginEnd="20dp" />
+                        android:tint="#FFFFFF"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="16dp" />
 
                     <ImageView
                         android:id="@+id/nextButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:padding="4dp"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:padding="6dp"
                         android:src="@drawable/ic_skip_next"
-                        android:tint="#808080" />
+                        android:tint="#FFFFFF" />
                 </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Row 2: Small buttons column + Focus + Brightness + Volume -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="10dp">
-
-            <!-- Left column: Orientation Lock + Screen Mirror (stacked) -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginEnd="10dp">
-
-                <!-- Orientation Lock (active with red arrow) -->
-                <FrameLayout
-                    android:id="@+id/rotationButton"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/ios_small_button_active">
-
-                    <ImageView
-                        android:id="@+id/rotationIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_orientation_lock"
-                        android:tint="#FF3B30" />
-                </FrameLayout>
-
-                <!-- Screen Mirror -->
-                <FrameLayout
-                    android:id="@+id/screenMirrorButton"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:background="@drawable/ios_small_button">
-
-                    <ImageView
-                        android:id="@+id/screenMirrorIcon"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_screen_mirror"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-            </LinearLayout>
-
-            <!-- Focus Widget -->
-            <LinearLayout
-                android:id="@+id/focusButton"
-                android:layout_width="0dp"
-                android:layout_height="122dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:background="@drawable/ios_widget_background"
-                android:padding="16dp"
-                android:layout_marginEnd="10dp"
-                android:gravity="center_vertical">
-
-                <FrameLayout
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/ios_focus_circle">
-
-                    <ImageView
-                        android:id="@+id/focusIcon"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_focus"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Focus"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginStart="12dp" />
             </LinearLayout>
 
             <!-- Brightness Slider -->
             <FrameLayout
                 android:id="@+id/brightnessSlider"
-                android:layout_width="56dp"
-                android:layout_height="122dp"
-                android:layout_marginEnd="10dp"
-                android:background="@drawable/ios_slider_background"
+                android:layout_width="72dp"
+                android:layout_height="160dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/miui_slider_background"
                 android:clipChildren="true"
                 android:clipToPadding="true">
 
                 <View
                     android:id="@+id/brightnessFill"
                     android:layout_width="match_parent"
-                    android:layout_height="90dp"
+                    android:layout_height="100dp"
                     android:layout_gravity="bottom"
-                    android:background="@drawable/ios_slider_fill" />
+                    android:background="@drawable/miui_slider_fill" />
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="14dp"
+                    android:layout_marginBottom="18dp"
                     android:src="@drawable/ic_brightness"
-                    android:tint="#3C3C43" />
+                    android:tint="#666666" />
             </FrameLayout>
 
             <!-- Volume Slider -->
             <FrameLayout
                 android:id="@+id/volumeSlider"
-                android:layout_width="56dp"
-                android:layout_height="122dp"
-                android:background="@drawable/ios_slider_background">
+                android:layout_width="72dp"
+                android:layout_height="160dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/miui_slider_background"
+                android:clipChildren="true"
+                android:clipToPadding="true">
 
                 <View
                     android:id="@+id/volumeFill"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="80dp"
                     android:layout_gravity="bottom"
-                    android:background="@drawable/ios_slider_fill" />
+                    android:background="@drawable/miui_slider_fill" />
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="14dp"
-                    android:src="@drawable/ic_volume_mute"
-                    android:tint="#999999" />
+                    android:layout_marginBottom="18dp"
+                    android:src="@drawable/ic_volume"
+                    android:tint="#666666" />
             </FrameLayout>
         </LinearLayout>
 
-        <!-- Row 3: Flashlight, Calculator, Screen Recording, Display -->
+        <!-- Row 3-4: Circular Buttons (2 rows x 4 columns) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="10dp">
+            android:orientation="vertical"
+            android:layout_marginBottom="12dp">
 
-            <FrameLayout
-                android:id="@+id/flashlightButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/ios_widget_background">
+            <!-- First row of circular buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="16dp">
 
-                <ImageView
-                    android:id="@+id/flashlightIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_flashlight"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
+                <FrameLayout
+                    android:id="@+id/bluetoothButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp">
 
-            <FrameLayout
-                android:id="@+id/calculatorButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/ios_widget_background">
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
 
-                <ImageView
-                    android:id="@+id/calculatorIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_calculator"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
+                    <ImageView
+                        android:id="@+id/bluetoothIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_bluetooth"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
 
-            <FrameLayout
-                android:id="@+id/recordingButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/ios_widget_background">
+                <FrameLayout
+                    android:id="@+id/notificationButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp">
 
-                <ImageView
-                    android:id="@+id/recordingIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_screen_recording"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
 
-            <FrameLayout
-                android:id="@+id/displayButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:background="@drawable/ios_widget_background_active">
+                    <ImageView
+                        android:id="@+id/notificationIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_notification"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
 
-                <ImageView
-                    android:id="@+id/displayIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_display"
-                    android:tint="#007AFF" />
-            </FrameLayout>
+                <FrameLayout
+                    android:id="@+id/flashlightButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
+
+                    <ImageView
+                        android:id="@+id/flashlightIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_flashlight"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/rotationButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
+
+                    <ImageView
+                        android:id="@+id/rotationIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_screen_rotation"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
+            </LinearLayout>
+
+            <!-- Second row of circular buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <FrameLayout
+                    android:id="@+id/cameraButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
+
+                    <ImageView
+                        android:id="@+id/cameraIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_camera"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/screenMirrorButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
+
+                    <ImageView
+                        android:id="@+id/screenMirrorIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_screen_mirror"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/videoButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
+
+                    <ImageView
+                        android:id="@+id/videoIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_video"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/locationButton"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_weight="1">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/miui_circle_button" />
+
+                    <ImageView
+                        android:id="@+id/locationIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_location"
+                        android:tint="#FFFFFF" />
+                </FrameLayout>
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Row 4: Hearing, Timer, Battery, Accessibility -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <FrameLayout
-                android:id="@+id/hearingButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/ios_widget_background">
-
-                <ImageView
-                    android:id="@+id/hearingIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_hearing"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/timerButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/ios_widget_background">
-
-                <ImageView
-                    android:id="@+id/timerIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_timer"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/batteryButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/ios_widget_background">
-
-                <ImageView
-                    android:id="@+id/batteryIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_battery"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/accessibilityButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:background="@drawable/ios_widget_background_active">
-
-                <ImageView
-                    android:id="@+id/accessibilityIcon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_accessibility"
-                    android:tint="#007AFF" />
-            </FrameLayout>
-        </LinearLayout>
-
-        <!-- Home Indicator -->
-        <View
-            android:layout_width="135dp"
-            android:layout_height="5dp"
+        <!-- Grid Button -->
+        <FrameLayout
+            android:id="@+id/gridButton"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/ios_home_indicator" />
+            android:layout_marginBottom="16dp">
+
+            <View
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_gravity="center"
+                android:background="@drawable/miui_circle_button" />
+
+            <ImageView
+                android:id="@+id/gridIcon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_grid"
+                android:tint="#FFFFFF" />
+        </FrameLayout>
+
+        <!-- Edit Button -->
+        <TextView
+            android:id="@+id/editButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Sửa"
+            android:textColor="#AAAAAA"
+            android:textSize="16sp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="@drawable/miui_toggle_background" />
 
     </LinearLayout>
 

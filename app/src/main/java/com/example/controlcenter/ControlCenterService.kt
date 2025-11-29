@@ -79,53 +79,44 @@ class ControlCenterService : Service() {
     private val controlStates = mutableMapOf(
         "wifi" to true,
         "bluetooth" to true,
-        "airplane" to false,
         "cellular" to true,
         "flashlight" to false,
-        "rotation" to true,
-        "focus" to false,
+        "rotation" to false,
+        "notification" to true,
+        "camera" to false,
         "screenMirror" to false,
-        "timer" to false,
-        "calculator" to false,
-        "recording" to false,
-        "display" to true,
-        "hearing" to false,
-        "battery" to false,
-        "accessibility" to true
+        "video" to false,
+        "location" to false
     )
     
     private val buttonIconMap = mapOf(
         R.id.wifiButton to R.id.wifiIcon,
-        R.id.bluetoothButton to R.id.bluetoothIcon,
-        R.id.airplaneButton to R.id.airplaneIcon,
         R.id.cellularButton to R.id.cellularIcon,
+        R.id.bluetoothButton to R.id.bluetoothIcon,
+        R.id.notificationButton to R.id.notificationIcon,
         R.id.flashlightButton to R.id.flashlightIcon,
         R.id.rotationButton to R.id.rotationIcon,
-        R.id.focusButton to R.id.focusIcon,
+        R.id.cameraButton to R.id.cameraIcon,
         R.id.screenMirrorButton to R.id.screenMirrorIcon,
-        R.id.timerButton to R.id.timerIcon,
-        R.id.calculatorButton to R.id.calculatorIcon,
-        R.id.recordingButton to R.id.recordingIcon,
-        R.id.displayButton to R.id.displayIcon,
-        R.id.hearingButton to R.id.hearingIcon,
-        R.id.batteryButton to R.id.batteryIcon,
-        R.id.accessibilityButton to R.id.accessibilityIcon
+        R.id.videoButton to R.id.videoIcon,
+        R.id.locationButton to R.id.locationIcon
     )
     
-    private val bottomWidgetButtons = setOf(
+    private val circularButtons = setOf(
+        R.id.bluetoothButton,
+        R.id.notificationButton,
         R.id.flashlightButton,
-        R.id.timerButton,
-        R.id.calculatorButton,
-        R.id.recordingButton,
-        R.id.displayButton,
-        R.id.hearingButton,
-        R.id.batteryButton,
-        R.id.accessibilityButton
+        R.id.rotationButton,
+        R.id.cameraButton,
+        R.id.screenMirrorButton,
+        R.id.videoButton,
+        R.id.locationButton,
+        R.id.gridButton
     )
     
-    private val smallOvalButtons = setOf(
-        R.id.rotationButton,
-        R.id.screenMirrorButton
+    private val toggleButtons = setOf(
+        R.id.wifiButton,
+        R.id.cellularButton
     )
     
     private val activeColor = Color.parseColor("#007AFF")
@@ -679,40 +670,6 @@ class ControlCenterService : Service() {
             }
         }
         
-        controlCenterView?.findViewById<View>(R.id.calculatorButton)?.setOnClickListener { button ->
-            SystemControlHelper.openCalculator(this)
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.recordingButton)?.setOnClickListener { button ->
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.displayButton)?.setOnClickListener { button ->
-            SystemControlHelper.openDisplaySettings(this)
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.hearingButton)?.setOnClickListener { button ->
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.batteryButton)?.setOnClickListener { button ->
-            SystemControlHelper.openBatterySettings(this)
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.accessibilityButton)?.setOnClickListener { button ->
-            SystemControlHelper.openAccessibilitySettings(this)
-            animateButtonPress(button)
-            vibrate()
-        }
-        
         controlCenterView?.findViewById<View>(R.id.rotationButton)?.setOnClickListener { button ->
             val currentState = SystemControlHelper.isRotationLocked(this)
             val newState = !currentState
@@ -729,8 +686,17 @@ class ControlCenterService : Service() {
             }
         }
         
-        controlCenterView?.findViewById<View>(R.id.focusButton)?.setOnClickListener { button ->
-            SystemControlHelper.openFocusSettings(this)
+        controlCenterView?.findViewById<View>(R.id.notificationButton)?.setOnClickListener { button ->
+            val currentState = controlStates["notification"] ?: true
+            val newState = !currentState
+            animateButtonPress(button)
+            vibrate()
+            controlStates["notification"] = newState
+            updateButtonState(R.id.notificationButton, newState)
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.cameraButton)?.setOnClickListener { button ->
+            SystemControlHelper.openCamera(this)
             animateButtonPress(button)
             vibrate()
         }
@@ -741,8 +707,21 @@ class ControlCenterService : Service() {
             vibrate()
         }
         
-        controlCenterView?.findViewById<View>(R.id.timerButton)?.setOnClickListener { button ->
-            SystemControlHelper.openTimer(this)
+        controlCenterView?.findViewById<View>(R.id.videoButton)?.setOnClickListener { button ->
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.locationButton)?.setOnClickListener { button ->
+            val currentState = controlStates["location"] ?: false
+            val newState = !currentState
+            animateButtonPress(button)
+            vibrate()
+            controlStates["location"] = newState
+            updateButtonState(R.id.locationButton, newState)
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.gridButton)?.setOnClickListener { button ->
             animateButtonPress(button)
             vibrate()
         }
@@ -772,7 +751,6 @@ class ControlCenterService : Service() {
     private fun syncStateFromSystem() {
         controlStates["wifi"] = SystemControlHelper.isWifiEnabled(this)
         controlStates["bluetooth"] = SystemControlHelper.isBluetoothEnabled(this)
-        controlStates["airplane"] = SystemControlHelper.isAirplaneModeOn(this)
         controlStates["cellular"] = SystemControlHelper.isMobileDataEnabled(this)
         controlStates["flashlight"] = SystemControlHelper.isFlashlightOn()
         controlStates["rotation"] = SystemControlHelper.isRotationLocked(this)
@@ -780,20 +758,15 @@ class ControlCenterService : Service() {
 
     private fun updateAllButtonStates() {
         updateButtonState(R.id.wifiButton, controlStates["wifi"] ?: false)
-        updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
-        updateButtonState(R.id.airplaneButton, controlStates["airplane"] ?: false)
         updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
+        updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
         updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
-        updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: true)
-        updateButtonState(R.id.focusButton, controlStates["focus"] ?: false)
+        updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: false)
+        updateButtonState(R.id.notificationButton, controlStates["notification"] ?: true)
+        updateButtonState(R.id.cameraButton, controlStates["camera"] ?: false)
         updateButtonState(R.id.screenMirrorButton, controlStates["screenMirror"] ?: false)
-        updateButtonState(R.id.timerButton, controlStates["timer"] ?: false)
-        updateButtonState(R.id.calculatorButton, controlStates["calculator"] ?: false)
-        updateButtonState(R.id.recordingButton, controlStates["recording"] ?: false)
-        updateButtonState(R.id.displayButton, controlStates["display"] ?: true)
-        updateButtonState(R.id.hearingButton, controlStates["hearing"] ?: false)
-        updateButtonState(R.id.batteryButton, controlStates["battery"] ?: false)
-        updateButtonState(R.id.accessibilityButton, controlStates["accessibility"] ?: true)
+        updateButtonState(R.id.videoButton, controlStates["video"] ?: false)
+        updateButtonState(R.id.locationButton, controlStates["location"] ?: false)
     }
 
     private fun updateButtonState(buttonId: Int, isActive: Boolean) {
@@ -801,19 +774,17 @@ class ControlCenterService : Service() {
         val iconId = buttonIconMap[buttonId]
         val icon = iconId?.let { controlCenterView?.findViewById<ImageView>(it) }
         
-        val backgroundRes = when {
-            bottomWidgetButtons.contains(buttonId) -> {
-                if (isActive) R.drawable.ios_widget_background_active else R.drawable.ios_widget_background
+        when {
+            circularButtons.contains(buttonId) -> {
+                val circleView = (button as? android.view.ViewGroup)?.getChildAt(0)
+                val backgroundRes = if (isActive) R.drawable.miui_circle_button_active else R.drawable.miui_circle_button
+                circleView?.setBackgroundResource(backgroundRes)
             }
-            smallOvalButtons.contains(buttonId) -> {
-                if (isActive) R.drawable.ios_small_button_active else R.drawable.ios_small_button
-            }
-            else -> {
-                if (isActive) R.drawable.control_item_background_active else R.drawable.control_item_background
+            toggleButtons.contains(buttonId) -> {
+                val backgroundRes = if (isActive) R.drawable.miui_toggle_background_active else R.drawable.miui_toggle_background
+                button?.setBackgroundResource(backgroundRes)
             }
         }
-        
-        button?.setBackgroundResource(backgroundRes)
         
         icon?.setColorFilter(
             if (isActive) activeColor else inactiveColor,
