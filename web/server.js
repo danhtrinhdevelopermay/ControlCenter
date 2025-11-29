@@ -19,7 +19,17 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-    let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+    let requestedPath = req.url === '/' ? 'index.html' : req.url;
+    
+    const normalizedPath = path.normalize(requestedPath).replace(/^(\.\.[\/\\])+/, '');
+    const filePath = path.join(__dirname, normalizedPath);
+    
+    if (!filePath.startsWith(__dirname)) {
+        res.writeHead(403, { 'Content-Type': 'text/html' });
+        res.end('<h1>403 - Forbidden</h1>');
+        return;
+    }
+    
     const extname = path.extname(filePath).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
 
