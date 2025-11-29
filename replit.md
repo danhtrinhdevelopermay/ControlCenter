@@ -127,6 +127,50 @@ Cho phép người dùng thêm tối đa 8 phím tắt ứng dụng vào Control
 - **2025-11-29**: Navigation bar và status bar hiện với background trong suốt khi Control Center mở
 - **2025-11-29**: Sửa lỗi brightness và volume slider - thêm touch handling và đồng bộ với giá trị hệ thống
 - **2025-11-29**: Thêm tính năng Media Info - hiển thị thông tin bài hát đang phát (tên, nghệ sĩ, album art)
+- **2025-11-29**: Thêm tính năng WiFi Scanning - quét và kết nối mạng WiFi trực tiếp từ Control Center
+
+## WiFi Scanning Feature (Cập nhật 2025-11-29)
+
+### Mô tả:
+Cho phép người dùng quét danh sách mạng WiFi khả dụng và kết nối trực tiếp từ Control Center mà không cần vào Settings.
+
+### Files mới:
+- `WiFiScannerHelper.kt` - Helper quét và kết nối mạng WiFi
+- `WiFiNetworkAdapter.kt` - Adapter hiển thị danh sách mạng WiFi
+- `dialog_wifi_list.xml` - Layout popup danh sách mạng WiFi
+- `dialog_wifi_password.xml` - Layout popup nhập mật khẩu
+- `item_wifi_network.xml` - Layout item mạng WiFi trong danh sách
+- `ic_lock.xml` - Icon khóa cho mạng bảo mật
+- `ic_refresh.xml` - Icon làm mới danh sách
+- `ic_check.xml` - Icon đánh dấu mạng đang kết nối
+
+### Cách sử dụng:
+1. **Nhấn giữ** nút WiFi trong Control Center
+2. Popup hiển thị danh sách mạng WiFi khả dụng
+3. Nhấn vào mạng muốn kết nối
+4. Nếu mạng có mật khẩu, nhập mật khẩu và nhấn "Kết nối"
+5. Đợi kết nối hoàn tất
+
+### Tính năng:
+- Hiển thị tín hiệu WiFi (mạnh/yếu)
+- Icon khóa cho mạng bảo mật
+- Đánh dấu mạng đang kết nối
+- Nút làm mới danh sách
+- Hỗ trợ WPA2, WPA3, WEP và mạng mở
+- Hiển thị lỗi nếu kết nối thất bại
+
+### Permissions cần thiết:
+- `ACCESS_WIFI_STATE` - Đọc trạng thái WiFi
+- `CHANGE_WIFI_STATE` - Thay đổi trạng thái WiFi
+- `ACCESS_FINE_LOCATION` - Quét mạng WiFi (bắt buộc từ Android 6.0+)
+- `ACCESS_COARSE_LOCATION` - Hỗ trợ quét mạng WiFi
+- `ACCESS_NETWORK_STATE` - Kiểm tra trạng thái mạng
+
+### Lưu ý kỹ thuật:
+- Android 10+: Sử dụng WifiNetworkSpecifier API
+- Android 9 trở xuống: Sử dụng WifiConfiguration API (deprecated)
+- Mạng doanh nghiệp (EAP) không được hỗ trợ
+- WPA3 chỉ hỗ trợ trên Android 11+
 
 ## Media Notification Listener Feature
 
