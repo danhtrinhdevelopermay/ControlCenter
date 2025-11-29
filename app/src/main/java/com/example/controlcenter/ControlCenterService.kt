@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
+import android.view.VelocityTracker
 
 class ControlCenterService : Service() {
 
@@ -55,8 +56,11 @@ class ControlCenterService : Service() {
 
     private var startY = 0f
     private var currentTranslationY = 0f
+    private var velocityTracker: VelocityTracker? = null
+    private var isDragging = false
     
     private val maxBlurRadius = 25f
+    private val minFlingVelocity = 1000f
 
     private val controlStates = mutableMapOf(
         "wifi" to true,
@@ -214,8 +218,8 @@ class ControlCenterService : Service() {
             setBackgroundColor(0x40000000.toInt())
             alpha = 0f
 
-            setOnClickListener {
-                hideControlCenter()
+            setOnTouchListener { _, event ->
+                handleBackgroundTouch(event)
             }
         }
 
@@ -273,20 +277,37 @@ class ControlCenterService : Service() {
 
     private fun setupDismissGesture() {
         controlCenterView?.setOnTouchListener { _, event ->
-            handleDismissTouch(event)
-            true
+            handlePanelTouch(event)
         }
     }
-
-    private fun handleDismissTouch(event: MotionEvent) {
+    
+    private fun handleBackgroundTouch(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                hideControlCenter()
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun handlePanelTouch(event: MotionEvent): Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                isDragging = true
                 startY = event.rawY
                 currentTranslationY = controlCenterView?.translationY ?: 0f
+                
+                velocityTracker?.clear()
+                velocityTracker = VelocityTracker.obtain()
+                velocityTracker?.addMovement(event)
+                return true
             }
             MotionEvent.ACTION_MOVE -> {
-                val deltaY = event.rawY - startY
-                if (deltaY < 0) {
+                if (isDragging) {
+                    velocityTracker?.addMovement(event)
+                    
+                    val deltaY = event.rawY - startY
                     val newTranslation = (currentTranslationY + deltaY).coerceIn(-panelHeight.toFloat(), 0f)
                     controlCenterView?.translationY = newTranslation
 
@@ -294,25 +315,50 @@ class ControlCenterService : Service() {
                     backgroundView?.alpha = progress
                     updateBlurRadius(progress)
                 }
+                return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                val currentTransY = controlCenterView?.translationY ?: 0f
-                if (currentTransY < -panelHeight / 3f) {
-                    hideControlCenter()
-                } else {
-                    animateShow()
+                if (isDragging) {
+                    isDragging = false
+                    
+                    velocityTracker?.addMovement(event)
+                    velocityTracker?.computeCurrentVelocity(1000)
+                    val velocityY = velocityTracker?.yVelocity ?: 0f
+                    
+                    val currentTransY = controlCenterView?.translationY ?: 0f
+                    val shouldHide = currentTransY < -panelHeight / 3f || velocityY < -minFlingVelocity
+                    
+                    if (shouldHide) {
+                        hideControlCenterWithVelocity(velocityY)
+                    } else {
+                        animateShowWithVelocity(velocityY)
+                    }
+                    
+                    velocityTracker?.recycle()
+                    velocityTracker = null
                 }
+                return true
             }
         }
+        return false
     }
 
     private fun animateShow() {
+        animateShowWithVelocity(0f)
+    }
+    
+    private fun animateShowWithVelocity(velocity: Float) {
         controlCenterView?.let { panel ->
             val springAnimation = SpringAnimation(panel, DynamicAnimation.TRANSLATION_Y, 0f)
             springAnimation.spring.apply {
-                stiffness = SpringForce.STIFFNESS_MEDIUM
-                dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
+                stiffness = SpringForce.STIFFNESS_LOW
+                dampingRatio = SpringForce.DAMPING_RATIO_LOW_BOUNCY
             }
+            
+            if (velocity != 0f) {
+                springAnimation.setStartVelocity(velocity)
+            }
+            
             springAnimation.addUpdateListener { _, value, _ ->
                 val progress = 1f - (kotlin.math.abs(value) / panelHeight.toFloat())
                 backgroundView?.alpha = progress.coerceIn(0f, 1f)
@@ -323,6 +369,10 @@ class ControlCenterService : Service() {
     }
 
     private fun hideControlCenter() {
+        hideControlCenterWithVelocity(0f)
+    }
+    
+    private fun hideControlCenterWithVelocity(velocity: Float) {
         controlCenterView?.let { panel ->
             val springAnimation = SpringAnimation(
                 panel,
@@ -333,6 +383,11 @@ class ControlCenterService : Service() {
                 stiffness = SpringForce.STIFFNESS_MEDIUM
                 dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
             }
+            
+            if (velocity != 0f && velocity < 0f) {
+                springAnimation.setStartVelocity(velocity)
+            }
+            
             springAnimation.addUpdateListener { _, value, _ ->
                 val progress = 1f - (kotlin.math.abs(value) / panelHeight.toFloat())
                 backgroundView?.alpha = progress.coerceIn(0f, 1f)
@@ -347,9 +402,13 @@ class ControlCenterService : Service() {
 
     private fun removeViews() {
         isShowing = false
+        isDragging = false
         
         blurAnimator?.cancel()
         blurAnimator = null
+        
+        velocityTracker?.recycle()
+        velocityTracker = null
 
         controlCenterView?.let {
             try {
