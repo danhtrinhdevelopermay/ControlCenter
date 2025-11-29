@@ -82,7 +82,7 @@ object SystemControlHelper {
     fun openFocusSettings(context: Context) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val intent = Intent(Settings.ACTION_ZEN_MODE_SETTINGS)
+                val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
             }
