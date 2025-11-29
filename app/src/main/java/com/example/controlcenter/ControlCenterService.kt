@@ -1041,13 +1041,19 @@ class ControlCenterService : Service() {
         val mediaInfo = MediaNotificationListener.currentMediaInfo
         
         val musicTitle = controlCenterView?.findViewById<android.widget.TextView>(R.id.musicTitle)
+        val musicTitlePlaying = controlCenterView?.findViewById<android.widget.TextView>(R.id.musicTitlePlaying)
         val musicArtist = controlCenterView?.findViewById<android.widget.TextView>(R.id.musicArtist)
         val albumArtView = controlCenterView?.findViewById<ImageView>(R.id.albumArtView)
+        val albumArtBackground = controlCenterView?.findViewById<ImageView>(R.id.albumArtBackground)
+        val albumArtOverlay = controlCenterView?.findViewById<View>(R.id.albumArtOverlay)
+        val mediaInfoContainer = controlCenterView?.findViewById<View>(R.id.mediaInfoContainer)
         val playButton = controlCenterView?.findViewById<ImageView>(R.id.playButton)
         
-        if (mediaInfo != null) {
-            musicTitle?.text = mediaInfo.title
-            musicTitle?.setTextColor(Color.WHITE)
+        if (mediaInfo != null && (mediaInfo.title.isNotEmpty() || mediaInfo.isPlaying)) {
+            musicTitle?.visibility = View.GONE
+            mediaInfoContainer?.visibility = View.VISIBLE
+            
+            musicTitlePlaying?.text = mediaInfo.title
             
             if (mediaInfo.artist.isNotEmpty()) {
                 musicArtist?.text = mediaInfo.artist
@@ -1058,19 +1064,27 @@ class ControlCenterService : Service() {
             
             if (mediaInfo.albumArt != null) {
                 albumArtView?.setImageBitmap(mediaInfo.albumArt)
-                albumArtView?.visibility = View.VISIBLE
+                albumArtBackground?.setImageBitmap(mediaInfo.albumArt)
+                albumArtBackground?.visibility = View.VISIBLE
+                albumArtOverlay?.visibility = View.VISIBLE
             } else {
-                albumArtView?.visibility = View.GONE
+                albumArtView?.setImageDrawable(null)
+                albumArtBackground?.visibility = View.GONE
+                albumArtOverlay?.visibility = View.GONE
             }
             
             val playIcon = if (mediaInfo.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
             playButton?.setImageResource(playIcon)
         } else {
             val isPlaying = MediaControlHelper.isMusicPlaying(this)
-            musicTitle?.text = if (isPlaying) "Đang phát" else "Không phát"
-            musicTitle?.setTextColor(if (isPlaying) Color.WHITE else Color.parseColor("#AAAAAA"))
-            musicArtist?.visibility = View.GONE
-            albumArtView?.visibility = View.GONE
+            
+            musicTitle?.visibility = View.VISIBLE
+            mediaInfoContainer?.visibility = View.GONE
+            albumArtBackground?.visibility = View.GONE
+            albumArtOverlay?.visibility = View.GONE
+            
+            musicTitle?.text = "Không phát"
+            musicTitle?.setTextColor(Color.WHITE)
             
             val playIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
             playButton?.setImageResource(playIcon)
