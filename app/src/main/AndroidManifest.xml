@@ -61,6 +61,11 @@
             android:exported="false"
             android:theme="@style/Theme.ControlCenter" />
 
+        <activity
+            android:name=".shortcuts.EditShortcutsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ControlCenter" />
+
         <service
             android:name=".ControlCenterService"
             android:exported="false"
