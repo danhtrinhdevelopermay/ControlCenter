@@ -25,6 +25,8 @@ import android.view.animation.DecelerateInterpolator
 import android.animation.ValueAnimator
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageView
+import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.graphics.Color
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -713,6 +715,12 @@ class ControlCenterService : Service() {
             vibrate()
         }
         
+        controlCenterView?.findViewById<View>(R.id.editButton)?.setOnClickListener { button ->
+            animateButtonPress(button)
+            vibrate()
+            openAppPicker()
+        }
+        
         controlCenterView?.findViewById<View>(R.id.playButton)?.setOnClickListener { button ->
             MediaControlHelper.playPause(this)
             animateButtonPress(button)
@@ -733,6 +741,87 @@ class ControlCenterService : Service() {
         
         updateAllButtonStates()
         updateMediaPlayerState()
+        setupAppShortcuts()
+    }
+    
+    private fun setupAppShortcuts() {
+        val shortcuts = AppShortcutManager.getSavedShortcuts(this)
+        val container = controlCenterView?.findViewById<LinearLayout>(R.id.appShortcutsContainer)
+        val row = controlCenterView?.findViewById<LinearLayout>(R.id.appShortcutsRow)
+        
+        if (shortcuts.isEmpty()) {
+            container?.visibility = View.GONE
+            return
+        }
+        
+        container?.visibility = View.VISIBLE
+        row?.removeAllViews()
+        
+        for (packageName in shortcuts) {
+            val appInfo = AppShortcutManager.getAppInfo(this, packageName)
+            if (appInfo != null) {
+                val shortcutView = createShortcutView(appInfo)
+                row?.addView(shortcutView)
+            }
+        }
+    }
+    
+    private fun createShortcutView(appInfo: AppInfo): View {
+        val container = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                resources.getDimensionPixelSize(android.R.dimen.app_icon_size).coerceAtLeast(72.dpToPx()),
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginEnd = 8.dpToPx()
+            }
+        }
+        
+        val iconView = ImageView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(52.dpToPx(), 52.dpToPx()).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+            }
+            appInfo.icon?.let { setImageDrawable(it) }
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+        
+        val textView = android.widget.TextView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+                topMargin = 56.dpToPx()
+            }
+            text = appInfo.appName
+            textSize = 11f
+            setTextColor(Color.WHITE)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+        }
+        
+        container.addView(iconView)
+        container.addView(textView)
+        
+        container.setOnClickListener { view ->
+            animateButtonPress(view)
+            vibrate()
+            hideControlCenter()
+            AppShortcutManager.launchApp(this, appInfo.packageName)
+        }
+        
+        return container
+    }
+    
+    private fun Int.dpToPx(): Int {
+        return (this * resources.displayMetrics.density).toInt()
+    }
+    
+    private fun openAppPicker() {
+        hideControlCenter()
+        val intent = Intent(this, AppPickerActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
     }
     
     private fun syncStateFromSystem() {
