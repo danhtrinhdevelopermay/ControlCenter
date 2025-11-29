@@ -5,7 +5,7 @@
 - **Ngôn ngữ**: Kotlin + Android
 - **Mô tả**: App điều khiển nhanh các chức năng hệ thống Android như WiFi, Bluetooth, đèn pin, v.v.
 - **Ngày tạo**: 2025-11-29
-- **Phong cách UI**: iOS 17 Control Center
+- **Phong cách UI**: MIUI Control Center
 
 ## Cấu trúc dự án
 - Android app sử dụng Shizuku để điều khiển các chức năng hệ thống
@@ -29,37 +29,49 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 - `WRITE_SETTINGS`, `ACCESS_NOTIFICATION_POLICY` - Các quyền hệ thống
 - Bluetooth, WiFi, Camera permissions
 
-## Layout iOS 17 Style (2025-11-29)
+## Layout MIUI Style (Cập nhật 2025-11-29)
 
 ### Các thành phần UI:
 | Component | Mô tả |
 |-----------|-------|
-| Connectivity Widget | Grid 2x2: Airplane, Cellular, WiFi, Bluetooth |
-| Now Playing Widget | Media controls với Play/Pause, Next, Previous, AirPlay |
-| Orientation Lock | Khóa xoay màn hình |
-| Screen Mirror | Phản chiếu màn hình |
-| Focus Mode | Chế độ tập trung với moon icon |
-| Brightness Slider | Thanh trượt độ sáng dọc |
-| Volume Slider | Thanh trượt âm lượng dọc |
-| Bottom Controls | Flashlight, Calculator, Screen Recording, Display |
-| Extra Controls | Hearing, Timer, Battery, Accessibility |
+| Header | Ngày/giờ, tên người dùng, tín hiệu và pin |
+| WiFi Toggle | Nút toggle lớn hình chữ nhật với trạng thái |
+| Data Toggle | Nút toggle lớn hình chữ nhật với trạng thái |
+| Media Control | Card điều khiển phát nhạc với Play/Pause, Next, Previous |
+| Brightness Slider | Thanh trượt độ sáng dọc (bên phải) |
+| Volume Slider | Thanh trượt âm lượng dọc (bên phải) |
+| Circular Buttons | 8 nút tròn: Bluetooth, Notification, Flashlight, Rotation, Camera, Screen Mirror, Video, Location |
+| Grid Button | Nút grid ở giữa dưới cùng |
+| Edit Button | Nút "Sửa" dạng text button |
 
-### Button IDs mới:
-- `calculatorButton` / `calculatorIcon`
-- `recordingButton` / `recordingIcon`
-- `displayButton` / `displayIcon`
-- `hearingButton` / `hearingIcon`
-- `batteryButton` / `batteryIcon`
-- `accessibilityButton` / `accessibilityIcon`
+### Button IDs MIUI:
+- `wifiButton` / `wifiIcon` - WiFi toggle
+- `cellularButton` / `cellularIcon` - Data toggle
+- `bluetoothButton` / `bluetoothIcon` - Bluetooth
+- `notificationButton` / `notificationIcon` - Thông báo
+- `flashlightButton` / `flashlightIcon` - Đèn pin
+- `rotationButton` / `rotationIcon` - Xoay màn hình
+- `cameraButton` / `cameraIcon` - Camera
+- `screenMirrorButton` / `screenMirrorIcon` - Screen Mirror
+- `videoButton` / `videoIcon` - Video
+- `locationButton` / `locationIcon` - GPS
+- `gridButton` / `gridIcon` - Grid menu
 
 ### Files chính:
-- `app/src/main/res/layout/control_center_panel.xml` - Layout iOS 17
+- `app/src/main/res/layout/control_center_panel.xml` - Layout MIUI
 - `app/src/main/java/com/example/controlcenter/ControlCenterService.kt` - Service xử lý UI
 - `app/src/main/java/com/example/controlcenter/SystemControlHelper.kt` - Helper điều khiển hệ thống
 - `app/src/main/java/com/example/controlcenter/MediaControlHelper.kt` - Helper điều khiển media
 
+### MIUI Drawables:
+- `miui_toggle_background.xml` - Background cho toggle buttons (WiFi, Data)
+- `miui_circle_button.xml` - Background cho circular buttons
+- `miui_slider_background.xml` - Background cho sliders
+- `miui_media_background.xml` - Background cho media control
+
 ## Ghi chú kỹ thuật
 - Shizuku `newProcess()` cần reflection để access
 - App cần cấp quyền Shizuku và các quyền runtime khác để hoạt động đầy đủ
-- UI design theo iOS 17 Control Center với frosted glass effect
+- UI design theo MIUI Control Center với frosted glass blur effect (giữ nguyên từ version trước)
+- Background blur effects: `FLAG_BLUR_BEHIND` với `blurBehindRadius` động theo animation
 - Media controls hoạt động qua system media key events
