@@ -163,4 +163,50 @@ object SystemControlHelper {
             false
         }
     }
+    
+    fun openCalculator(context: Context) {
+        try {
+            val intent = Intent()
+            intent.action = Intent.ACTION_MAIN
+            intent.addCategory(Intent.CATEGORY_APP_CALCULATOR)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening calculator", e)
+            Toast.makeText(context, "Cannot open calculator", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    fun openDisplaySettings(context: Context) {
+        try {
+            val intent = Intent(Settings.ACTION_DISPLAY_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening display settings", e)
+            Toast.makeText(context, "Cannot open display settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    fun openBatterySettings(context: Context) {
+        try {
+            val intent = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening battery settings", e)
+            Toast.makeText(context, "Cannot open battery settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    fun openAccessibilitySettings(context: Context) {
+        try {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening accessibility settings", e)
+            Toast.makeText(context, "Cannot open accessibility settings", Toast.LENGTH_SHORT).show()
+        }
+    }
 }

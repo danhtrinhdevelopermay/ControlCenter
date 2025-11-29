@@ -82,12 +82,16 @@ class ControlCenterService : Service() {
         "airplane" to false,
         "cellular" to true,
         "flashlight" to false,
-        "dnd" to false,
-        "rotation" to false,
+        "rotation" to true,
         "focus" to false,
         "screenMirror" to false,
         "timer" to false,
-        "camera" to false
+        "calculator" to false,
+        "recording" to false,
+        "display" to true,
+        "hearing" to false,
+        "battery" to false,
+        "accessibility" to true
     )
     
     private val buttonIconMap = mapOf(
@@ -96,25 +100,32 @@ class ControlCenterService : Service() {
         R.id.airplaneButton to R.id.airplaneIcon,
         R.id.cellularButton to R.id.cellularIcon,
         R.id.flashlightButton to R.id.flashlightIcon,
-        R.id.dndButton to R.id.dndIcon,
         R.id.rotationButton to R.id.rotationIcon,
         R.id.focusButton to R.id.focusIcon,
         R.id.screenMirrorButton to R.id.screenMirrorIcon,
         R.id.timerButton to R.id.timerIcon,
-        R.id.cameraButton to R.id.cameraIcon
+        R.id.calculatorButton to R.id.calculatorIcon,
+        R.id.recordingButton to R.id.recordingIcon,
+        R.id.displayButton to R.id.displayIcon,
+        R.id.hearingButton to R.id.hearingIcon,
+        R.id.batteryButton to R.id.batteryIcon,
+        R.id.accessibilityButton to R.id.accessibilityIcon
     )
     
-    private val bottomCircularButtons = setOf(
+    private val bottomWidgetButtons = setOf(
         R.id.flashlightButton,
         R.id.timerButton,
-        R.id.cameraButton,
-        R.id.screenMirrorButton
+        R.id.calculatorButton,
+        R.id.recordingButton,
+        R.id.displayButton,
+        R.id.hearingButton,
+        R.id.batteryButton,
+        R.id.accessibilityButton
     )
     
     private val smallOvalButtons = setOf(
-        R.id.focusButton,
-        R.id.dndButton,
-        R.id.rotationButton
+        R.id.rotationButton,
+        R.id.screenMirrorButton
     )
     
     private val activeColor = Color.parseColor("#007AFF")
@@ -668,20 +679,38 @@ class ControlCenterService : Service() {
             }
         }
         
-        controlCenterView?.findViewById<View>(R.id.dndButton)?.setOnClickListener { button ->
-            val currentState = SystemControlHelper.isDoNotDisturbOn(this)
-            val newState = !currentState
+        controlCenterView?.findViewById<View>(R.id.calculatorButton)?.setOnClickListener { button ->
+            SystemControlHelper.openCalculator(this)
             animateButtonPress(button)
             vibrate()
-            ShizukuHelper.toggleDoNotDisturb(newState) { success ->
-                if (success) {
-                    controlStates["dnd"] = newState
-                    updateButtonState(R.id.dndButton, newState)
-                } else {
-                    controlStates["dnd"] = SystemControlHelper.isDoNotDisturbOn(this)
-                    updateButtonState(R.id.dndButton, controlStates["dnd"] ?: false)
-                }
-            }
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.recordingButton)?.setOnClickListener { button ->
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.displayButton)?.setOnClickListener { button ->
+            SystemControlHelper.openDisplaySettings(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.hearingButton)?.setOnClickListener { button ->
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.batteryButton)?.setOnClickListener { button ->
+            SystemControlHelper.openBatterySettings(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.accessibilityButton)?.setOnClickListener { button ->
+            SystemControlHelper.openAccessibilitySettings(this)
+            animateButtonPress(button)
+            vibrate()
         }
         
         controlCenterView?.findViewById<View>(R.id.rotationButton)?.setOnClickListener { button ->
@@ -718,12 +747,6 @@ class ControlCenterService : Service() {
             vibrate()
         }
         
-        controlCenterView?.findViewById<View>(R.id.cameraButton)?.setOnClickListener { button ->
-            SystemControlHelper.openCamera(this)
-            animateButtonPress(button)
-            vibrate()
-        }
-        
         controlCenterView?.findViewById<View>(R.id.playButton)?.setOnClickListener { button ->
             MediaControlHelper.playPause(this)
             animateButtonPress(button)
@@ -752,7 +775,6 @@ class ControlCenterService : Service() {
         controlStates["airplane"] = SystemControlHelper.isAirplaneModeOn(this)
         controlStates["cellular"] = SystemControlHelper.isMobileDataEnabled(this)
         controlStates["flashlight"] = SystemControlHelper.isFlashlightOn()
-        controlStates["dnd"] = SystemControlHelper.isDoNotDisturbOn(this)
         controlStates["rotation"] = SystemControlHelper.isRotationLocked(this)
     }
 
@@ -762,12 +784,16 @@ class ControlCenterService : Service() {
         updateButtonState(R.id.airplaneButton, controlStates["airplane"] ?: false)
         updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
         updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
-        updateButtonState(R.id.dndButton, controlStates["dnd"] ?: false)
-        updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: false)
+        updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: true)
         updateButtonState(R.id.focusButton, controlStates["focus"] ?: false)
         updateButtonState(R.id.screenMirrorButton, controlStates["screenMirror"] ?: false)
         updateButtonState(R.id.timerButton, controlStates["timer"] ?: false)
-        updateButtonState(R.id.cameraButton, controlStates["camera"] ?: false)
+        updateButtonState(R.id.calculatorButton, controlStates["calculator"] ?: false)
+        updateButtonState(R.id.recordingButton, controlStates["recording"] ?: false)
+        updateButtonState(R.id.displayButton, controlStates["display"] ?: true)
+        updateButtonState(R.id.hearingButton, controlStates["hearing"] ?: false)
+        updateButtonState(R.id.batteryButton, controlStates["battery"] ?: false)
+        updateButtonState(R.id.accessibilityButton, controlStates["accessibility"] ?: true)
     }
 
     private fun updateButtonState(buttonId: Int, isActive: Boolean) {
@@ -776,8 +802,8 @@ class ControlCenterService : Service() {
         val icon = iconId?.let { controlCenterView?.findViewById<ImageView>(it) }
         
         val backgroundRes = when {
-            bottomCircularButtons.contains(buttonId) -> {
-                if (isActive) R.drawable.ios_circle_button_active else R.drawable.ios_circle_button
+            bottomWidgetButtons.contains(buttonId) -> {
+                if (isActive) R.drawable.ios_widget_background_active else R.drawable.ios_widget_background
             }
             smallOvalButtons.contains(buttonId) -> {
                 if (isActive) R.drawable.ios_small_button_active else R.drawable.ios_small_button
