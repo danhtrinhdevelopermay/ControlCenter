@@ -72,6 +72,16 @@
             android:layout_marginBottom="16dp" />
 
         <Button
+            android:id="@+id/notificationPermissionBtn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Grant Notification Access (Media Info)"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:background="@drawable/control_item_background"
+            android:layout_marginBottom="16dp" />
+
+        <Button
             android:id="@+id/shizukuPermissionBtn"
             android:layout_width="match_parent"
             android:layout_height="56dp"

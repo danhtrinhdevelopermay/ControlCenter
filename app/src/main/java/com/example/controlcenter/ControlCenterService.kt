@@ -725,21 +725,34 @@ class ControlCenterService : Service() {
             MediaControlHelper.playPause(this)
             animateButtonPress(button)
             vibrate()
+            handler.postDelayed({
+                MediaNotificationListener.refreshMediaInfo(this)
+                updateMediaPlayerState()
+            }, 300)
         }
         
         controlCenterView?.findViewById<View>(R.id.nextButton)?.setOnClickListener { button ->
             MediaControlHelper.next(this)
             animateButtonPress(button)
             vibrate()
+            handler.postDelayed({
+                MediaNotificationListener.refreshMediaInfo(this)
+                updateMediaPlayerState()
+            }, 300)
         }
         
         controlCenterView?.findViewById<View>(R.id.prevButton)?.setOnClickListener { button ->
             MediaControlHelper.previous(this)
             animateButtonPress(button)
             vibrate()
+            handler.postDelayed({
+                MediaNotificationListener.refreshMediaInfo(this)
+                updateMediaPlayerState()
+            }, 300)
         }
         
         updateAllButtonStates()
+        setupMediaListener()
         updateMediaPlayerState()
         setupAppShortcuts()
         setupBrightnessSlider()
@@ -981,10 +994,54 @@ class ControlCenterService : Service() {
     }
     
     private fun updateMediaPlayerState() {
-        controlCenterView?.findViewById<android.widget.TextView>(R.id.musicTitle)?.let { textView ->
+        val mediaInfo = MediaNotificationListener.currentMediaInfo
+        
+        val musicTitle = controlCenterView?.findViewById<android.widget.TextView>(R.id.musicTitle)
+        val musicArtist = controlCenterView?.findViewById<android.widget.TextView>(R.id.musicArtist)
+        val albumArtView = controlCenterView?.findViewById<ImageView>(R.id.albumArtView)
+        val playButton = controlCenterView?.findViewById<ImageView>(R.id.playButton)
+        
+        if (mediaInfo != null) {
+            musicTitle?.text = mediaInfo.title
+            musicTitle?.setTextColor(Color.WHITE)
+            
+            if (mediaInfo.artist.isNotEmpty()) {
+                musicArtist?.text = mediaInfo.artist
+                musicArtist?.visibility = View.VISIBLE
+            } else {
+                musicArtist?.visibility = View.GONE
+            }
+            
+            if (mediaInfo.albumArt != null) {
+                albumArtView?.setImageBitmap(mediaInfo.albumArt)
+                albumArtView?.visibility = View.VISIBLE
+            } else {
+                albumArtView?.visibility = View.GONE
+            }
+            
+            val playIcon = if (mediaInfo.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+            playButton?.setImageResource(playIcon)
+        } else {
             val isPlaying = MediaControlHelper.isMusicPlaying(this)
-            textView.text = if (isPlaying) "Playing" else "Not Playing"
-            textView.setTextColor(if (isPlaying) Color.WHITE else Color.parseColor("#999999"))
+            musicTitle?.text = if (isPlaying) "Đang phát" else "Không phát"
+            musicTitle?.setTextColor(if (isPlaying) Color.WHITE else Color.parseColor("#AAAAAA"))
+            musicArtist?.visibility = View.GONE
+            albumArtView?.visibility = View.GONE
+            
+            val playIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+            playButton?.setImageResource(playIcon)
+        }
+    }
+    
+    private fun setupMediaListener() {
+        MediaNotificationListener.setOnMediaChangedListener { mediaInfo ->
+            handler.post {
+                updateMediaPlayerState()
+            }
+        }
+        
+        if (MediaNotificationListener.isNotificationAccessEnabled(this)) {
+            MediaNotificationListener.initMediaSessionManager(this)
         }
     }
 

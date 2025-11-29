@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     private lateinit var statusText: TextView
     private lateinit var overlayPermissionBtn: Button
     private lateinit var accessibilityPermissionBtn: Button
+    private lateinit var notificationPermissionBtn: Button
     private lateinit var shizukuPermissionBtn: Button
     private lateinit var startServiceBtn: Button
     private lateinit var swipeZoneSettingsContainer: LinearLayout
@@ -91,6 +92,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         statusText = findViewById(R.id.statusText)
         overlayPermissionBtn = findViewById(R.id.overlayPermissionBtn)
         accessibilityPermissionBtn = findViewById(R.id.accessibilityPermissionBtn)
+        notificationPermissionBtn = findViewById(R.id.notificationPermissionBtn)
         shizukuPermissionBtn = findViewById(R.id.shizukuPermissionBtn)
         startServiceBtn = findViewById(R.id.startServiceBtn)
         swipeZoneSettingsContainer = findViewById(R.id.swipeZoneSettingsContainer)
@@ -112,6 +114,10 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
 
         accessibilityPermissionBtn.setOnClickListener {
             openAccessibilitySettings()
+        }
+        
+        notificationPermissionBtn.setOnClickListener {
+            openNotificationListenerSettings()
         }
         
         shizukuPermissionBtn.setOnClickListener {
@@ -240,6 +246,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     private fun updateUI() {
         val hasOverlayPermission = hasOverlayPermission()
         val hasAccessibilityPermission = isAccessibilityServiceEnabled()
+        val hasNotificationAccess = MediaNotificationListener.isNotificationAccessEnabled(this)
         val hasShizukuPermission = ShizukuHelper.checkShizukuPermission()
         val isShizukuAvailable = ShizukuHelper.isShizukuAvailable()
 
@@ -257,6 +264,15 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
             text = if (hasAccessibilityPermission) "✓ Accessibility Service Enabled" else "Enable Accessibility Service"
             setBackgroundColor(
                 if (hasAccessibilityPermission) ContextCompat.getColor(context, R.color.control_item_active)
+                else ContextCompat.getColor(context, R.color.control_item_inactive)
+            )
+        }
+        
+        notificationPermissionBtn.apply {
+            isEnabled = !hasNotificationAccess
+            text = if (hasNotificationAccess) "✓ Notification Access Granted" else "Grant Notification Access (Media Info)"
+            setBackgroundColor(
+                if (hasNotificationAccess) ContextCompat.getColor(context, R.color.control_item_active)
                 else ContextCompat.getColor(context, R.color.control_item_inactive)
             )
         }
@@ -288,9 +304,10 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         statusText.text = when {
             !hasOverlayPermission -> "Step 1: Grant overlay permission to display Control Center over other apps"
             !hasAccessibilityPermission -> "Step 2: Enable accessibility service to detect swipe gestures"
-            !isShizukuAvailable -> "Step 3 (Optional): Install and start Shizuku app for advanced features (WiFi, Bluetooth toggles)\n\nYou can still use Control Center without Shizuku, but some features will be limited."
-            !hasShizukuPermission -> "Step 3 (Optional): Grant Shizuku permission for advanced system control\n\nThis enables WiFi, Bluetooth, DND, and Airplane Mode toggles."
-            else -> "All set! Control Center is active.\n\nSwipe down from the configured zone to open.\n\n✓ Shizuku enabled for full system control!"
+            !hasNotificationAccess -> "Step 3: Grant notification access to display current music info (song title, artist, album art)"
+            !isShizukuAvailable -> "Step 4 (Optional): Install and start Shizuku app for advanced features (WiFi, Bluetooth toggles)\n\nYou can still use Control Center without Shizuku, but some features will be limited."
+            !hasShizukuPermission -> "Step 4 (Optional): Grant Shizuku permission for advanced system control\n\nThis enables WiFi, Bluetooth, DND, and Airplane Mode toggles."
+            else -> "All set! Control Center is active.\n\nSwipe down from the configured zone to open.\n\n✓ Shizuku enabled for full system control!\n✓ Notification access enabled for media info!"
         }
 
         if (allPermissionsGranted) {
@@ -336,6 +353,16 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         Toast.makeText(
             this,
             "Find 'Control Center' in the list and enable it",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+    
+    private fun openNotificationListenerSettings() {
+        MediaNotificationListener.openNotificationAccessSettings(this)
+        
+        Toast.makeText(
+            this,
+            "Find 'Control Center' in the list and enable notification access for media info",
             Toast.LENGTH_LONG
         ).show()
     }
