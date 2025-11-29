@@ -180,144 +180,112 @@
             android:orientation="horizontal"
             android:layout_marginBottom="10dp">
 
+            <FrameLayout
+                android:id="@+id/rotationButton"
+                android:layout_width="0dp"
+                android:layout_height="70dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/ios_widget_background">
+
+                <ImageView
+                    android:id="@+id/rotationIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_orientation_lock"
+                    android:tint="#FFFFFF" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/dndButton"
+                android:layout_width="0dp"
+                android:layout_height="70dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/ios_widget_background">
+
+                <ImageView
+                    android:id="@+id/dndIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_do_not_disturb"
+                    android:tint="#FFFFFF" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/focusButton"
+                android:layout_width="0dp"
+                android:layout_height="70dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:background="@drawable/ios_widget_background">
+
+                <ImageView
+                    android:id="@+id/focusIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_focus"
+                    android:tint="#FFFFFF" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
+
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="70dp"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginEnd="5dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:background="@drawable/ios_widget_background"
-                    android:padding="10dp"
-                    android:layout_marginBottom="10dp">
-
-                    <FrameLayout
-                        android:id="@+id/screenMirrorButton"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_margin="4dp"
-                        android:background="@drawable/control_item_background">
-
-                        <ImageView
-                            android:id="@+id/screenMirrorIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_screen_mirror"
-                            android:tint="#FFFFFF" />
-                    </FrameLayout>
-
-                    <FrameLayout
-                        android:id="@+id/rotationButton"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_margin="4dp"
-                        android:background="@drawable/control_item_background">
-
-                        <ImageView
-                            android:id="@+id/rotationIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_orientation_lock"
-                            android:tint="#FFFFFF" />
-                    </FrameLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:background="@drawable/ios_widget_background"
-                    android:padding="10dp">
-
-                    <FrameLayout
-                        android:id="@+id/focusButton"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_margin="4dp"
-                        android:background="@drawable/control_item_background">
-
-                        <ImageView
-                            android:id="@+id/focusIcon"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_focus"
-                            android:tint="#FFFFFF" />
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center_vertical"
-                        android:layout_marginStart="8dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Focus"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginStart="5dp">
+                android:background="@drawable/ios_widget_background"
+                android:padding="12dp"
+                android:layout_marginEnd="5dp"
+                android:gravity="center_vertical">
 
                 <FrameLayout
-                    android:layout_width="60dp"
-                    android:layout_height="160dp"
-                    android:layout_marginEnd="10dp"
-                    android:background="@drawable/ios_slider_background">
-
-                    <View
-                        android:id="@+id/brightnessProgress"
-                        android:layout_width="match_parent"
-                        android:layout_height="80dp"
-                        android:layout_gravity="bottom"
-                        android:background="@drawable/ios_slider_progress" />
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:background="@drawable/control_item_background">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:layout_gravity="bottom|center_horizontal"
-                        android:layout_marginBottom="12dp"
-                        android:src="@drawable/ic_brightness"
-                        android:tint="#000000" />
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_focus"
+                        android:tint="#FFFFFF" />
                 </FrameLayout>
 
-                <FrameLayout
-                    android:layout_width="60dp"
-                    android:layout_height="160dp"
-                    android:background="@drawable/ios_slider_background">
-
-                    <View
-                        android:id="@+id/volumeProgress"
-                        android:layout_width="match_parent"
-                        android:layout_height="112dp"
-                        android:layout_gravity="bottom"
-                        android:background="@drawable/ios_slider_progress" />
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="bottom|center_horizontal"
-                        android:layout_marginBottom="12dp"
-                        android:src="@drawable/ic_volume"
-                        android:tint="#000000" />
-                </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Focus"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="12dp" />
             </LinearLayout>
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="70dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:background="@drawable/ios_widget_background">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_brightness"
+                    android:tint="#FFFFFF" />
+            </FrameLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -329,81 +297,65 @@
 
             <FrameLayout
                 android:id="@+id/flashlightButton"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_margin="8dp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/ios_circle_button">
 
                 <ImageView
                     android:id="@+id/flashlightIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_flashlight"
                     android:tint="#FFFFFF" />
             </FrameLayout>
 
             <FrameLayout
-                android:id="@+id/timerButton"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_margin="8dp"
+                android:id="@+id/screenMirrorButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/ios_circle_button">
 
                 <ImageView
-                    android:id="@+id/timerIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:id="@+id/screenMirrorIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_timer"
-                    android:tint="#FFFFFF" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/calculatorButton"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_margin="8dp"
-                android:background="@drawable/ios_circle_button">
-
-                <ImageView
-                    android:id="@+id/calculatorIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_calculator"
+                    android:src="@drawable/ic_screen_mirror"
                     android:tint="#FFFFFF" />
             </FrameLayout>
 
             <FrameLayout
                 android:id="@+id/cameraButton"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_margin="8dp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/ios_circle_button">
 
                 <ImageView
                     android:id="@+id/cameraIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_camera"
                     android:tint="#FFFFFF" />
             </FrameLayout>
 
             <FrameLayout
-                android:id="@+id/dndButton"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_margin="8dp"
+                android:id="@+id/timerButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/ios_circle_button">
 
                 <ImageView
-                    android:id="@+id/dndIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:id="@+id/timerIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_do_not_disturb"
+                    android:src="@drawable/ic_timer"
                     android:tint="#FFFFFF" />
             </FrameLayout>
         </LinearLayout>

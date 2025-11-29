@@ -87,7 +87,6 @@ class ControlCenterService : Service() {
         "focus" to false,
         "screenMirror" to false,
         "timer" to false,
-        "calculator" to false,
         "camera" to false
     )
     
@@ -102,21 +101,19 @@ class ControlCenterService : Service() {
         R.id.focusButton to R.id.focusIcon,
         R.id.screenMirrorButton to R.id.screenMirrorIcon,
         R.id.timerButton to R.id.timerIcon,
-        R.id.calculatorButton to R.id.calculatorIcon,
         R.id.cameraButton to R.id.cameraIcon
     )
     
     private val bottomCircularButtons = setOf(
         R.id.flashlightButton,
         R.id.timerButton,
-        R.id.calculatorButton,
         R.id.cameraButton,
-        R.id.dndButton
+        R.id.screenMirrorButton
     )
     
     private val smallOvalButtons = setOf(
         R.id.focusButton,
-        R.id.screenMirrorButton,
+        R.id.dndButton,
         R.id.rotationButton
     )
     
@@ -600,7 +597,6 @@ class ControlCenterService : Service() {
         setupControlButton(R.id.focusButton, "focus")
         setupControlButton(R.id.screenMirrorButton, "screenMirror")
         setupControlButton(R.id.timerButton, "timer")
-        setupControlButton(R.id.calculatorButton, "calculator")
         setupControlButton(R.id.cameraButton, "camera")
 
         updateAllButtonStates()
@@ -627,7 +623,6 @@ class ControlCenterService : Service() {
         updateButtonState(R.id.focusButton, controlStates["focus"] ?: false)
         updateButtonState(R.id.screenMirrorButton, controlStates["screenMirror"] ?: false)
         updateButtonState(R.id.timerButton, controlStates["timer"] ?: false)
-        updateButtonState(R.id.calculatorButton, controlStates["calculator"] ?: false)
         updateButtonState(R.id.cameraButton, controlStates["camera"] ?: false)
     }
 
