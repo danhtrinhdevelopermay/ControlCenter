@@ -872,17 +872,16 @@ class ControlCenterService : Service() {
         
         if (shortcuts.isEmpty()) {
             container?.visibility = View.GONE
-            return
-        }
-        
-        container?.visibility = View.VISIBLE
-        row?.removeAllViews()
-        
-        for (packageName in shortcuts) {
-            val appInfo = AppShortcutManager.getAppInfo(this, packageName)
-            if (appInfo != null) {
-                val shortcutView = createShortcutView(appInfo)
-                row?.addView(shortcutView)
+        } else {
+            container?.visibility = View.VISIBLE
+            row?.removeAllViews()
+            
+            for (packageName in shortcuts) {
+                val appInfo = AppShortcutManager.getAppInfo(this, packageName)
+                if (appInfo != null) {
+                    val shortcutView = createShortcutView(appInfo)
+                    row?.addView(shortcutView)
+                }
             }
         }
         
