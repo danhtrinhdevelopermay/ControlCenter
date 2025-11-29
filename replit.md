@@ -126,6 +126,30 @@ Cho phép người dùng thêm tối đa 8 phím tắt ứng dụng vào Control
 - **2025-11-29**: Thêm tính năng App Shortcuts - cho phép thêm phím tắt ứng dụng tùy chọn
 - **2025-11-29**: Navigation bar và status bar hiện với background trong suốt khi Control Center mở
 - **2025-11-29**: Sửa lỗi brightness và volume slider - thêm touch handling và đồng bộ với giá trị hệ thống
+- **2025-11-29**: Thêm tính năng Media Info - hiển thị thông tin bài hát đang phát (tên, nghệ sĩ, album art)
+
+## Media Notification Listener Feature
+
+### Mô tả:
+Hiển thị thông tin bài hát đang phát trong Control Center (tên bài, nghệ sĩ, album art).
+
+### Files mới:
+- `MediaNotificationListener.kt` - Service lắng nghe thông báo media để lấy thông tin bài hát
+
+### Cách hoạt động:
+1. App yêu cầu quyền Notification Access
+2. MediaNotificationListener kết nối với MediaSessionManager
+3. Khi có bài hát đang phát, lấy thông tin từ MediaMetadata
+4. Hiển thị tên bài, nghệ sĩ và album art trong Control Center
+
+### Permissions:
+- `BIND_NOTIFICATION_LISTENER_SERVICE` - Cần thiết để lắng nghe thông báo media
+
+### UI Updates:
+- `musicTitle` - Hiển thị tên bài hát
+- `musicArtist` - Hiển thị tên nghệ sĩ
+- `albumArtView` - Hiển thị ảnh album
+- `playButton` - Đổi icon play/pause theo trạng thái
 
 ## Ghi chú về Brightness/Volume Sliders
 
