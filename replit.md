@@ -71,38 +71,38 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 - Không cần Notification Listener permission
 - Hoạt động với mọi music app (Spotify, YouTube Music, Zalo, v.v.)
 
-## Web-based iOS Control Center (2025-11-29)
-**Giao diện web mô phỏng iOS 17 Control Center:**
+## Android Layout iOS 17 Style (2025-11-29)
+**Cập nhật layout giống iOS 17 Control Center:**
 
-**Cấu trúc files:**
-- `web/index.html` - HTML structure với tất cả widgets
-- `web/styles.css` - CSS styling (blur effects, colors, responsive)
-- `web/script.js` - JavaScript cho tương tác
-- `web/server.js` - Node.js server (port 5000)
+**Các thành phần UI đã cập nhật:**
+1. ✅ Connectivity widget (2x2 grid: Airplane, Cellular, WiFi, Bluetooth)
+2. ✅ Now Playing widget với media controls và AirPlay button
+3. ✅ Orientation Lock button (active state với red icon)
+4. ✅ Screen Mirror button
+5. ✅ Focus mode widget với moon icon
+6. ✅ Brightness slider (tall pill shape)
+7. ✅ Volume slider (tall pill shape với mute icon)
+8. ✅ Bottom controls: Flashlight, Calculator, Screen Recording, Display
+9. ✅ Extra controls: Hearing, Timer, Battery, Accessibility
 
-**Các thành phần UI:**
-1. ✅ Status bar với System Services, carrier info, battery
-2. ✅ Connectivity widget (Airplane, Cellular, WiFi, Bluetooth)
-3. ✅ Now Playing widget với media controls
-4. ✅ Orientation lock và Screen mirror buttons
-5. ✅ Focus mode widget
-6. ✅ Brightness và Volume sliders (interactive)
-7. ✅ Bottom controls (Flashlight, Calculator, Screen Recording, Display)
-8. ✅ Extra controls (Hearing, Timer, Battery, Accessibility)
+**Files đã thay đổi:**
+- `control_center_panel.xml` - Layout hoàn toàn mới giống iOS 17
+- `ios_widget_background.xml` - Dark translucent background
+- `ios_widget_background_active.xml` - White active state
+- `ios_small_button.xml` - Small square button background
+- `ios_small_button_active.xml` - Active state với white background
+- `ios_slider_background.xml` - Tall slider background
+- `ios_slider_fill.xml` - White slider fill
+- `ios_focus_circle.xml` - Purple circle cho Focus icon
+- `ios_home_indicator.xml` - Home indicator bar
 
-**Tính năng:**
-- Frosted glass blur effect
-- Interactive toggle buttons
-- Draggable sliders
-- Touch/click haptic feedback
-- Responsive design
-- Secure server (path traversal protection)
-
-**Chạy server:**
-```bash
-node web/server.js
-```
-Server sẽ chạy tại http://0.0.0.0:5000
+**Icons mới:**
+- `ic_volume_mute.xml` - Volume muted icon
+- `ic_screen_recording.xml` - Screen recording icon
+- `ic_display.xml` - Display/eye icon
+- `ic_hearing.xml` - Hearing icon
+- `ic_battery.xml` - Battery icon
+- `ic_accessibility.xml` - Accessibility icon
 
 ## Ghi chú kỹ thuật
 - Shizuku `newProcess()` đã bị deprecated nhưng vẫn có thể dùng qua reflection
