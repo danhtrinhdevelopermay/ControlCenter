@@ -29,7 +29,16 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageView
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.EditText
+import android.widget.CheckBox
+import android.widget.ProgressBar
+import android.widget.Toast
+import android.text.InputType
 import android.graphics.Color
+import android.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.dynamicanimation.animation.DynamicAnimation
@@ -615,6 +624,12 @@ class ControlCenterService : Service() {
             }
         }
         
+        controlCenterView?.findViewById<View>(R.id.wifiButton)?.setOnLongClickListener { button ->
+            vibrate()
+            showWifiListDialog()
+            true
+        }
+        
         controlCenterView?.findViewById<View>(R.id.bluetoothButton)?.setOnClickListener { button ->
             val currentState = SystemControlHelper.isBluetoothEnabled(this)
             val newState = !currentState
@@ -1067,9 +1082,186 @@ class ControlCenterService : Service() {
             MediaNotificationListener.initMediaSessionManager(this)
         }
     }
+    
+    private var wifiScannerHelper: WiFiScannerHelper? = null
+    private var wifiDialog: AlertDialog? = null
+    private var passwordDialog: AlertDialog? = null
+    
+    private fun showWifiListDialog() {
+        if (!SystemControlHelper.isWifiEnabled(this)) {
+            Toast.makeText(this, "Vui lòng bật Wi-Fi trước", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_wifi_list, null)
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.wifiRecyclerView)
+        val loadingProgress = dialogView.findViewById<ProgressBar>(R.id.loadingProgress)
+        val emptyText = dialogView.findViewById<TextView>(R.id.emptyText)
+        val refreshButton = dialogView.findViewById<ImageView>(R.id.refreshButton)
+        val cancelButton = dialogView.findViewById<TextView>(R.id.cancelButton)
+        
+        refreshButton.setImageResource(R.drawable.ic_refresh)
+        
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        
+        var adapter: WiFiNetworkAdapter? = null
+        
+        wifiScannerHelper = WiFiScannerHelper(this)
+        
+        val scanWifi = {
+            loadingProgress.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+            emptyText.visibility = View.GONE
+            
+            refreshButton.animate()
+                .rotationBy(360f)
+                .setDuration(1000)
+                .start()
+            
+            wifiScannerHelper?.startScan { networks ->
+                loadingProgress.visibility = View.GONE
+                
+                if (networks.isEmpty()) {
+                    emptyText.visibility = View.VISIBLE
+                    recyclerView.visibility = View.GONE
+                } else {
+                    emptyText.visibility = View.GONE
+                    recyclerView.visibility = View.VISIBLE
+                    
+                    if (adapter == null) {
+                        adapter = WiFiNetworkAdapter(networks) { network ->
+                            onWifiNetworkSelected(network)
+                        }
+                        recyclerView.adapter = adapter
+                    } else {
+                        adapter?.updateNetworks(networks)
+                    }
+                }
+            }
+        }
+        
+        refreshButton.setOnClickListener {
+            scanWifi()
+        }
+        
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
+        builder.setView(dialogView)
+        
+        wifiDialog = builder.create()
+        wifiDialog?.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        wifiDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        wifiDialog?.setCanceledOnTouchOutside(true)
+        
+        cancelButton.setOnClickListener {
+            wifiDialog?.dismiss()
+            wifiScannerHelper?.cleanup()
+        }
+        
+        wifiDialog?.setOnDismissListener {
+            wifiScannerHelper?.cleanup()
+        }
+        
+        wifiDialog?.show()
+        
+        scanWifi()
+    }
+    
+    private fun onWifiNetworkSelected(network: WiFiNetwork) {
+        wifiDialog?.dismiss()
+        
+        if (network.isConnected) {
+            Toast.makeText(this, "Đã kết nối với ${network.ssid}", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        if (network.isSecured) {
+            showWifiPasswordDialog(network)
+        } else {
+            connectToWifiNetwork(network, null)
+        }
+    }
+    
+    private fun showWifiPasswordDialog(network: WiFiNetwork) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_wifi_password, null)
+        val ssidText = dialogView.findViewById<TextView>(R.id.ssidText)
+        val passwordInput = dialogView.findViewById<EditText>(R.id.passwordInput)
+        val showPasswordCheckbox = dialogView.findViewById<CheckBox>(R.id.showPasswordCheckbox)
+        val connectButton = dialogView.findViewById<TextView>(R.id.connectButton)
+        val cancelButton = dialogView.findViewById<TextView>(R.id.cancelButton)
+        val connectingProgress = dialogView.findViewById<ProgressBar>(R.id.connectingProgress)
+        val statusText = dialogView.findViewById<TextView>(R.id.statusText)
+        val buttonsContainer = dialogView.findViewById<LinearLayout>(R.id.buttonsContainer)
+        
+        ssidText.text = network.ssid
+        
+        showPasswordCheckbox.setOnCheckedChangeListener { _, isChecked ->
+            passwordInput.inputType = if (isChecked) {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            } else {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            passwordInput.setSelection(passwordInput.text.length)
+        }
+        
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
+        builder.setView(dialogView)
+        
+        passwordDialog = builder.create()
+        passwordDialog?.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        passwordDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        passwordDialog?.setCanceledOnTouchOutside(true)
+        
+        cancelButton.setOnClickListener {
+            passwordDialog?.dismiss()
+        }
+        
+        connectButton.setOnClickListener {
+            val password = passwordInput.text.toString()
+            
+            if (password.length < 8) {
+                statusText.text = "Mật khẩu phải có ít nhất 8 ký tự"
+                statusText.visibility = View.VISIBLE
+                return@setOnClickListener
+            }
+            
+            buttonsContainer.visibility = View.GONE
+            connectingProgress.visibility = View.VISIBLE
+            statusText.text = "Đang kết nối..."
+            statusText.setTextColor(Color.parseColor("#AAAAAA"))
+            statusText.visibility = View.VISIBLE
+            
+            connectToWifiNetwork(network, password)
+        }
+        
+        passwordDialog?.show()
+    }
+    
+    private fun connectToWifiNetwork(network: WiFiNetwork, password: String?) {
+        val scanner = wifiScannerHelper ?: WiFiScannerHelper(this)
+        
+        scanner.connectToNetwork(network.ssid, password, network.isSecured) { success, message ->
+            handler.post {
+                passwordDialog?.dismiss()
+                
+                if (success) {
+                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                    updateWifiStatus()
+                    syncStateFromSystem()
+                    updateAllButtonStates()
+                } else {
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                }
+                
+                scanner.cleanup()
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
+        wifiScannerHelper?.cleanup()
+        wifiDialog?.dismiss()
+        passwordDialog?.dismiss()
         removeViews()
     }
 }
