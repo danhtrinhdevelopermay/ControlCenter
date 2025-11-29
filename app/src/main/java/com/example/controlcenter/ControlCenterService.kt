@@ -40,10 +40,18 @@ class ControlCenterService : Service() {
     companion object {
         const val ACTION_SHOW = "com.example.controlcenter.ACTION_SHOW"
         const val ACTION_HIDE = "com.example.controlcenter.ACTION_HIDE"
+        const val ACTION_DRAG_START = "com.example.controlcenter.ACTION_DRAG_START"
+        const val ACTION_DRAG_UPDATE = "com.example.controlcenter.ACTION_DRAG_UPDATE"
+        const val ACTION_DRAG_END = "com.example.controlcenter.ACTION_DRAG_END"
+        const val EXTRA_DRAG_Y = "drag_y"
+        const val EXTRA_VELOCITY_Y = "velocity_y"
         const val NOTIFICATION_ID = 1001
         const val CHANNEL_ID = "control_center_channel"
 
         var isShowing = false
+            private set
+        
+        var isInteractiveDragging = false
             private set
     }
 
@@ -55,6 +63,7 @@ class ControlCenterService : Service() {
     private var screenWidth = 0
     private var screenHeight = 0
     private var panelHeight = 0
+    private var panelMeasured = false
 
     private var startY = 0f
     private var currentTranslationY = 0f
@@ -65,6 +74,7 @@ class ControlCenterService : Service() {
     
     private val maxBlurRadius = 25f
     private val minFlingVelocity = 1000f
+    private val openThreshold = 0.35f
 
     private val controlStates = mutableMapOf(
         "wifi" to true,
@@ -132,6 +142,17 @@ class ControlCenterService : Service() {
             ACTION_HIDE -> {
                 hideControlCenter()
             }
+            ACTION_DRAG_START -> {
+                handleDragStart()
+            }
+            ACTION_DRAG_UPDATE -> {
+                val dragY = intent.getFloatExtra(EXTRA_DRAG_Y, 0f)
+                handleDragUpdate(dragY)
+            }
+            ACTION_DRAG_END -> {
+                val velocityY = intent.getFloatExtra(EXTRA_VELOCITY_Y, 0f)
+                handleDragEnd(velocityY)
+            }
         }
 
         return START_STICKY
@@ -180,6 +201,71 @@ class ControlCenterService : Service() {
             .build()
     }
 
+    private fun handleDragStart() {
+        if (isShowing || isHiding) return
+        
+        isShowing = true
+        isInteractiveDragging = true
+        panelMeasured = false
+        vibrate()
+
+        addBackgroundView()
+        addControlCenterView()
+
+        backgroundView?.alpha = 0f
+        updateBlurRadius(0f)
+        
+        controlCenterView?.post {
+            panelHeight = controlCenterView?.height ?: 0
+            if (panelHeight > 0) {
+                panelMeasured = true
+                controlCenterView?.translationY = -panelHeight.toFloat()
+            }
+        }
+    }
+
+    private fun handleDragUpdate(dragY: Float) {
+        if (!isShowing || !isInteractiveDragging) return
+        if (!panelMeasured || panelHeight == 0) {
+            controlCenterView?.post {
+                panelHeight = controlCenterView?.height ?: 0
+                if (panelHeight > 0) {
+                    panelMeasured = true
+                    handleDragUpdate(dragY)
+                }
+            }
+            return
+        }
+
+        val newTranslation = (-panelHeight + dragY).coerceIn(-panelHeight.toFloat(), 0f)
+        controlCenterView?.translationY = newTranslation
+
+        val progress = 1f - (kotlin.math.abs(newTranslation) / panelHeight.toFloat())
+        backgroundView?.alpha = progress.coerceIn(0f, 1f)
+        updateBlurRadius(progress.coerceIn(0f, 1f))
+    }
+
+    private fun handleDragEnd(velocityY: Float) {
+        if (!isShowing || !isInteractiveDragging) return
+        isInteractiveDragging = false
+
+        if (!panelMeasured || panelHeight == 0) {
+            removeViews()
+            return
+        }
+
+        val currentTransY = controlCenterView?.translationY ?: -panelHeight.toFloat()
+        val progress = 1f - (kotlin.math.abs(currentTransY) / panelHeight.toFloat())
+        
+        val shouldOpen = progress > openThreshold || velocityY > minFlingVelocity
+        
+        if (shouldOpen) {
+            animateShowWithVelocity(velocityY.coerceAtLeast(0f))
+        } else {
+            hideControlCenterWithVelocity(-kotlin.math.abs(velocityY))
+        }
+    }
+
     private fun showControlCenter() {
         isShowing = true
         vibrate()
@@ -189,6 +275,7 @@ class ControlCenterService : Service() {
 
         controlCenterView?.post {
             panelHeight = controlCenterView?.height ?: 0
+            panelMeasured = true
             controlCenterView?.translationY = -panelHeight.toFloat()
 
             animateShow()
@@ -216,7 +303,7 @@ class ControlCenterService : Service() {
         params.gravity = Gravity.TOP or Gravity.START
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            params.blurBehindRadius = maxBlurRadius.toInt()
+            params.blurBehindRadius = 1
         }
 
         backgroundView = View(this).apply {
@@ -243,7 +330,7 @@ class ControlCenterService : Service() {
                 try {
                     val params = view.layoutParams as? WindowManager.LayoutParams
                     params?.let {
-                        it.blurBehindRadius = blurRadius.toInt()
+                        it.blurBehindRadius = blurRadius.toInt().coerceAtLeast(1)
                         windowManager?.updateViewLayout(view, it)
                     }
                 } catch (e: Exception) {
@@ -310,7 +397,9 @@ class ControlCenterService : Service() {
     private fun handleBackgroundTouch(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                hideControlCenter()
+                if (!isInteractiveDragging) {
+                    hideControlCenter()
+                }
                 return true
             }
         }
@@ -318,6 +407,8 @@ class ControlCenterService : Service() {
     }
 
     private fun handlePanelTouch(event: MotionEvent): Boolean {
+        if (isInteractiveDragging) return false
+        
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 isDragging = true
@@ -407,6 +498,7 @@ class ControlCenterService : Service() {
     private fun hideControlCenterWithVelocity(velocity: Float) {
         if (isHiding) return
         isHiding = true
+        isInteractiveDragging = false
         
         currentAnimation?.cancel()
         
@@ -446,6 +538,8 @@ class ControlCenterService : Service() {
         isShowing = false
         isDragging = false
         isHiding = false
+        isInteractiveDragging = false
+        panelMeasured = false
         
         currentAnimation?.cancel()
         currentAnimation = null
