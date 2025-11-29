@@ -11,7 +11,9 @@ import android.graphics.PixelFormat
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -61,6 +63,7 @@ class ControlCenterService : Service() {
     private var controlCenterView: View? = null
     private var backgroundView: View? = null
     private var blurAnimator: ValueAnimator? = null
+    private val handler = Handler(Looper.getMainLooper())
 
     private var screenWidth = 0
     private var screenHeight = 0
