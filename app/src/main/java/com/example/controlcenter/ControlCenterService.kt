@@ -47,6 +47,9 @@ import androidx.dynamicanimation.animation.SpringForce
 import android.view.VelocityTracker
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ControlCenterService : Service() {
 
@@ -894,7 +897,7 @@ class ControlCenterService : Service() {
         
         val repository = com.example.controlcenter.shortcuts.ShortcutRepository(this)
         
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             val shortcuts = repository.getActiveShortcutsList()
             
             if (shortcuts.isEmpty()) {
