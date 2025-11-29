@@ -37,7 +37,7 @@ class BluetoothDeviceAdapter(
         }
     }
 
-    private fun getDeviceIcon(name: String, deviceType: Int): Int {
+    private fun getDeviceIcon(name: String, deviceType: String): Int {
         val nameLower = name.lowercase()
         
         return when {

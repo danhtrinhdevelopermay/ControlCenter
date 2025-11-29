@@ -50,6 +50,7 @@ import android.view.WindowInsetsController
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.view.animation.OvershootInterpolator
+import android.provider.Settings
 
 class ControlCenterService : Service() {
 
