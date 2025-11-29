@@ -55,7 +55,21 @@ object ShizukuHelper {
                 return false
             }
             
-            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            // Use reflection to access private newProcess method
+            val process = try {
+                val method = Shizuku::class.java.getDeclaredMethod(
+                    "newProcess",
+                    Array<String>::class.java,
+                    Array<String>::class.java,
+                    String::class.java
+                )
+                method.isAccessible = true
+                method.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to use Shizuku.newProcess, falling back to Runtime.exec", e)
+                Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            }
+            
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             val errorReader = BufferedReader(InputStreamReader(process.errorStream))
             
