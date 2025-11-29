@@ -23,8 +23,10 @@ This is an Android Kotlin application that provides a system-wide Control Center
 
 ### Flow
 ```
-User swipe → GestureAccessibilityService detects → 
-ControlCenterService shows overlay → User interacts → 
+User touches swipe zone → GestureAccessibilityService sends DRAG_START →
+Control Center appears and follows finger → DRAG_UPDATE continuously →
+User releases → DRAG_END with velocity →
+Open (if >35% or velocity) / Close animation → User interacts →
 Dismiss gesture → Overlay hides
 ```
 
@@ -58,6 +60,7 @@ app/src/main/
 3. Download APK from Artifacts
 
 ## Recent Changes
+- Nov 29, 2025: Implemented interactive drag-to-follow gesture - Control Center now follows finger in real-time when dragging down from swipe zone (like iOS native behavior)
 - Nov 29, 2025: Added customizable swipe zone settings with visual preview overlay
 - Nov 29, 2025: Fixed control center flashing issue when closing (added isHiding flag and visibility control)
 - Nov 29, 2025: Added immersive mode to hide navigation bar and status bar when Control Center is open
@@ -76,3 +79,7 @@ app/src/main/
 - iOS-style UI with rounded widgets, circular buttons, and vertical sliders
 - SwipeZoneSettings stores zone configuration in SharedPreferences
 - Visual preview overlay (green semi-transparent) shows when configuring zone, auto-hides when leaving app
+- Interactive drag mode: Panel follows finger via ACTION_DRAG_START/UPDATE/END intents
+- VelocityTracker in both services for velocity-based animations
+- 35% progress threshold or 1000px/s velocity determines open/close behavior
+- isInteractiveDragging flag prevents conflicts between drag mode and panel touch handlers
