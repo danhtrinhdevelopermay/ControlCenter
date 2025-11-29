@@ -269,7 +269,7 @@
             <!-- Brightness Slider -->
             <FrameLayout
                 android:id="@+id/brightnessSlider"
-                android:layout_width="72dp"
+                android:layout_width="64dp"
                 android:layout_height="160dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
@@ -285,18 +285,19 @@
                     android:background="@drawable/miui_slider_fill" />
 
                 <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:id="@+id/brightnessIcon"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="18dp"
+                    android:layout_marginBottom="14dp"
                     android:src="@drawable/ic_brightness"
-                    android:tint="#666666" />
+                    android:tint="#808080" />
             </FrameLayout>
 
             <!-- Volume Slider -->
             <FrameLayout
                 android:id="@+id/volumeSlider"
-                android:layout_width="72dp"
+                android:layout_width="64dp"
                 android:layout_height="160dp"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/miui_slider_background"
@@ -311,12 +312,13 @@
                     android:background="@drawable/miui_slider_fill" />
 
                 <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:id="@+id/volumeIcon"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="18dp"
+                    android:layout_marginBottom="14dp"
                     android:src="@drawable/ic_volume"
-                    android:tint="#666666" />
+                    android:tint="#808080" />
             </FrameLayout>
         </LinearLayout>
 
