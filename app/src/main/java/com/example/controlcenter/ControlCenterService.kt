@@ -210,10 +210,11 @@ class ControlCenterService : Service() {
         vibrate()
 
         addBackgroundView()
-        addControlCenterView()
-
         backgroundView?.alpha = 0f
         updateBlurRadius(0f)
+        
+        addControlCenterView()
+        controlCenterView?.translationY = -screenHeight.toFloat()
         
         controlCenterView?.post {
             panelHeight = controlCenterView?.height ?: 0
