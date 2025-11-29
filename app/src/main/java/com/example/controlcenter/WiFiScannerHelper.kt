@@ -39,6 +39,10 @@ class WiFiScannerHelper(private val context: Context) {
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var isCallbackRegistered = false
     
+    companion object {
+        private const val TAG = "WiFiScannerHelper"
+    }
+    
     fun isWifiEnabled(): Boolean = wifiManager.isWifiEnabled
     
     fun setWifiEnabled(enabled: Boolean): Boolean {
@@ -59,12 +63,52 @@ class WiFiScannerHelper(private val context: Context) {
     fun startScan(onComplete: (List<WiFiNetwork>) -> Unit) {
         onScanCompleteListener = onComplete
         
-        if (!hasLocationPermission()) {
+        if (!wifiManager.isWifiEnabled) {
             onComplete(emptyList())
             return
         }
         
-        if (!wifiManager.isWifiEnabled) {
+        // Try Shizuku first for more reliable scanning on Android 10+
+        if (ShizukuHelper.isShizukuAvailable() && ShizukuHelper.checkShizukuPermission()) {
+            android.util.Log.d(TAG, "Using Shizuku for WiFi scanning")
+            startScanWithShizuku(onComplete)
+        } else {
+            android.util.Log.d(TAG, "Shizuku not available, using standard WiFi scanning")
+            startScanStandard(onComplete)
+        }
+    }
+    
+    private fun startScanWithShizuku(onComplete: (List<WiFiNetwork>) -> Unit) {
+        val currentSsid = getCurrentConnectedSsid()
+        
+        ShizukuHelper.scanWifiNetworks { shizukuNetworks ->
+            if (shizukuNetworks.isNotEmpty()) {
+                android.util.Log.d(TAG, "Shizuku scan found ${shizukuNetworks.size} networks")
+                val networks = shizukuNetworks.map { network ->
+                    WiFiNetwork(
+                        ssid = network.ssid,
+                        bssid = network.bssid,
+                        signalLevel = network.signalLevel,
+                        isSecured = network.isSecured,
+                        securityType = network.securityType,
+                        isConnected = network.ssid == currentSsid
+                    )
+                }.sortedWith(compareByDescending<WiFiNetwork> { it.isConnected }.thenByDescending { it.signalLevel })
+                
+                handler.post {
+                    onComplete(networks)
+                }
+            } else {
+                // Fallback to standard scanning if Shizuku scan returns empty
+                android.util.Log.d(TAG, "Shizuku scan returned empty, falling back to standard scan")
+                startScanStandard(onComplete)
+            }
+        }
+    }
+    
+    private fun startScanStandard(onComplete: (List<WiFiNetwork>) -> Unit) {
+        if (!hasLocationPermission()) {
+            android.util.Log.w(TAG, "No location permission for standard WiFi scan")
             onComplete(emptyList())
             return
         }
@@ -72,11 +116,8 @@ class WiFiScannerHelper(private val context: Context) {
         scanResultsReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 val success = intent?.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false) ?: false
-                if (success) {
-                    processScanResults()
-                } else {
-                    processScanResults()
-                }
+                android.util.Log.d(TAG, "Standard scan broadcast received, success: $success")
+                processScanResults()
                 unregisterReceiver()
             }
         }
@@ -88,13 +129,19 @@ class WiFiScannerHelper(private val context: Context) {
             context.registerReceiver(scanResultsReceiver, intentFilter)
         }
         
+        @Suppress("DEPRECATION")
         val scanStarted = wifiManager.startScan()
+        android.util.Log.d(TAG, "Standard scan started: $scanStarted")
+        
         if (!scanStarted) {
+            // On Android 10+, startScan() often returns false due to throttling
+            // Still try to get cached results
             processScanResults()
         }
         
         handler.postDelayed({
             if (scanResultsReceiver != null) {
+                android.util.Log.d(TAG, "Standard scan timeout, processing cached results")
                 processScanResults()
                 unregisterReceiver()
             }
@@ -182,13 +229,32 @@ class WiFiScannerHelper(private val context: Context) {
     }
     
     fun connectToNetwork(ssid: String, password: String?, isSecured: Boolean, securityType: String = "WPA2", onResult: (Boolean, String) -> Unit) {
-        if (!hasLocationPermission()) {
-            onResult(false, "Cần cấp quyền vị trí để kết nối WiFi")
+        if (securityType == "EAP") {
+            onResult(false, "Mạng doanh nghiệp (EAP) không được hỗ trợ")
             return
         }
         
-        if (securityType == "EAP") {
-            onResult(false, "Mạng doanh nghiệp (EAP) không được hỗ trợ")
+        // Try Shizuku first for more reliable connection on Android 10+
+        if (ShizukuHelper.isShizukuAvailable() && ShizukuHelper.checkShizukuPermission()) {
+            android.util.Log.d(TAG, "Using Shizuku to connect to WiFi: $ssid")
+            ShizukuHelper.connectToWifiNetwork(ssid, password, isSecured) { success, message ->
+                if (success) {
+                    onResult(true, message)
+                } else {
+                    // Fallback to standard method if Shizuku connection fails
+                    android.util.Log.d(TAG, "Shizuku connection failed, trying standard method")
+                    connectWithStandardMethod(ssid, password, isSecured, securityType, onResult)
+                }
+            }
+        } else {
+            android.util.Log.d(TAG, "Shizuku not available, using standard connection method")
+            connectWithStandardMethod(ssid, password, isSecured, securityType, onResult)
+        }
+    }
+    
+    private fun connectWithStandardMethod(ssid: String, password: String?, isSecured: Boolean, securityType: String, onResult: (Boolean, String) -> Unit) {
+        if (!hasLocationPermission()) {
+            onResult(false, "Cần cấp quyền vị trí để kết nối WiFi")
             return
         }
         

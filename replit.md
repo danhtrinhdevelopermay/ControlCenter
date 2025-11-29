@@ -134,9 +134,10 @@ Cho phép người dùng thêm tối đa 8 phím tắt ứng dụng vào Control
 ### Mô tả:
 Cho phép người dùng quét danh sách mạng WiFi khả dụng và kết nối trực tiếp từ Control Center mà không cần vào Settings.
 
-### Files mới:
-- `WiFiScannerHelper.kt` - Helper quét và kết nối mạng WiFi
+### Files:
+- `WiFiScannerHelper.kt` - Helper quét và kết nối mạng WiFi (sử dụng Shizuku hoặc phương thức tiêu chuẩn)
 - `WiFiNetworkAdapter.kt` - Adapter hiển thị danh sách mạng WiFi
+- `ShizukuHelper.kt` - Thêm chức năng quét WiFi qua Shizuku shell commands
 - `dialog_wifi_list.xml` - Layout popup danh sách mạng WiFi
 - `dialog_wifi_password.xml` - Layout popup nhập mật khẩu
 - `item_wifi_network.xml` - Layout item mạng WiFi trong danh sách
@@ -158,19 +159,30 @@ Cho phép người dùng quét danh sách mạng WiFi khả dụng và kết n�
 - Nút làm mới danh sách
 - Hỗ trợ WPA2, WPA3, WEP và mạng mở
 - Hiển thị lỗi nếu kết nối thất bại
+- **Sử dụng Shizuku để quét WiFi** - Khắc phục hạn chế throttling trên Android 10+
 
 ### Permissions cần thiết:
 - `ACCESS_WIFI_STATE` - Đọc trạng thái WiFi
 - `CHANGE_WIFI_STATE` - Thay đổi trạng thái WiFi
-- `ACCESS_FINE_LOCATION` - Quét mạng WiFi (bắt buộc từ Android 6.0+)
+- `ACCESS_FINE_LOCATION` - Quét mạng WiFi (dự phòng khi Shizuku không khả dụng)
 - `ACCESS_COARSE_LOCATION` - Hỗ trợ quét mạng WiFi
 - `ACCESS_NETWORK_STATE` - Kiểm tra trạng thái mạng
+- `moe.shizuku.manager.permission.API_V23` - Shizuku API (ưu tiên)
 
 ### Lưu ý kỹ thuật:
-- Android 10+: Sử dụng WifiNetworkSpecifier API
-- Android 9 trở xuống: Sử dụng WifiConfiguration API (deprecated)
+- **Shizuku (Ưu tiên)**: Sử dụng `cmd wifi list-scan-results` hoặc `dumpsys wifi` để lấy danh sách mạng WiFi, không bị giới hạn throttling
+- **Fallback**: Nếu Shizuku không khả dụng, sử dụng WifiManager.startScan() (có hạn chế trên Android 10+)
+- Android 10+: WifiManager.startScan() bị giới hạn 4 lần quét mỗi 2 phút
+- Kết nối WiFi: Ưu tiên sử dụng `cmd wifi connect-network` qua Shizuku
 - Mạng doanh nghiệp (EAP) không được hỗ trợ
 - WPA3 chỉ hỗ trợ trên Android 11+
+
+### Cách Shizuku quét WiFi:
+1. Thực thi `cmd wifi start-scan` để bắt đầu quét
+2. Đợi 2 giây để quét hoàn tất
+3. Thực thi `cmd wifi list-scan-results` để lấy kết quả
+4. Nếu không có kết quả, thử `dumpsys wifi | grep -A 50 'Latest scan results'`
+5. Cuối cùng thử `wpa_cli -i wlan0 scan_results` (cho một số thiết bị)
 
 ## Media Notification Listener Feature
 
