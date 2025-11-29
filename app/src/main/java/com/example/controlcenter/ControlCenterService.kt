@@ -491,11 +491,6 @@ class ControlCenterService : Service() {
                     val velocityX = velocityTracker?.xVelocity ?: 0f
                     val velocityY = velocityTracker?.yVelocity ?: 0f
                     
-                    val deltaX = event.rawX - startX
-                    val deltaY = event.rawY - startY
-                    val absX = kotlin.math.abs(deltaX)
-                    val absY = kotlin.math.abs(deltaY)
-                    
                     val currentTransX = controlCenterView?.translationX ?: 0f
                     val horizontalProgress = kotlin.math.abs(currentTransX) / screenWidth.toFloat()
                     
