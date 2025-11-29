@@ -724,7 +724,26 @@ class ControlCenterService : Service() {
             vibrate()
         }
         
+        controlCenterView?.findViewById<View>(R.id.playButton)?.setOnClickListener { button ->
+            MediaControlHelper.playPause(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.nextButton)?.setOnClickListener { button ->
+            MediaControlHelper.next(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
+        controlCenterView?.findViewById<View>(R.id.prevButton)?.setOnClickListener { button ->
+            MediaControlHelper.previous(this)
+            animateButtonPress(button)
+            vibrate()
+        }
+        
         updateAllButtonStates()
+        updateMediaPlayerState()
     }
     
     private fun syncStateFromSystem() {
@@ -791,6 +810,14 @@ class ControlCenterService : Service() {
                     .start()
             }
             .start()
+    }
+    
+    private fun updateMediaPlayerState() {
+        controlCenterView?.findViewById<android.widget.TextView>(R.id.musicTitle)?.let { textView ->
+            val isPlaying = MediaControlHelper.isMusicPlaying(this)
+            textView.text = if (isPlaying) "Playing" else "Not Playing"
+            textView.setTextColor(if (isPlaying) Color.WHITE else Color.parseColor("#999999"))
+        }
     }
 
     override fun onDestroy() {

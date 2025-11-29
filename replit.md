@@ -54,7 +54,25 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 - `WRITE_SETTINGS`, `ACCESS_NOTIFICATION_POLICY` - Các quyền hệ thống
 - Bluetooth, WiFi, Camera permissions
 
+## Chức năng Media Player (2025-11-29)
+**Đã thêm:**
+1. ✅ **Media Control Buttons** - Play/Pause, Next, Previous
+2. ✅ **Media State Detection** - Phát hiện nhạc đang phát qua AudioManager
+3. ✅ **Media Commands** - Send media key events qua AudioManager.dispatchMediaKeyEvent()
+4. ✅ **UI Update** - TextView hiển thị "Playing" khi phát nhạc, "Not Playing" khi không
+
+**Files đã thêm/cập nhật:**
+- `MediaControlHelper.kt` - Helper class để điều khiển media
+- `ControlCenterService.kt` - Thêm media button click listeners
+- `control_center_panel.xml` - Thêm ID cho musicTitle TextView
+
+**Cách hoạt động:**
+- Sử dụng `AudioManager.dispatchMediaKeyEvent()` để send media keys
+- Không cần Notification Listener permission
+- Hoạt động với mọi music app (Spotify, YouTube Music, Zalo, v.v.)
+
 ## Ghi chú kỹ thuật
 - Shizuku `newProcess()` đã bị deprecated nhưng vẫn có thể dùng qua reflection
 - App cần cấp quyền Shizuku và các quyền runtime khác để hoạt động đầy đủ
 - UI design theo iOS 18 Control Center với frosted glass effect
+- Media controls hoạt động qua system media key events, không cần thêm permission
