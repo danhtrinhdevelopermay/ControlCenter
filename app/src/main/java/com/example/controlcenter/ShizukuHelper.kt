@@ -2,15 +2,21 @@ package com.example.controlcenter
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.concurrent.Executors
 
 object ShizukuHelper {
     
+    private val executor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    
     private const val TAG = "ShizukuHelper"
-    private const val REQUEST_CODE = 1001
+    private const val REQUEST_CODE = 1002
     
     fun isShizukuAvailable(): Boolean {
         return try {
@@ -57,6 +63,9 @@ object ShizukuHelper {
             val error = errorReader.readText()
             val exitCode = process.waitFor()
             
+            reader.close()
+            errorReader.close()
+            
             if (exitCode != 0) {
                 Log.e(TAG, "Command failed with exit code $exitCode: $command\nError: $error")
                 return false
@@ -66,6 +75,7 @@ object ShizukuHelper {
                 Log.d(TAG, "Command output: $output")
             }
             
+            Log.d(TAG, "Command succeeded: $command")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error executing command: $command", e)
@@ -73,40 +83,54 @@ object ShizukuHelper {
         }
     }
     
-    fun toggleWifi(enable: Boolean): Boolean {
+    fun toggleWifi(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
         val command = if (enable) "svc wifi enable" else "svc wifi disable"
-        return executeShellCommand(command)
+        executeShellCommandAsync(command, callback)
     }
     
-    fun toggleBluetooth(enable: Boolean): Boolean {
+    fun toggleBluetooth(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
         val command = if (enable) "svc bluetooth enable" else "svc bluetooth disable"
-        return executeShellCommand(command)
+        executeShellCommandAsync(command, callback)
     }
     
-    fun toggleAirplaneMode(enable: Boolean): Boolean {
-        val value = if (enable) "1" else "0"
-        val success1 = executeShellCommand("settings put global airplane_mode_on $value")
-        val success2 = executeShellCommand("am broadcast -a android.intent.action.AIRPLANE_MODE")
-        return success1 && success2
+    fun toggleAirplaneMode(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        executor.execute {
+            val value = if (enable) "1" else "0"
+            val success1 = executeShellCommand("settings put global airplane_mode_on $value")
+            val success2 = executeShellCommand("am broadcast -a android.intent.action.AIRPLANE_MODE")
+            val result = success1 && success2
+            callback?.let {
+                mainHandler.post { it(result) }
+            }
+        }
     }
     
-    fun toggleMobileData(enable: Boolean): Boolean {
+    fun toggleMobileData(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
         val command = if (enable) "svc data enable" else "svc data disable"
-        return executeShellCommand(command)
+        executeShellCommandAsync(command, callback)
     }
     
-    fun toggleDoNotDisturb(enable: Boolean): Boolean {
+    fun toggleDoNotDisturb(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
         val mode = if (enable) "1" else "0"
-        return executeShellCommand("cmd notification set_dnd $mode")
+        executeShellCommandAsync("cmd notification set_dnd $mode", callback)
     }
     
-    fun setBrightness(brightness: Int): Boolean {
+    fun setBrightness(brightness: Int, callback: ((Boolean) -> Unit)? = null) {
         val brightnessValue = brightness.coerceIn(0, 255)
-        return executeShellCommand("settings put system screen_brightness $brightnessValue")
+        executeShellCommandAsync("settings put system screen_brightness $brightnessValue", callback)
     }
     
-    fun setRotationLock(locked: Boolean): Boolean {
+    fun setRotationLock(locked: Boolean, callback: ((Boolean) -> Unit)? = null) {
         val value = if (locked) "0" else "1"
-        return executeShellCommand("settings put system accelerometer_rotation $value")
+        executeShellCommandAsync("settings put system accelerometer_rotation $value", callback)
+    }
+    
+    private fun executeShellCommandAsync(command: String, callback: ((Boolean) -> Unit)?) {
+        executor.execute {
+            val result = executeShellCommand(command)
+            callback?.let {
+                mainHandler.post { it(result) }
+            }
+        }
     }
 }

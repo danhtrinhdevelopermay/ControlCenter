@@ -590,66 +590,114 @@ class ControlCenterService : Service() {
         syncStateFromSystem()
         
         controlCenterView?.findViewById<View>(R.id.wifiButton)?.setOnClickListener { button ->
-            val newState = !SystemControlHelper.isWifiEnabled(this)
-            ShizukuHelper.toggleWifi(newState)
-            controlStates["wifi"] = newState
-            updateButtonState(R.id.wifiButton, newState)
+            val currentState = SystemControlHelper.isWifiEnabled(this)
+            val newState = !currentState
             animateButtonPress(button)
             vibrate()
+            ShizukuHelper.toggleWifi(newState) { success ->
+                if (success) {
+                    controlStates["wifi"] = newState
+                    updateButtonState(R.id.wifiButton, newState)
+                } else {
+                    controlStates["wifi"] = SystemControlHelper.isWifiEnabled(this)
+                    updateButtonState(R.id.wifiButton, controlStates["wifi"] ?: false)
+                }
+            }
         }
         
         controlCenterView?.findViewById<View>(R.id.bluetoothButton)?.setOnClickListener { button ->
-            val newState = !SystemControlHelper.isBluetoothEnabled(this)
-            ShizukuHelper.toggleBluetooth(newState)
-            controlStates["bluetooth"] = newState
-            updateButtonState(R.id.bluetoothButton, newState)
+            val currentState = SystemControlHelper.isBluetoothEnabled(this)
+            val newState = !currentState
             animateButtonPress(button)
             vibrate()
+            ShizukuHelper.toggleBluetooth(newState) { success ->
+                if (success) {
+                    controlStates["bluetooth"] = newState
+                    updateButtonState(R.id.bluetoothButton, newState)
+                } else {
+                    controlStates["bluetooth"] = SystemControlHelper.isBluetoothEnabled(this)
+                    updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
+                }
+            }
         }
         
         controlCenterView?.findViewById<View>(R.id.airplaneButton)?.setOnClickListener { button ->
-            val newState = !SystemControlHelper.isAirplaneModeOn(this)
-            ShizukuHelper.toggleAirplaneMode(newState)
-            controlStates["airplane"] = newState
-            updateButtonState(R.id.airplaneButton, newState)
+            val currentState = SystemControlHelper.isAirplaneModeOn(this)
+            val newState = !currentState
             animateButtonPress(button)
             vibrate()
+            ShizukuHelper.toggleAirplaneMode(newState) { success ->
+                if (success) {
+                    controlStates["airplane"] = newState
+                    updateButtonState(R.id.airplaneButton, newState)
+                } else {
+                    controlStates["airplane"] = SystemControlHelper.isAirplaneModeOn(this)
+                    updateButtonState(R.id.airplaneButton, controlStates["airplane"] ?: false)
+                }
+            }
         }
         
         controlCenterView?.findViewById<View>(R.id.cellularButton)?.setOnClickListener { button ->
-            val newState = !(controlStates["cellular"] ?: true)
-            ShizukuHelper.toggleMobileData(newState)
-            controlStates["cellular"] = newState
-            updateButtonState(R.id.cellularButton, newState)
+            val currentState = SystemControlHelper.isMobileDataEnabled(this)
+            val newState = !currentState
             animateButtonPress(button)
             vibrate()
+            ShizukuHelper.toggleMobileData(newState) { success ->
+                if (success) {
+                    controlStates["cellular"] = newState
+                    updateButtonState(R.id.cellularButton, newState)
+                } else {
+                    controlStates["cellular"] = SystemControlHelper.isMobileDataEnabled(this)
+                    updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
+                }
+            }
         }
         
         controlCenterView?.findViewById<View>(R.id.flashlightButton)?.setOnClickListener { button ->
-            val newState = !SystemControlHelper.isFlashlightOn()
-            SystemControlHelper.toggleFlashlight(this, newState)
-            controlStates["flashlight"] = newState
-            updateButtonState(R.id.flashlightButton, newState)
+            val currentState = SystemControlHelper.isFlashlightOn()
+            val newState = !currentState
             animateButtonPress(button)
             vibrate()
+            val success = SystemControlHelper.toggleFlashlight(this, newState)
+            if (success) {
+                controlStates["flashlight"] = newState
+                updateButtonState(R.id.flashlightButton, newState)
+            } else {
+                controlStates["flashlight"] = SystemControlHelper.isFlashlightOn()
+                updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
+            }
         }
         
         controlCenterView?.findViewById<View>(R.id.dndButton)?.setOnClickListener { button ->
-            val newState = !SystemControlHelper.isDoNotDisturbOn(this)
-            ShizukuHelper.toggleDoNotDisturb(newState)
-            controlStates["dnd"] = newState
-            updateButtonState(R.id.dndButton, newState)
+            val currentState = SystemControlHelper.isDoNotDisturbOn(this)
+            val newState = !currentState
             animateButtonPress(button)
             vibrate()
+            ShizukuHelper.toggleDoNotDisturb(newState) { success ->
+                if (success) {
+                    controlStates["dnd"] = newState
+                    updateButtonState(R.id.dndButton, newState)
+                } else {
+                    controlStates["dnd"] = SystemControlHelper.isDoNotDisturbOn(this)
+                    updateButtonState(R.id.dndButton, controlStates["dnd"] ?: false)
+                }
+            }
         }
         
         controlCenterView?.findViewById<View>(R.id.rotationButton)?.setOnClickListener { button ->
-            val newState = !(controlStates["rotation"] ?: false)
-            ShizukuHelper.setRotationLock(newState)
-            controlStates["rotation"] = newState
-            updateButtonState(R.id.rotationButton, newState)
+            val currentState = SystemControlHelper.isRotationLocked(this)
+            val newState = !currentState
             animateButtonPress(button)
             vibrate()
+            ShizukuHelper.setRotationLock(newState) { success ->
+                if (success) {
+                    controlStates["rotation"] = newState
+                    updateButtonState(R.id.rotationButton, newState)
+                } else {
+                    controlStates["rotation"] = SystemControlHelper.isRotationLocked(this)
+                    updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: false)
+                }
+            }
         }
         
         controlCenterView?.findViewById<View>(R.id.focusButton)?.setOnClickListener { button ->
@@ -683,8 +731,10 @@ class ControlCenterService : Service() {
         controlStates["wifi"] = SystemControlHelper.isWifiEnabled(this)
         controlStates["bluetooth"] = SystemControlHelper.isBluetoothEnabled(this)
         controlStates["airplane"] = SystemControlHelper.isAirplaneModeOn(this)
+        controlStates["cellular"] = SystemControlHelper.isMobileDataEnabled(this)
         controlStates["flashlight"] = SystemControlHelper.isFlashlightOn()
         controlStates["dnd"] = SystemControlHelper.isDoNotDisturbOn(this)
+        controlStates["rotation"] = SystemControlHelper.isRotationLocked(this)
     }
 
     private fun updateAllButtonStates() {

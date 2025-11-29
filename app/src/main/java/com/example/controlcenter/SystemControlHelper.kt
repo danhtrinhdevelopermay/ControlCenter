@@ -135,4 +135,32 @@ object SystemControlHelper {
             false
         }
     }
+    
+    fun isMobileDataEnabled(context: Context): Boolean {
+        return try {
+            val value = Settings.Global.getInt(
+                context.contentResolver,
+                "mobile_data",
+                1
+            )
+            value == 1
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking mobile data state", e)
+            true
+        }
+    }
+    
+    fun isRotationLocked(context: Context): Boolean {
+        return try {
+            val value = Settings.System.getInt(
+                context.contentResolver,
+                Settings.System.ACCELEROMETER_ROTATION,
+                0
+            )
+            value == 0
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking rotation lock state", e)
+            false
+        }
+    }
 }
