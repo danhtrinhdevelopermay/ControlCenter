@@ -180,7 +180,7 @@
             <FrameLayout
                 android:id="@+id/mediaPlayerWidget"
                 android:layout_width="0dp"
-                android:layout_height="150dp"
+                android:layout_height="160dp"
                 android:layout_weight="1"
                 android:background="@drawable/miui_media_background"
                 android:layout_marginEnd="6dp"
@@ -334,7 +334,7 @@
             <!-- Sliders Container - Takes the other half width -->
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="150dp"
+                android:layout_height="160dp"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
                 android:orientation="horizontal">
