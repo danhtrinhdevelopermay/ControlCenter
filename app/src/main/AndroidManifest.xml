@@ -22,6 +22,8 @@
         tools:ignore="ProtectedPermissions" />
     
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
