@@ -5,6 +5,7 @@
 - **Ngôn ngữ**: Kotlin + Android
 - **Mô tả**: App điều khiển nhanh các chức năng hệ thống Android như WiFi, Bluetooth, đèn pin, v.v.
 - **Ngày tạo**: 2025-11-29
+- **Phong cách UI**: iOS 18 Control Center
 
 ## Cấu trúc dự án
 - Android app sử dụng Shizuku để điều khiển các chức năng hệ thống
@@ -23,7 +24,24 @@
 ### Vấn đề hiện tại
 - **Triệu chứng**: Đã cấp quyền Shizuku nhưng chỉ có đèn pin và camera hoạt động
 - **Nguyên nhân**: Shell commands cần quyền Shizuku để thực thi
-- **Giải pháp đang áp dụng**: Sử dụng reflection để gọi `Shizuku.newProcess()`
+- **Giải pháp đã áp dụng**: ✅ Sử dụng reflection để gọi `Shizuku.newProcess()`
+
+### UI Improvements iOS 18 Style (2025-11-29)
+**Cập nhật giao diện:**
+1. ✅ **Background Colors** - Cập nhật từ `#662C2C2E` → `#66414145` (iOS frosted glass effect)
+2. ✅ **Corner Radius** - Tăng từ 22dp → 26dp (chuẩn iOS 18)
+3. ✅ **Control Item Background** - Cập nhật từ `#662C2C2E` → `#80535358` (opacity tốt hơn)
+4. ✅ **Active State** - Giảm opacity từ `#FFFFFF` → `#E6FFFFFF` (subtle white)
+5. ✅ **Circle Buttons** - Background từ `#4D2C2C2E` → `#66414145`
+
+**Files đã thay đổi:**
+- `ios_widget_background.xml` - Widget container background
+- `ios_connectivity_widget.xml` - WiFi/Bluetooth group background
+- `ios_now_playing_widget.xml` - Music player background
+- `control_item_background.xml` - Small button backgrounds
+- `control_item_background_active.xml` - Active state
+- `ios_circle_button.xml` - Bottom row buttons
+- `ios_circle_button_active.xml` - Active state
 
 ## Dependencies
 ```kotlin
@@ -39,3 +57,4 @@ implementation("dev.rikka.shizuku:provider:13.1.5")
 ## Ghi chú kỹ thuật
 - Shizuku `newProcess()` đã bị deprecated nhưng vẫn có thể dùng qua reflection
 - App cần cấp quyền Shizuku và các quyền runtime khác để hoạt động đầy đủ
+- UI design theo iOS 18 Control Center với frosted glass effect
