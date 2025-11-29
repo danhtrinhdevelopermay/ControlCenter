@@ -640,9 +640,11 @@ class ControlCenterService : Service() {
                 if (success) {
                     controlStates["cellular"] = newState
                     updateButtonState(R.id.cellularButton, newState)
+                    updateCellularStatus()
                 } else {
                     controlStates["cellular"] = SystemControlHelper.isMobileDataEnabled(this)
                     updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
+                    updateCellularStatus()
                 }
             }
         }
@@ -934,6 +936,7 @@ class ControlCenterService : Service() {
         updateButtonState(R.id.wifiButton, controlStates["wifi"] ?: false)
         updateWifiStatus()
         updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
+        updateCellularStatus()
         updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
         updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
         updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: false)
@@ -968,15 +971,32 @@ class ControlCenterService : Service() {
     }
     
     private fun updateWifiStatus() {
+        val wifiText = controlCenterView?.findViewById<android.widget.TextView>(R.id.wifiText)
         val wifiStatusText = controlCenterView?.findViewById<android.widget.TextView>(R.id.wifiStatusText)
         val isEnabled = controlStates["wifi"] ?: false
         
         if (!isEnabled) {
+            wifiText?.text = "Wi-Fi"
             wifiStatusText?.text = "Tắt"
         } else {
             val ssid = SystemControlHelper.getWifiSSID(this)
-            wifiStatusText?.text = ssid ?: "Không kết nối"
+            if (ssid != null && ssid.isNotEmpty() && ssid != "<unknown ssid>") {
+                wifiText?.text = ssid
+                wifiStatusText?.text = "Đã kết nối"
+            } else {
+                wifiText?.text = "Wi-Fi"
+                wifiStatusText?.text = "Không kết nối"
+            }
         }
+    }
+    
+    private fun updateCellularStatus() {
+        val cellularText = controlCenterView?.findViewById<android.widget.TextView>(R.id.cellularText)
+        val cellularStatusText = controlCenterView?.findViewById<android.widget.TextView>(R.id.cellularStatusText)
+        val isEnabled = controlStates["cellular"] ?: false
+        
+        cellularText?.text = "Dữ liệu di động"
+        cellularStatusText?.text = if (isEnabled) "Đang bật" else "Tắt"
     }
 
     private fun animateButtonPress(button: View) {
