@@ -173,9 +173,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            android:weightSum="2">
 
-            <!-- Media Control Widget -->
+            <!-- Media Control Widget - Takes exactly half width like WiFi button -->
             <FrameLayout
                 android:id="@+id/mediaPlayerWidget"
                 android:layout_width="0dp"
@@ -330,64 +331,73 @@
                 </LinearLayout>
             </FrameLayout>
 
-            <!-- Brightness Slider -->
-            <FrameLayout
-                android:id="@+id/brightnessSlider"
-                android:layout_width="56dp"
+            <!-- Sliders Container - Takes the other half width -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="150dp"
+                android:layout_weight="1"
                 android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/miui_slider_background"
-                android:clipChildren="true"
-                android:clipToPadding="true"
-                android:clipToOutline="true"
-                android:outlineProvider="background">
+                android:orientation="horizontal">
 
-                <View
-                    android:id="@+id/brightnessFill"
-                    android:layout_width="match_parent"
-                    android:layout_height="90dp"
-                    android:layout_gravity="bottom"
-                    android:background="@drawable/miui_slider_fill" />
+                <!-- Brightness Slider -->
+                <FrameLayout
+                    android:id="@+id/brightnessSlider"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/miui_slider_background"
+                    android:clipChildren="true"
+                    android:clipToPadding="true"
+                    android:clipToOutline="true"
+                    android:outlineProvider="background">
 
-                <ImageView
-                    android:id="@+id/brightnessIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="12dp"
-                    android:src="@drawable/ic_brightness"
-                    android:tint="#808080" />
-            </FrameLayout>
+                    <View
+                        android:id="@+id/brightnessFill"
+                        android:layout_width="match_parent"
+                        android:layout_height="90dp"
+                        android:layout_gravity="bottom"
+                        android:background="@drawable/miui_slider_fill" />
 
-            <!-- Volume Slider -->
-            <FrameLayout
-                android:id="@+id/volumeSlider"
-                android:layout_width="56dp"
-                android:layout_height="150dp"
-                android:layout_marginStart="6dp"
-                android:background="@drawable/miui_slider_background"
-                android:clipChildren="true"
-                android:clipToPadding="true"
-                android:clipToOutline="true"
-                android:outlineProvider="background">
+                    <ImageView
+                        android:id="@+id/brightnessIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:src="@drawable/ic_brightness"
+                        android:tint="#808080" />
+                </FrameLayout>
 
-                <View
-                    android:id="@+id/volumeFill"
-                    android:layout_width="match_parent"
-                    android:layout_height="75dp"
-                    android:layout_gravity="bottom"
-                    android:background="@drawable/miui_slider_fill" />
+                <!-- Volume Slider -->
+                <FrameLayout
+                    android:id="@+id/volumeSlider"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/miui_slider_background"
+                    android:clipChildren="true"
+                    android:clipToPadding="true"
+                    android:clipToOutline="true"
+                    android:outlineProvider="background">
 
-                <ImageView
-                    android:id="@+id/volumeIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="12dp"
-                    android:src="@drawable/ic_volume"
-                    android:tint="#808080" />
-            </FrameLayout>
+                    <View
+                        android:id="@+id/volumeFill"
+                        android:layout_width="match_parent"
+                        android:layout_height="75dp"
+                        android:layout_gravity="bottom"
+                        android:background="@drawable/miui_slider_fill" />
+
+                    <ImageView
+                        android:id="@+id/volumeIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:src="@drawable/ic_volume"
+                        android:tint="#808080" />
+                </FrameLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Row 3-4: Circular Buttons (2 rows x 4 columns) -->
