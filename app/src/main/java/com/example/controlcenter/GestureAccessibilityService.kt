@@ -37,6 +37,22 @@ class GestureAccessibilityService : AccessibilityService() {
         setupGestureDetector()
     }
 
+    fun refreshGestureDetector() {
+        removeGestureDetector()
+        setupGestureDetector()
+    }
+
+    private fun removeGestureDetector() {
+        gestureDetectorView?.let {
+            try {
+                windowManager?.removeView(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        gestureDetectorView = null
+    }
+
     private fun setupGestureDetector() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
@@ -46,12 +62,16 @@ class GestureAccessibilityService : AccessibilityService() {
         screenWidth = displayMetrics.widthPixels
         screenHeight = displayMetrics.heightPixels
 
-        val gestureAreaWidth = screenWidth / 3
-        val gestureAreaHeight = 100
+        val xPercent = SwipeZoneSettings.getZoneXPercent(this)
+        val widthPercent = SwipeZoneSettings.getZoneWidthPercent(this)
+        val zoneHeight = SwipeZoneSettings.getZoneHeight(this)
+
+        val gestureAreaX = (screenWidth * xPercent / 100f).toInt()
+        val gestureAreaWidth = (screenWidth * widthPercent / 100f).toInt().coerceAtLeast(50)
 
         val params = WindowManager.LayoutParams(
             gestureAreaWidth,
-            gestureAreaHeight,
+            zoneHeight,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
             else
@@ -63,8 +83,8 @@ class GestureAccessibilityService : AccessibilityService() {
             PixelFormat.TRANSLUCENT
         )
 
-        params.gravity = Gravity.TOP or Gravity.END
-        params.x = 0
+        params.gravity = Gravity.TOP or Gravity.START
+        params.x = gestureAreaX
         params.y = 0
 
         gestureDetectorView = View(this).apply {
@@ -120,12 +140,6 @@ class GestureAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         instance = null
-        gestureDetectorView?.let {
-            try {
-                windowManager?.removeView(it)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        removeGestureDetector()
     }
 }
