@@ -72,7 +72,7 @@ class ControlCenterService : Service() {
     private var isHiding = false
     private var currentAnimation: SpringAnimation? = null
     
-    private val maxBlurRadius = 25f
+    private val maxBlurRadius = 75f
     private val minFlingVelocity = 1000f
     private val openThreshold = 0.35f
 
@@ -299,7 +299,7 @@ class ControlCenterService : Service() {
                     WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS,
             PixelFormat.TRANSLUCENT
         )
-        params.dimAmount = 0.3f
+        params.dimAmount = 0.0f
         params.gravity = Gravity.TOP or Gravity.START
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
