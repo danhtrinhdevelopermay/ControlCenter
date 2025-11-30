@@ -34,6 +34,10 @@ The UI adheres strictly to the MIUI Control Center design language, featuring:
     - **Swipe to dismiss**: Vuốt thông báo sang phải để xóa thông báo đó
     - **Clear all**: Nhấn nút X ở dưới để xóa tất cả thông báo từ hệ thống
     - **RecyclerView migration**: Chuyển từ ScrollView+LinearLayout sang RecyclerView với ViewHolder pattern để cải thiện hiệu suất cuộn đáng kể
+    - **Auto contrast text color**: Header text (time/date) automatically adjusts to black or white based on background luminance for visibility
+    - **Notification actions**: Display action buttons (like Reply, Mute) from notifications with up to 3 actions per notification
+    - **ContentIntent support**: Clicking a notification now opens the correct activity using the notification's contentIntent instead of just launching the app
+    - **NotificationData extended**: Added `contentIntent` (PendingIntent) and `actions` (List<NotificationAction>) to store notification interaction data
 - **Brightness & Volume Control:** Sliders directly interact with `Settings.System.SCREEN_BRIGHTNESS` (requiring `WRITE_SETTINGS` permission) and `AudioManager.STREAM_MUSIC`, respectively.
 - **App Shortcuts:** Allows users to add up to 8 customizable application shortcuts, managed by `AppShortcutManager.kt` and `AppPickerActivity.kt`. Requires `QUERY_ALL_PACKAGES` permission.
 - **Advanced WiFi Scanning & Connection:** `WiFiScannerHelper.kt` enables scanning for available WiFi networks and connecting from within the Control Center. It prioritizes Shizuku for scanning (`cmd wifi list-scan-results`) to bypass Android 10+ throttling, with `WifiManager.startScan()` as a fallback.
