@@ -536,6 +536,10 @@ class NotificationCenterService : Service() {
 
     private fun setupNotificationList() {
         recyclerView = notificationCenterView?.findViewById(R.id.notificationsRecyclerView)
+        val scrollView = notificationCenterView?.findViewById<android.widget.ScrollView>(R.id.notificationsScrollView)
+        
+        recyclerView?.visibility = View.VISIBLE
+        scrollView?.visibility = View.GONE
         
         val clearAllButton = notificationCenterView?.findViewById<ImageView>(R.id.clearAllButton)
         clearAllButton?.setOnClickListener {

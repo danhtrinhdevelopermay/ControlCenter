@@ -38,6 +38,7 @@ import android.widget.TextView
 import android.widget.EditText
 import android.widget.CheckBox
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.Toast
 import android.text.InputType
 import android.graphics.Color
@@ -852,6 +853,11 @@ class ControlCenterService : Service() {
     }
     
     private fun loadNotificationsFromListener() {
+        val scrollView = notificationPanelView?.findViewById<ScrollView>(R.id.notificationsScrollView)
+        val recyclerView = notificationPanelView?.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.notificationsRecyclerView)
+        scrollView?.visibility = View.VISIBLE
+        recyclerView?.visibility = View.GONE
+        
         val container = notificationPanelView?.findViewById<LinearLayout>(R.id.notificationsContainer) ?: return
         container.removeAllViews()
         
