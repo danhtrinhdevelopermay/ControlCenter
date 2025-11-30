@@ -138,12 +138,59 @@ class ControlCenterService : Service() {
     
     private val activeColor = Color.parseColor("#007AFF")
     private val inactiveColor = Color.WHITE
+    
+    // Cached panel height for faster opening (avoid re-measuring each time)
+    private var cachedPanelHeight = 0
+    private var isPanelHeightCached = false
+    private val backgroundExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         getScreenDimensions()
         createNotificationChannel()
+        
+        // Pre-calculate panel height for faster opening
+        preCachePanelHeight()
+        // Pre-load system states in background
+        preloadSystemStates()
+    }
+    
+    private fun preCachePanelHeight() {
+        handler.post {
+            try {
+                val inflater = LayoutInflater.from(this)
+                val tempView = inflater.inflate(R.layout.control_center_panel, null)
+                
+                // Measure to get panel height
+                tempView.measure(
+                    View.MeasureSpec.makeMeasureSpec(screenWidth, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                )
+                cachedPanelHeight = tempView.measuredHeight
+                isPanelHeightCached = cachedPanelHeight > 0
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    private fun preloadSystemStates() {
+        backgroundExecutor.execute {
+            val wifiState = SystemControlHelper.isWifiEnabled(this)
+            val bluetoothState = SystemControlHelper.isBluetoothEnabled(this)
+            val flashlightState = SystemControlHelper.isFlashlightOn()
+            val rotationState = SystemControlHelper.isRotationLocked(this)
+            val locationState = SystemControlHelper.isLocationEnabled(this)
+            
+            handler.post {
+                controlStates["wifi"] = wifiState
+                controlStates["bluetooth"] = bluetoothState
+                controlStates["flashlight"] = flashlightState
+                controlStates["rotation"] = rotationState
+                controlStates["location"] = locationState
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -222,7 +269,6 @@ class ControlCenterService : Service() {
         
         isShowing = true
         isInteractiveDragging = true
-        panelMeasured = false
         vibrate()
 
         addBackgroundView()
@@ -230,13 +276,23 @@ class ControlCenterService : Service() {
         updateBlurRadius(0f)
         
         addControlCenterView()
-        controlCenterView?.translationY = -screenHeight.toFloat()
         
-        controlCenterView?.post {
-            panelHeight = controlCenterView?.height ?: 0
-            if (panelHeight > 0) {
-                panelMeasured = true
-                controlCenterView?.translationY = -panelHeight.toFloat()
+        // Use cached panel height for immediate response
+        if (isPanelHeightCached && cachedPanelHeight > 0) {
+            panelHeight = cachedPanelHeight
+            panelMeasured = true
+            controlCenterView?.translationY = -panelHeight.toFloat()
+        } else {
+            controlCenterView?.translationY = -screenHeight.toFloat()
+            panelMeasured = false
+            controlCenterView?.post {
+                panelHeight = controlCenterView?.height ?: 0
+                if (panelHeight > 0) {
+                    panelMeasured = true
+                    cachedPanelHeight = panelHeight
+                    isPanelHeightCached = true
+                    controlCenterView?.translationY = -panelHeight.toFloat()
+                }
             }
         }
     }
@@ -290,12 +346,21 @@ class ControlCenterService : Service() {
         addBackgroundView()
         addControlCenterView()
 
-        controlCenterView?.post {
-            panelHeight = controlCenterView?.height ?: 0
+        // Use cached panel height for immediate response
+        if (isPanelHeightCached && cachedPanelHeight > 0) {
+            panelHeight = cachedPanelHeight
             panelMeasured = true
             controlCenterView?.translationY = -panelHeight.toFloat()
-
             animateShow()
+        } else {
+            controlCenterView?.post {
+                panelHeight = controlCenterView?.height ?: 0
+                panelMeasured = true
+                cachedPanelHeight = panelHeight
+                isPanelHeightCached = panelHeight > 0
+                controlCenterView?.translationY = -panelHeight.toFloat()
+                animateShow()
+            }
         }
     }
 
@@ -1753,22 +1818,32 @@ class ControlCenterService : Service() {
     private val quickSettingStates = mutableMapOf<String, Boolean>()
     
     private fun syncQuickSettingStates() {
-        quickSettingStates[QuickSettingTile.TILE_WIFI] = SystemControlHelper.isWifiEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_BLUETOOTH] = SystemControlHelper.isBluetoothEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_MOBILE_DATA] = SystemControlHelper.isMobileDataEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_FLASHLIGHT] = SystemControlHelper.isFlashlightOn()
-        quickSettingStates[QuickSettingTile.TILE_ROTATION_LOCK] = SystemControlHelper.isRotationLocked(this)
-        quickSettingStates[QuickSettingTile.TILE_DO_NOT_DISTURB] = SystemControlHelper.isDoNotDisturbEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_LOCATION] = SystemControlHelper.isLocationEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_AUTO_BRIGHTNESS] = SystemControlHelper.isAutoBrightnessEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_AIRPLANE_MODE] = SystemControlHelper.isAirplaneModeEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_HOTSPOT] = SystemControlHelper.isHotspotEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_NFC] = SystemControlHelper.isNfcEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_BATTERY_SAVER] = SystemControlHelper.isBatterySaverEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_DARK_MODE] = SystemControlHelper.isDarkModeEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_EYE_COMFORT] = SystemControlHelper.isEyeComfortEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_SYNC] = SystemControlHelper.isSyncEnabled(this)
-        quickSettingStates[QuickSettingTile.TILE_INVERT_COLORS] = SystemControlHelper.isInvertColorsEnabled(this)
+        // Run all system state queries in background to avoid UI blocking
+        backgroundExecutor.execute {
+            val states = mapOf(
+                QuickSettingTile.TILE_WIFI to SystemControlHelper.isWifiEnabled(this),
+                QuickSettingTile.TILE_BLUETOOTH to SystemControlHelper.isBluetoothEnabled(this),
+                QuickSettingTile.TILE_MOBILE_DATA to SystemControlHelper.isMobileDataEnabled(this),
+                QuickSettingTile.TILE_FLASHLIGHT to SystemControlHelper.isFlashlightOn(),
+                QuickSettingTile.TILE_ROTATION_LOCK to SystemControlHelper.isRotationLocked(this),
+                QuickSettingTile.TILE_DO_NOT_DISTURB to SystemControlHelper.isDoNotDisturbEnabled(this),
+                QuickSettingTile.TILE_LOCATION to SystemControlHelper.isLocationEnabled(this),
+                QuickSettingTile.TILE_AUTO_BRIGHTNESS to SystemControlHelper.isAutoBrightnessEnabled(this),
+                QuickSettingTile.TILE_AIRPLANE_MODE to SystemControlHelper.isAirplaneModeEnabled(this),
+                QuickSettingTile.TILE_HOTSPOT to SystemControlHelper.isHotspotEnabled(this),
+                QuickSettingTile.TILE_NFC to SystemControlHelper.isNfcEnabled(this),
+                QuickSettingTile.TILE_BATTERY_SAVER to SystemControlHelper.isBatterySaverEnabled(this),
+                QuickSettingTile.TILE_DARK_MODE to SystemControlHelper.isDarkModeEnabled(this),
+                QuickSettingTile.TILE_EYE_COMFORT to SystemControlHelper.isEyeComfortEnabled(this),
+                QuickSettingTile.TILE_SYNC to SystemControlHelper.isSyncEnabled(this),
+                QuickSettingTile.TILE_INVERT_COLORS to SystemControlHelper.isInvertColorsEnabled(this)
+            )
+            
+            handler.post {
+                quickSettingStates.putAll(states)
+                updateQuickSettingTileStates()
+            }
+        }
     }
     
     private fun updateQuickSettingTileStates() {
@@ -1871,11 +1946,23 @@ class ControlCenterService : Service() {
     }
     
     private fun syncStateFromSystem() {
-        controlStates["wifi"] = SystemControlHelper.isWifiEnabled(this)
-        controlStates["bluetooth"] = SystemControlHelper.isBluetoothEnabled(this)
-        controlStates["cellular"] = SystemControlHelper.isMobileDataEnabled(this)
-        controlStates["flashlight"] = SystemControlHelper.isFlashlightOn()
-        controlStates["rotation"] = SystemControlHelper.isRotationLocked(this)
+        // Run system state queries in background to avoid UI blocking
+        backgroundExecutor.execute {
+            val wifiState = SystemControlHelper.isWifiEnabled(this)
+            val bluetoothState = SystemControlHelper.isBluetoothEnabled(this)
+            val cellularState = SystemControlHelper.isMobileDataEnabled(this)
+            val flashlightState = SystemControlHelper.isFlashlightOn()
+            val rotationState = SystemControlHelper.isRotationLocked(this)
+            
+            handler.post {
+                controlStates["wifi"] = wifiState
+                controlStates["bluetooth"] = bluetoothState
+                controlStates["cellular"] = cellularState
+                controlStates["flashlight"] = flashlightState
+                controlStates["rotation"] = rotationState
+                updateAllButtonStates()
+            }
+        }
     }
 
     private fun updateAllButtonStates() {
