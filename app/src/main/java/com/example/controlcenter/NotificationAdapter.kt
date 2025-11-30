@@ -1,12 +1,10 @@
 package com.example.controlcenter
 
-import android.animation.ValueAnimator
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -26,16 +24,21 @@ class NotificationAdapter(
     
     private var cachedCardColor: Int? = null
     private var cachedCornerRadius: Float = 0f
+    private var cachedActionButtonRadius: Float = 0f
+    private var cachedActionColor: Int = Color.parseColor("#1A007AFF")
+    private var cachedActionTextColor: Int = Color.parseColor("#007AFF")
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotificationViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_notification, parent, false)
         
+        val density = parent.context.resources.displayMetrics.density
         if (cachedCornerRadius == 0f) {
-            cachedCornerRadius = 20 * parent.context.resources.displayMetrics.density
+            cachedCornerRadius = 20 * density
+            cachedActionButtonRadius = 14 * density
         }
         
-        return NotificationViewHolder(view)
+        return NotificationViewHolder(view, density)
     }
 
     override fun onBindViewHolder(holder: NotificationViewHolder, position: Int) {
@@ -74,7 +77,7 @@ class NotificationAdapter(
         return cachedCardColor!!
     }
 
-    inner class NotificationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class NotificationViewHolder(itemView: View, private val density: Float) : RecyclerView.ViewHolder(itemView) {
         private val appIcon: ImageView = itemView.findViewById(R.id.appIcon)
         private val appName: TextView = itemView.findViewById(R.id.appName)
         private val notificationTime: TextView = itemView.findViewById(R.id.notificationTime)
@@ -88,6 +91,10 @@ class NotificationAdapter(
         
         private var currentNotification: NotificationData? = null
         private var cardBackground: GradientDrawable? = null
+        private val actionButtons = mutableListOf<TextView>()
+        private val paddingH = (12 * density).toInt()
+        private val paddingV = (6 * density).toInt()
+        private val marginEnd = (8 * density).toInt()
 
         init {
             cardBackground = GradientDrawable().apply {
@@ -95,6 +102,28 @@ class NotificationAdapter(
                 cornerRadius = cachedCornerRadius
             }
             notificationCard.background = cardBackground
+            
+            for (i in 0 until 3) {
+                val button = TextView(itemView.context).apply {
+                    setTextColor(cachedActionTextColor)
+                    textSize = 13f
+                    setPadding(paddingH, paddingV, paddingH, paddingV)
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        cornerRadius = cachedActionButtonRadius
+                        setColor(cachedActionColor)
+                    }
+                    val params = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    params.marginEnd = marginEnd
+                    layoutParams = params
+                    visibility = View.GONE
+                }
+                actionButtons.add(button)
+                actionsContainer.addView(button)
+            }
         }
 
         fun bind(notification: NotificationData) {
@@ -162,48 +191,27 @@ class NotificationAdapter(
         }
         
         private fun setupActions(notification: NotificationData) {
-            actionsContainer.removeAllViews()
+            val actions = notification.actions.take(3)
             
-            if (notification.actions.isEmpty()) {
+            if (actions.isEmpty()) {
                 actionsContainer.visibility = View.GONE
+                actionButtons.forEach { it.visibility = View.GONE }
                 return
             }
             
             actionsContainer.visibility = View.VISIBLE
-            val context = itemView.context
-            val density = context.resources.displayMetrics.density
             
-            val displayActions = notification.actions.take(3)
-            
-            for (action in displayActions) {
-                val actionButton = TextView(context).apply {
-                    text = action.title
-                    setTextColor(Color.parseColor("#007AFF"))
-                    textSize = 13f
-                    
-                    val paddingH = (12 * density).toInt()
-                    val paddingV = (6 * density).toInt()
-                    setPadding(paddingH, paddingV, paddingH, paddingV)
-                    
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.RECTANGLE
-                        cornerRadius = 14 * density
-                        setColor(Color.parseColor("#1A007AFF"))
+            for (i in 0 until 3) {
+                if (i < actions.size) {
+                    val action = actions[i]
+                    actionButtons[i].apply {
+                        text = action.title
+                        visibility = View.VISIBLE
+                        setOnClickListener { onActionClick(action) }
                     }
-                    
-                    val params = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    )
-                    params.marginEnd = (8 * density).toInt()
-                    layoutParams = params
-                    
-                    setOnClickListener {
-                        onActionClick(action)
-                    }
+                } else {
+                    actionButtons[i].visibility = View.GONE
                 }
-                
-                actionsContainer.addView(actionButton)
             }
         }
         
@@ -239,28 +247,18 @@ class NotificationAdapter(
 
         private fun animateExpand() {
             notificationContent.maxLines = Integer.MAX_VALUE
-            
-            ValueAnimator.ofFloat(0f, 180f).apply {
-                duration = 150
-                interpolator = AccelerateDecelerateInterpolator()
-                addUpdateListener { animator ->
-                    expandArrow.rotation = animator.animatedValue as Float
-                }
-                start()
-            }
+            expandArrow.animate()
+                .rotation(180f)
+                .setDuration(120)
+                .start()
         }
 
         private fun animateCollapse() {
             notificationContent.maxLines = maxCollapsedLines
-            
-            ValueAnimator.ofFloat(180f, 0f).apply {
-                duration = 150
-                interpolator = AccelerateDecelerateInterpolator()
-                addUpdateListener { animator ->
-                    expandArrow.rotation = animator.animatedValue as Float
-                }
-                start()
-            }
+            expandArrow.animate()
+                .rotation(0f)
+                .setDuration(120)
+                .start()
         }
 
         private fun formatTime(timestamp: Long): String {
