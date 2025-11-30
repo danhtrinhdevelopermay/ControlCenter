@@ -41,6 +41,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.ItemTouchHelper
 
 class NotificationCenterService : Service() {
 
@@ -98,6 +101,9 @@ class NotificationCenterService : Service() {
     )
 
     private val notifications = mutableListOf<NotificationData>()
+    private var notificationAdapter: NotificationAdapter? = null
+    private var recyclerView: RecyclerView? = null
+    private var emptyStateView: TextView? = null
 
     private val notificationChangedListener: ((List<android.service.notification.StatusBarNotification>) -> Unit) = { _ ->
         handler.post {
@@ -503,144 +509,99 @@ class NotificationCenterService : Service() {
 
     private fun applyNotificationAppearance() {
         val headerColor = AppearanceSettings.getNotificationHeaderColorWithOpacity(this)
-        val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
 
         val header = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationHeader)
         header?.background = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             setColor(headerColor)
         }
-
-        val container = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationsContainer)
-        container?.let { cont ->
-            for (i in 0 until cont.childCount) {
-                val child = cont.getChildAt(i)
-                val drawable = GradientDrawable().apply {
-                    shape = GradientDrawable.RECTANGLE
-                    cornerRadius = 20 * resources.displayMetrics.density
-                    setColor(cardColor)
-                }
-                child.background = drawable
-            }
-        }
+        
+        notificationAdapter?.notifyDataSetChanged()
     }
 
     private fun setupNotificationList() {
-        val container = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationsContainer)
-        container?.removeAllViews()
-
+        recyclerView = notificationCenterView?.findViewById(R.id.notificationsRecyclerView)
+        
         val clearAllButton = notificationCenterView?.findViewById<ImageView>(R.id.clearAllButton)
         clearAllButton?.setOnClickListener {
             vibrate()
             dismissAllNotifications()
             notifications.clear()
-            container?.removeAllViews()
-            addEmptyState(container)
+            notificationAdapter?.submitList(emptyList())
+            updateEmptyState()
         }
 
-        if (notifications.isEmpty()) {
-            addEmptyState(container)
-            return
+        notificationAdapter = NotificationAdapter(
+            onItemClick = { notification -> handleNotificationClick(notification) },
+            getCardColor = { AppearanceSettings.getNotificationColorWithOpacity(this) }
+        )
+
+        recyclerView?.apply {
+            layoutManager = LinearLayoutManager(this@NotificationCenterService)
+            adapter = notificationAdapter
+            setHasFixedSize(false)
+            itemAnimator = null
         }
 
-        val inflater = LayoutInflater.from(this)
-        
-        for (notification in notifications) {
-            val itemView = inflater.inflate(R.layout.item_notification, container, false)
-            
-            val appIcon = itemView.findViewById<ImageView>(R.id.appIcon)
-            val appName = itemView.findViewById<TextView>(R.id.appName)
-            val notificationTime = itemView.findViewById<TextView>(R.id.notificationTime)
-            val notificationTitle = itemView.findViewById<TextView>(R.id.notificationTitle)
-            val notificationContent = itemView.findViewById<TextView>(R.id.notificationContent)
-            val notificationImage = itemView.findViewById<ImageView>(R.id.notificationImage)
-            
-            if (notification.icon != null) {
-                appIcon.setImageDrawable(notification.icon)
-            } else {
-                appIcon.setImageResource(R.drawable.ic_notification)
-            }
-            
-            appName.text = notification.appName
-            notificationTime.text = formatTime(notification.time)
-            notificationTitle.text = notification.title
-            
-            if (notification.content.isNotEmpty()) {
-                notificationContent.text = notification.content
-                notificationContent.visibility = View.VISIBLE
-            } else {
-                notificationContent.visibility = View.GONE
-            }
-
-            if (notification.largeIcon != null) {
-                notificationImage.setImageBitmap(notification.largeIcon)
-                notificationImage.visibility = View.VISIBLE
-            } else {
-                notificationImage.visibility = View.GONE
-            }
-
-            setupSwipeToDismiss(itemView, notification, container)
-
-            val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
-            val notificationCard = itemView.findViewById<LinearLayout>(R.id.notificationCard)
-            notificationCard?.background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = 20 * resources.displayMetrics.density
-                setColor(cardColor)
-            }
-            
-            container?.addView(itemView)
-        }
+        setupSwipeToDelete()
+        updateNotificationList()
     }
-    
-    private fun setupSwipeToDismiss(itemView: View, notification: NotificationData, container: LinearLayout?) {
-        var startX = 0f
-        var startY = 0f
-        var isSwiping = false
-        val swipeThreshold = 100 * resources.displayMetrics.density
-        val dismissThreshold = screenWidth * 0.3f
-        
-        itemView.setOnTouchListener { view, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    startX = event.rawX
-                    startY = event.rawY
-                    isSwiping = false
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val deltaX = event.rawX - startX
-                    val deltaY = event.rawY - startY
-                    
-                    if (!isSwiping && kotlin.math.abs(deltaX) > 10 && kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY)) {
-                        isSwiping = true
+
+    private fun setupSwipeToDelete() {
+        val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val notification = notificationAdapter?.removeItem(position)
+                    if (notification != null) {
+                        vibrate()
+                        notifications.remove(notification)
+                        dismissNotification(notification)
+                        updateEmptyState()
                     }
-                    
-                    if (isSwiping && deltaX > 0) {
-                        view.translationX = deltaX
-                        view.alpha = 1f - (deltaX / screenWidth).coerceIn(0f, 0.6f)
-                    }
-                    isSwiping
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    val deltaX = event.rawX - startX
-                    
-                    if (isSwiping && deltaX > dismissThreshold) {
-                        animateDismissNotification(view, notification, container)
-                    } else if (isSwiping) {
-                        view.animate()
-                            .translationX(0f)
-                            .alpha(1f)
-                            .setDuration(150)
-                            .start()
-                    } else if (kotlin.math.abs(deltaX) < 10 && kotlin.math.abs(event.rawY - startY) < 10) {
-                        handleNotificationClick(notification)
-                    }
-                    isSwiping = false
-                    true
-                }
-                else -> false
             }
+
+            override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float = 0.3f
+        }
+
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
+    }
+
+    private fun updateNotificationList() {
+        notificationAdapter?.submitList(notifications.toList())
+        updateEmptyState()
+    }
+
+    private fun updateEmptyState() {
+        if (notifications.isEmpty()) {
+            if (emptyStateView == null) {
+                emptyStateView = TextView(this).apply {
+                    text = "Không có thông báo"
+                    setTextColor(Color.parseColor("#888888"))
+                    textSize = 16f
+                    gravity = android.view.Gravity.CENTER
+                    val dp16 = (16 * resources.displayMetrics.density).toInt()
+                    val dp100 = (100 * resources.displayMetrics.density).toInt()
+                    setPadding(dp16, dp100, dp16, dp100)
+                }
+            }
+            val parent = recyclerView?.parent as? android.view.ViewGroup
+            if (emptyStateView?.parent == null) {
+                parent?.addView(emptyStateView)
+            }
+            recyclerView?.visibility = View.GONE
+            emptyStateView?.visibility = View.VISIBLE
+        } else {
+            recyclerView?.visibility = View.VISIBLE
+            emptyStateView?.visibility = View.GONE
+            (emptyStateView?.parent as? android.view.ViewGroup)?.removeView(emptyStateView)
         }
     }
     
@@ -663,25 +624,6 @@ class NotificationCenterService : Service() {
         }
     }
     
-    private fun animateDismissNotification(view: View, notification: NotificationData, container: LinearLayout?) {
-        vibrate()
-        view.animate()
-            .translationX(screenWidth.toFloat())
-            .alpha(0f)
-            .setDuration(200)
-            .withEndAction {
-                container?.removeView(view)
-                notifications.remove(notification)
-                
-                dismissNotification(notification)
-                
-                if (notifications.isEmpty()) {
-                    addEmptyState(container)
-                }
-            }
-            .start()
-    }
-    
     private fun dismissNotification(notification: NotificationData) {
         try {
             if (notification.packageName != "system") {
@@ -700,26 +642,9 @@ class NotificationCenterService : Service() {
         }
     }
 
-    private fun addEmptyState(container: LinearLayout?) {
-        val emptyView = TextView(this).apply {
-            text = "Không có thông báo"
-            setTextColor(Color.parseColor("#888888"))
-            textSize = 16f
-            gravity = android.view.Gravity.CENTER
-            val dp16 = (16 * resources.displayMetrics.density).toInt()
-            val dp100 = (100 * resources.displayMetrics.density).toInt()
-            setPadding(dp16, dp100, dp16, dp100)
-        }
-        val layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        container?.addView(emptyView, layoutParams)
-    }
-
     private fun refreshNotificationList() {
         if (isShowing && notificationCenterView != null) {
-            setupNotificationList()
+            updateNotificationList()
             applyNotificationAppearance()
         }
     }
