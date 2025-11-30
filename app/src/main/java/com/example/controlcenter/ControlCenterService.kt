@@ -1177,10 +1177,34 @@ class ControlCenterService : Service() {
             vibrator.vibrate(30)
         }
     }
+    
+    private fun updateDateTime() {
+        val dateTimeText = controlCenterView?.findViewById<TextView>(R.id.dateTimeText)
+        
+        val calendar = java.util.Calendar.getInstance()
+        val dayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
+        val dayOfMonth = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        val month = calendar.get(java.util.Calendar.MONTH) + 1
+        
+        val dayName = when (dayOfWeek) {
+            java.util.Calendar.SUNDAY -> "CN"
+            java.util.Calendar.MONDAY -> "Th 2"
+            java.util.Calendar.TUESDAY -> "Th 3"
+            java.util.Calendar.WEDNESDAY -> "Th 4"
+            java.util.Calendar.THURSDAY -> "Th 5"
+            java.util.Calendar.FRIDAY -> "Th 6"
+            java.util.Calendar.SATURDAY -> "Th 7"
+            else -> ""
+        }
+        
+        val formattedDate = "$dayName, $dayOfMonth Thg $month"
+        dateTimeText?.text = formattedDate
+    }
 
     private fun setupControlButtons() {
         syncStateFromSystem()
         applyAppearanceSettings()
+        updateDateTime()
         
         controlCenterView?.findViewById<View>(R.id.wifiButton)?.setOnClickListener { button ->
             val currentState = SystemControlHelper.isWifiEnabled(this)
