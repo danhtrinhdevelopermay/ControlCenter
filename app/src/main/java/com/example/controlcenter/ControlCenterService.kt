@@ -1719,18 +1719,31 @@ class ControlCenterService : Service() {
         val volumeSlider = controlCenterView?.findViewById<FrameLayout>(R.id.volumeSlider)
         val slidersContainer = brightnessSlider?.parent as? LinearLayout
         
-        slidersContainer?.layoutParams?.height = sliderHeightPx
-        slidersContainer?.requestLayout()
+        slidersContainer?.layoutParams?.let { containerParams ->
+            containerParams.height = sliderHeightPx
+            slidersContainer.layoutParams = containerParams
+        }
         
         brightnessSlider?.layoutParams?.let { params ->
-            params.height = sliderHeightPx
-            brightnessSlider.layoutParams = params
+            if (params is LinearLayout.LayoutParams) {
+                params.width = sliderWidthPx
+                params.height = sliderHeightPx
+                params.weight = 0f
+                params.marginEnd = (6 * resources.displayMetrics.density).toInt()
+                brightnessSlider.layoutParams = params
+            }
         }
         
         volumeSlider?.layoutParams?.let { params ->
-            params.height = sliderHeightPx
-            volumeSlider.layoutParams = params
+            if (params is LinearLayout.LayoutParams) {
+                params.width = sliderWidthPx
+                params.height = sliderHeightPx
+                params.weight = 0f
+                volumeSlider.layoutParams = params
+            }
         }
+        
+        slidersContainer?.gravity = android.view.Gravity.CENTER_HORIZONTAL
         
         brightnessSlider?.background = android.graphics.drawable.GradientDrawable().apply {
             shape = android.graphics.drawable.GradientDrawable.RECTANGLE

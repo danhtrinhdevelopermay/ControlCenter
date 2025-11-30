@@ -640,9 +640,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:min="40"
-                    android:max="120"
-                    android:progress="70"
+                    android:max="80"
+                    android:progress="30"
                     android:progressTint="#5856D6"
                     android:thumbTint="#5856D6" />
 
@@ -674,9 +673,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:min="100"
-                    android:max="300"
-                    android:progress="160"
+                    android:max="200"
+                    android:progress="60"
                     android:progressTint="#5856D6"
                     android:thumbTint="#5856D6" />
 

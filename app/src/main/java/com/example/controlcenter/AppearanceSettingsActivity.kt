@@ -190,10 +190,12 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         notificationCenterBlurSeekBar.progress = AppearanceSettings.getNotificationCenterBlur(this)
         notificationCenterBlurValue.text = "${AppearanceSettings.getNotificationCenterBlur(this)}%"
         
-        sliderWidthSeekBar.progress = AppearanceSettings.getSliderWidth(this)
-        sliderWidthValue.text = "${AppearanceSettings.getSliderWidth(this)}dp"
-        sliderHeightSeekBar.progress = AppearanceSettings.getSliderHeight(this)
-        sliderHeightValue.text = "${AppearanceSettings.getSliderHeight(this)}dp"
+        val sliderWidth = AppearanceSettings.getSliderWidth(this)
+        sliderWidthSeekBar.progress = sliderWidth - 40
+        sliderWidthValue.text = "${sliderWidth}dp"
+        val sliderHeight = AppearanceSettings.getSliderHeight(this)
+        sliderHeightSeekBar.progress = sliderHeight - 100
+        sliderHeightValue.text = "${sliderHeight}dp"
 
         updateAllPreviews()
     }
@@ -319,13 +321,29 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             AppearanceSettings.setNotificationCenterBlur(this, value)
         }
         
-        setupSeekBarListenerDp(sliderWidthSeekBar, sliderWidthValue) { value ->
-            AppearanceSettings.setSliderWidth(this, value)
-        }
+        sliderWidthSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val actualValue = progress + 40
+                sliderWidthValue.text = "${actualValue}dp"
+                if (fromUser) {
+                    AppearanceSettings.setSliderWidth(this@AppearanceSettingsActivity, actualValue)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
         
-        setupSeekBarListenerDp(sliderHeightSeekBar, sliderHeightValue) { value ->
-            AppearanceSettings.setSliderHeight(this, value)
-        }
+        sliderHeightSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val actualValue = progress + 100
+                sliderHeightValue.text = "${actualValue}dp"
+                if (fromUser) {
+                    AppearanceSettings.setSliderHeight(this@AppearanceSettingsActivity, actualValue)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupColorInputListener(editText: EditText, onColorChange: (Int) -> Unit) {
@@ -420,8 +438,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         AppearanceSettings.setNotificationCornerRadius(this, notificationCornerRadiusSeekBar.progress)
         AppearanceSettings.setControlCenterBlur(this, controlCenterBlurSeekBar.progress)
         AppearanceSettings.setNotificationCenterBlur(this, notificationCenterBlurSeekBar.progress)
-        AppearanceSettings.setSliderWidth(this, sliderWidthSeekBar.progress)
-        AppearanceSettings.setSliderHeight(this, sliderHeightSeekBar.progress)
+        AppearanceSettings.setSliderWidth(this, sliderWidthSeekBar.progress + 40)
+        AppearanceSettings.setSliderHeight(this, sliderHeightSeekBar.progress + 100)
     }
 
     private fun updateAllPreviews() {
