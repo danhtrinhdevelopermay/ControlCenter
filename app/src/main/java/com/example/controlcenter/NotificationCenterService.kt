@@ -24,6 +24,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.animation.ValueAnimator
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -270,9 +271,15 @@ class NotificationCenterService : Service() {
                         val actions = mutableListOf<NotificationAction>()
                         notification.actions?.forEach { action ->
                             val actionTitle = action.title?.toString() ?: return@forEach
+                            val remoteInputs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+                                action.remoteInputs
+                            } else null
+                            val isReplyAction = remoteInputs != null && remoteInputs.isNotEmpty()
                             actions.add(NotificationAction(
                                 title = actionTitle,
-                                actionIntent = action.actionIntent
+                                actionIntent = action.actionIntent,
+                                remoteInputs = remoteInputs,
+                                isReplyAction = isReplyAction
                             ))
                         }
                         
@@ -699,8 +706,164 @@ class NotificationCenterService : Service() {
     private fun handleActionClick(action: NotificationAction) {
         vibrate()
         try {
-            action.actionIntent?.send()
+            if (action.isReplyAction && action.remoteInputs != null && action.remoteInputs.isNotEmpty()) {
+                showReplyDialog(action)
+            } else {
+                action.actionIntent?.send()
+                hideNotificationCenter()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun showReplyDialog(action: NotificationAction) {
+        val remoteInput = action.remoteInputs?.firstOrNull() ?: return
+        
+        val dialogView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 20)
+            
+            val inputField = EditText(this@NotificationCenterService).apply {
+                hint = remoteInput.label ?: "Nhập tin nhắn..."
+                setHintTextColor(0x99FFFFFF.toInt())
+                setTextColor(Color.WHITE)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 12 * resources.displayMetrics.density
+                    setColor(0x33FFFFFF)
+                }
+                setPadding(40, 30, 40, 30)
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                isSingleLine = false
+                maxLines = 4
+            }
+            addView(inputField, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+            
+            val buttonContainer = LinearLayout(this@NotificationCenterService).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.END
+                setPadding(0, 30, 0, 0)
+                
+                val cancelButton = TextView(this@NotificationCenterService).apply {
+                    text = "Hủy"
+                    setTextColor(0xFFFFFFFF.toInt())
+                    textSize = 16f
+                    setPadding(40, 20, 40, 20)
+                }
+                addView(cancelButton)
+                
+                val sendButton = TextView(this@NotificationCenterService).apply {
+                    text = "Gửi"
+                    setTextColor(0xFF007AFF.toInt())
+                    textSize = 16f
+                    typeface = android.graphics.Typeface.DEFAULT_BOLD
+                    setPadding(40, 20, 40, 20)
+                }
+                addView(sendButton)
+            }
+            addView(buttonContainer, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+        }
+        
+        val inputField = (dialogView.getChildAt(0) as EditText)
+        val buttonContainer = (dialogView.getChildAt(1) as LinearLayout)
+        val cancelButton = buttonContainer.getChildAt(0) as TextView
+        val sendButton = buttonContainer.getChildAt(1) as TextView
+        
+        val dialogParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+            width = (screenWidth * 0.85).toInt()
+        }
+        
+        val dialogContainer = FrameLayout(this).apply {
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 20 * resources.displayMetrics.density
+                setColor(0xDD1C1C1E.toInt())
+            }
+            addView(dialogView)
+        }
+        
+        var dialogAdded = false
+        try {
+            windowManager?.addView(dialogContainer, dialogParams)
+            dialogAdded = true
+            inputField.requestFocus()
+            
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            handler.postDelayed({
+                imm.showSoftInput(inputField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            }, 200)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return
+        }
+        
+        cancelButton.setOnClickListener {
+            if (dialogAdded) {
+                try {
+                    windowManager?.removeView(dialogContainer)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        
+        sendButton.setOnClickListener {
+            val replyText = inputField.text.toString().trim()
+            if (replyText.isNotEmpty()) {
+                sendReply(action, remoteInput, replyText)
+            }
+            if (dialogAdded) {
+                try {
+                    windowManager?.removeView(dialogContainer)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
             hideNotificationCenter()
+        }
+        
+        dialogContainer.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_OUTSIDE) {
+                if (dialogAdded) {
+                    try {
+                        windowManager?.removeView(dialogContainer)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                true
+            } else {
+                false
+            }
+        }
+    }
+    
+    private fun sendReply(action: NotificationAction, remoteInput: android.app.RemoteInput, replyText: String) {
+        try {
+            val intent = Intent()
+            val bundle = android.os.Bundle()
+            bundle.putCharSequence(remoteInput.resultKey, replyText)
+            android.app.RemoteInput.addResultsToIntent(action.remoteInputs, intent, bundle)
+            action.actionIntent?.send(this, 0, intent)
         } catch (e: Exception) {
             e.printStackTrace()
         }
