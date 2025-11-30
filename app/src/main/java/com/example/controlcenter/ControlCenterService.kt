@@ -104,7 +104,7 @@ class ControlCenterService : Service() {
     private var currentPage = 0
     private var pageIndicatorContainer: LinearLayout? = null
     
-    private val maxBlurRadius = 180f
+    private val maxBlurRadius = 165f
     private val minFlingVelocity = 1000f
     private val minHorizontalFlingVelocity = 800f
     private val horizontalSwipeThreshold = 50f

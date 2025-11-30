@@ -85,7 +85,7 @@ class NotificationCenterService : Service() {
     private var isHiding = false
     private var currentAnimation: SpringAnimation? = null
     
-    private val maxBlurRadius = 180f
+    private val maxBlurRadius = 165f
     private val minFlingVelocity = 1000f
     private val openThreshold = 0.0f
 
