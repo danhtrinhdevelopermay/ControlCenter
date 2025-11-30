@@ -265,6 +265,17 @@ class NotificationCenterService : Service() {
                             extras.getParcelable<android.graphics.Bitmap>(Notification.EXTRA_LARGE_ICON)
                         }
                         
+                        val contentIntent = notification.contentIntent
+                        
+                        val actions = mutableListOf<NotificationAction>()
+                        notification.actions?.forEach { action ->
+                            val actionTitle = action.title?.toString() ?: return@forEach
+                            actions.add(NotificationAction(
+                                title = actionTitle,
+                                actionIntent = action.actionIntent
+                            ))
+                        }
+                        
                         newNotifications.add(
                             NotificationData(
                                 id = sbn.id,
@@ -275,7 +286,9 @@ class NotificationCenterService : Service() {
                                 time = sbn.postTime,
                                 icon = appIcon,
                                 largeIcon = largeIcon,
-                                key = sbn.key
+                                key = sbn.key,
+                                contentIntent = contentIntent,
+                                actions = actions
                             )
                         )
                     }
@@ -545,6 +558,7 @@ class NotificationCenterService : Service() {
 
         notificationAdapter = NotificationAdapter(
             onItemClick = { notification -> handleNotificationClick(notification) },
+            onActionClick = { action -> handleActionClick(action) },
             getCardColor = { AppearanceSettings.getNotificationColorWithOpacity(this) }
         )
 
@@ -666,6 +680,16 @@ class NotificationCenterService : Service() {
                 MediaNotificationListener.openNotificationAccessSettings(this)
                 hideNotificationCenter()
             } else {
+                if (notification.contentIntent != null) {
+                    try {
+                        notification.contentIntent.send()
+                        hideNotificationCenter()
+                        return
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                
                 val launchIntent = packageManager.getLaunchIntentForPackage(notification.packageName)
                 if (launchIntent != null) {
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -673,6 +697,16 @@ class NotificationCenterService : Service() {
                     hideNotificationCenter()
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun handleActionClick(action: NotificationAction) {
+        vibrate()
+        try {
+            action.actionIntent?.send()
+            hideNotificationCenter()
         } catch (e: Exception) {
             e.printStackTrace()
         }

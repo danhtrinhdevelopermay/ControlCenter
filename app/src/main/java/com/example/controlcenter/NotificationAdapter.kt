@@ -1,6 +1,7 @@
 package com.example.controlcenter
 
 import android.animation.ValueAnimator
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 class NotificationAdapter(
     private val onItemClick: (NotificationData) -> Unit,
+    private val onActionClick: (NotificationAction) -> Unit,
     private val getCardColor: () -> Int
 ) : ListAdapter<NotificationData, NotificationAdapter.NotificationViewHolder>(NotificationDiffCallback()) {
 
@@ -82,6 +84,7 @@ class NotificationAdapter(
         private val notificationCard: LinearLayout = itemView.findViewById(R.id.notificationCard)
         private val previewContainer: View = itemView.findViewById(R.id.previewContainer)
         private val expandArrow: ImageView = itemView.findViewById(R.id.expandArrow)
+        private val actionsContainer: LinearLayout = itemView.findViewById(R.id.actionsContainer)
         
         private var currentNotification: NotificationData? = null
         private var cardBackground: GradientDrawable? = null
@@ -146,6 +149,8 @@ class NotificationAdapter(
             }
 
             cardBackground?.setColor(getCachedCardColor())
+            
+            setupActions(notification)
 
             expandArrow.setOnClickListener {
                 toggleExpand(notification, itemKey)
@@ -153,6 +158,52 @@ class NotificationAdapter(
 
             itemView.setOnClickListener {
                 onItemClick(notification)
+            }
+        }
+        
+        private fun setupActions(notification: NotificationData) {
+            actionsContainer.removeAllViews()
+            
+            if (notification.actions.isEmpty()) {
+                actionsContainer.visibility = View.GONE
+                return
+            }
+            
+            actionsContainer.visibility = View.VISIBLE
+            val context = itemView.context
+            val density = context.resources.displayMetrics.density
+            
+            val displayActions = notification.actions.take(3)
+            
+            for (action in displayActions) {
+                val actionButton = TextView(context).apply {
+                    text = action.title
+                    setTextColor(Color.parseColor("#007AFF"))
+                    textSize = 13f
+                    
+                    val paddingH = (12 * density).toInt()
+                    val paddingV = (6 * density).toInt()
+                    setPadding(paddingH, paddingV, paddingH, paddingV)
+                    
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        cornerRadius = 14 * density
+                        setColor(Color.parseColor("#1A007AFF"))
+                    }
+                    
+                    val params = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    params.marginEnd = (8 * density).toInt()
+                    layoutParams = params
+                    
+                    setOnClickListener {
+                        onActionClick(action)
+                    }
+                }
+                
+                actionsContainer.addView(actionButton)
             }
         }
         
@@ -231,9 +282,20 @@ class NotificationAdapter(
         }
 
         override fun areContentsTheSame(oldItem: NotificationData, newItem: NotificationData): Boolean {
-            return oldItem.title == newItem.title &&
-                    oldItem.content == newItem.content &&
-                    oldItem.time == newItem.time
+            if (oldItem.title != newItem.title ||
+                oldItem.content != newItem.content ||
+                oldItem.time != newItem.time ||
+                oldItem.actions.size != newItem.actions.size) {
+                return false
+            }
+            
+            for (i in oldItem.actions.indices) {
+                if (oldItem.actions[i].title != newItem.actions[i].title) {
+                    return false
+                }
+            }
+            
+            return true
         }
     }
 }
