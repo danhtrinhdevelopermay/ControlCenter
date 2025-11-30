@@ -18,6 +18,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.service.notification.StatusBarNotification
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -59,6 +60,7 @@ class NotificationCenterService : Service() {
         const val EXTRA_VELOCITY_Y = "velocity_y"
         const val NOTIFICATION_ID = 1002
         const val CHANNEL_ID = "notification_center_channel"
+        private const val TAG = "NotificationCenterService"
 
         var isShowing = false
             private set
