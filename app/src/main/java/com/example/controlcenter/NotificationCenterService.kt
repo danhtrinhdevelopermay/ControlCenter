@@ -576,6 +576,20 @@ class NotificationCenterService : Service() {
             setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
                 setMaxRecycledViews(0, 25)
             })
+            
+            overScrollMode = View.OVER_SCROLL_ALWAYS
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
+                    override fun createEdgeEffect(view: RecyclerView, direction: Int): android.widget.EdgeEffect {
+                        return android.widget.EdgeEffect(view.context).apply {
+                            color = Color.parseColor("#33FFFFFF")
+                        }
+                    }
+                }
+            } else {
+                edgeEffectFactory = StretchEdgeEffectFactory()
+            }
         }
 
         setupSwipeToDelete()
@@ -1289,5 +1303,81 @@ class NotificationCenterService : Service() {
         super.onDestroy()
         MediaNotificationListener.setOnNotificationChangedListener(null)
         removeViews()
+    }
+    
+    inner class StretchEdgeEffectFactory : RecyclerView.EdgeEffectFactory() {
+        override fun createEdgeEffect(recyclerView: RecyclerView, direction: Int): android.widget.EdgeEffect {
+            return StretchEdgeEffect(recyclerView.context, recyclerView, direction)
+        }
+    }
+    
+    inner class StretchEdgeEffect(
+        context: Context,
+        private val recyclerView: RecyclerView,
+        private val direction: Int
+    ) : android.widget.EdgeEffect(context) {
+        
+        private var stretchAmount = 0f
+        private val maxStretch = 0.15f
+        
+        override fun onPull(deltaDistance: Float) {
+            onPull(deltaDistance, 0.5f)
+        }
+        
+        override fun onPull(deltaDistance: Float, displacement: Float) {
+            stretchAmount += deltaDistance * 0.5f
+            stretchAmount = stretchAmount.coerceIn(0f, maxStretch)
+            applyStretch()
+        }
+        
+        override fun onRelease() {
+            if (stretchAmount != 0f) {
+                animateStretchRelease()
+            }
+        }
+        
+        override fun onAbsorb(velocity: Int) {
+            val absVelocity = kotlin.math.abs(velocity)
+            stretchAmount = (absVelocity / 30000f).coerceIn(0f, maxStretch)
+            applyStretch()
+            animateStretchRelease()
+        }
+        
+        override fun isFinished(): Boolean {
+            return stretchAmount == 0f
+        }
+        
+        override fun finish() {
+            stretchAmount = 0f
+            recyclerView.scaleY = 1f
+            recyclerView.pivotY = if (direction == DIRECTION_TOP) 0f else recyclerView.height.toFloat()
+        }
+        
+        private fun applyStretch() {
+            recyclerView.pivotY = if (direction == DIRECTION_TOP) 0f else recyclerView.height.toFloat()
+            recyclerView.scaleY = 1f + stretchAmount
+        }
+        
+        private fun animateStretchRelease() {
+            val startStretch = stretchAmount
+            val animator = ValueAnimator.ofFloat(startStretch, 0f)
+            animator.duration = 300
+            animator.interpolator = android.view.animation.DecelerateInterpolator()
+            animator.addUpdateListener { animation ->
+                stretchAmount = animation.animatedValue as Float
+                applyStretch()
+            }
+            animator.addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    stretchAmount = 0f
+                    recyclerView.scaleY = 1f
+                }
+            })
+            animator.start()
+        }
+        
+        override fun draw(canvas: android.graphics.Canvas?): Boolean {
+            return stretchAmount > 0f
+        }
     }
 }
