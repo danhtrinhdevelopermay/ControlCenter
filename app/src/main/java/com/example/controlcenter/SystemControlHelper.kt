@@ -145,6 +145,14 @@ object SystemControlHelper {
             
             // Return null if SSID is <unknown ssid> (not connected)
             if (ssid == "<unknown ssid>" || ssid.isNullOrBlank()) {
+                // Try Shizuku as last resort
+                if (ShizukuHelper.isShizukuAvailable() && ShizukuHelper.checkShizukuPermission()) {
+                    ssid = ShizukuHelper.getConnectedWifiSSIDSync()
+                    Log.d(TAG, "Got WiFi SSID from Shizuku: $ssid")
+                }
+            }
+            
+            if (ssid == "<unknown ssid>" || ssid.isNullOrBlank()) {
                 return null
             }
             

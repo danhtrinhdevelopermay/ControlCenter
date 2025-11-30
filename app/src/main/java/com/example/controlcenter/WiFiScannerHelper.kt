@@ -190,14 +190,24 @@ class WiFiScannerHelper(private val context: Context) {
     
     fun getCurrentConnectedSsid(): String? {
         return try {
+            var ssid: String? = null
+            
+            // Try standard method first
             val wifiInfo = wifiManager.connectionInfo
             if (wifiInfo != null && wifiInfo.ssid != null) {
-                val ssid = wifiInfo.ssid.replace("\"", "")
-                if (ssid != "<unknown ssid>" && ssid.isNotEmpty()) {
-                    ssid
-                } else {
-                    null
+                ssid = wifiInfo.ssid.replace("\"", "")
+            }
+            
+            // If SSID is unknown, try Shizuku
+            if (ssid == null || ssid == "<unknown ssid>" || ssid.isEmpty()) {
+                if (ShizukuHelper.isShizukuAvailable() && ShizukuHelper.checkShizukuPermission()) {
+                    ssid = ShizukuHelper.getConnectedWifiSSIDSync()
+                    android.util.Log.d(TAG, "Got WiFi SSID from Shizuku: $ssid")
                 }
+            }
+            
+            if (ssid != null && ssid != "<unknown ssid>" && ssid.isNotEmpty()) {
+                ssid
             } else {
                 null
             }

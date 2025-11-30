@@ -608,6 +608,129 @@ object ShizukuHelper {
         }
     }
     
+    fun getConnectedWifiSSID(callback: (String?) -> Unit) {
+        executor.execute {
+            var ssid: String? = null
+            
+            try {
+                if (!checkShizukuPermission()) {
+                    mainHandler.post { callback(null) }
+                    return@execute
+                }
+                
+                // Method 1: Use cmd wifi status
+                val wifiStatus = executeShellCommandWithOutput("cmd wifi status")
+                if (wifiStatus != null) {
+                    Log.d(TAG, "WiFi status output: $wifiStatus")
+                    // Look for "Wifi is connected to" or SSID pattern
+                    val ssidMatch = Regex("SSID:\\s*\"?([^\"\\n]+)\"?", RegexOption.IGNORE_CASE).find(wifiStatus)
+                        ?: Regex("connected to\\s*\"?([^\"\\n,]+)\"?", RegexOption.IGNORE_CASE).find(wifiStatus)
+                    if (ssidMatch != null) {
+                        ssid = ssidMatch.groupValues[1].trim().removeSurrounding("\"")
+                    }
+                }
+                
+                // Method 2: Use dumpsys wifi
+                if (ssid == null || ssid.isEmpty() || ssid == "<unknown ssid>") {
+                    val dumpsysOutput = executeShellCommandWithOutput("dumpsys wifi")
+                    if (dumpsysOutput != null) {
+                        // Look for mWifiInfo patterns
+                        val wifiInfoMatch = Regex("mWifiInfo[^\\n]*SSID:\\s*\"?([^\"\\n,]+)\"?", RegexOption.IGNORE_CASE).find(dumpsysOutput)
+                            ?: Regex("SSID:\\s*\"([^\"]+)\"").find(dumpsysOutput)
+                        if (wifiInfoMatch != null) {
+                            val foundSsid = wifiInfoMatch.groupValues[1].trim()
+                            if (foundSsid != "<unknown ssid>" && foundSsid.isNotEmpty()) {
+                                ssid = foundSsid
+                            }
+                        }
+                        
+                        // Also look for "connected to" pattern
+                        if (ssid == null || ssid.isEmpty()) {
+                            val connectedMatch = Regex("connected.*?SSID[=:]\\s*\"?([^\"\\n,\\]]+)\"?", RegexOption.IGNORE_CASE).find(dumpsysOutput)
+                            if (connectedMatch != null) {
+                                ssid = connectedMatch.groupValues[1].trim().removeSurrounding("\"")
+                            }
+                        }
+                    }
+                }
+                
+                // Method 3: Use settings get wifi
+                if (ssid == null || ssid.isEmpty() || ssid == "<unknown ssid>") {
+                    val settingsOutput = executeShellCommandWithOutput("settings get global wifi_saved_state")
+                    // This might not give SSID directly, but let's try other commands
+                    
+                    val ipOutput = executeShellCommandWithOutput("ip addr show wlan0")
+                    if (ipOutput != null && ipOutput.contains("inet ")) {
+                        // WiFi is connected, try to get SSID from iw
+                        val iwOutput = executeShellCommandWithOutput("iw wlan0 link")
+                        if (iwOutput != null) {
+                            val iwSsidMatch = Regex("SSID:\\s*(.+)", RegexOption.IGNORE_CASE).find(iwOutput)
+                            if (iwSsidMatch != null) {
+                                ssid = iwSsidMatch.groupValues[1].trim()
+                            }
+                        }
+                    }
+                }
+                
+                Log.d(TAG, "Connected WiFi SSID via Shizuku: $ssid")
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error getting connected WiFi SSID", e)
+            }
+            
+            mainHandler.post { callback(ssid) }
+        }
+    }
+    
+    fun getConnectedWifiSSIDSync(): String? {
+        if (!checkShizukuPermission()) {
+            return null
+        }
+        
+        try {
+            // Method 1: Use dumpsys wifi
+            val dumpsysOutput = executeShellCommandWithOutput("dumpsys wifi")
+            if (dumpsysOutput != null) {
+                // Look for mWifiInfo patterns  
+                val wifiInfoMatch = Regex("mWifiInfo[^}]*SSID:\\s*\"([^\"]+)\"", RegexOption.IGNORE_CASE).find(dumpsysOutput)
+                if (wifiInfoMatch != null) {
+                    val ssid = wifiInfoMatch.groupValues[1].trim()
+                    if (ssid != "<unknown ssid>" && ssid.isNotEmpty()) {
+                        Log.d(TAG, "Found connected SSID from dumpsys: $ssid")
+                        return ssid
+                    }
+                }
+                
+                // Try alternative pattern
+                val ssidMatch = Regex("SSID:\\s*\"([^\"]+)\".*?state:\\s*COMPLETED", RegexOption.IGNORE_CASE).find(dumpsysOutput)
+                    ?: Regex("\"([^\"]+)\".*?state=COMPLETED", RegexOption.IGNORE_CASE).find(dumpsysOutput)
+                if (ssidMatch != null) {
+                    val ssid = ssidMatch.groupValues[1].trim()
+                    if (ssid != "<unknown ssid>" && ssid.isNotEmpty()) {
+                        Log.d(TAG, "Found connected SSID from pattern: $ssid")
+                        return ssid
+                    }
+                }
+            }
+            
+            // Method 2: Try iw command
+            val iwOutput = executeShellCommandWithOutput("iw wlan0 link")
+            if (iwOutput != null && !iwOutput.contains("Not connected")) {
+                val iwSsidMatch = Regex("SSID:\\s*(.+)").find(iwOutput)
+                if (iwSsidMatch != null) {
+                    val ssid = iwSsidMatch.groupValues[1].trim()
+                    Log.d(TAG, "Found connected SSID from iw: $ssid")
+                    return ssid
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting connected WiFi SSID sync", e)
+        }
+        
+        return null
+    }
+    
     fun scanWifiNetworks(callback: (List<ShizukuWifiNetwork>) -> Unit) {
         executor.execute {
             val networks = mutableListOf<ShizukuWifiNetwork>()
