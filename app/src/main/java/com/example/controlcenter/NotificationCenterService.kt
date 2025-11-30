@@ -506,7 +506,29 @@ class NotificationCenterService : Service() {
             setColor(headerColor)
         }
         
+        val textColor = getContrastTextColor(headerColor)
+        
+        val timeText = notificationCenterView?.findViewById<TextView>(R.id.timeText)
+        val dateText = notificationCenterView?.findViewById<TextView>(R.id.dateText)
+        
+        timeText?.setTextColor(textColor)
+        dateText?.setTextColor(textColor)
+        
         notificationAdapter?.notifyDataSetChanged()
+    }
+    
+    private fun getContrastTextColor(backgroundColor: Int): Int {
+        val red = Color.red(backgroundColor)
+        val green = Color.green(backgroundColor)
+        val blue = Color.blue(backgroundColor)
+        
+        val luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255
+        
+        return if (luminance > 0.5) {
+            Color.parseColor("#000000")
+        } else {
+            Color.parseColor("#FFFFFF")
+        }
     }
 
     private fun setupNotificationList() {
