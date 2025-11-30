@@ -191,10 +191,17 @@ class NotificationCenterService : Service() {
     private fun loadNotifications() {
         notifications.clear()
         
-        val cachedNotifications = MediaNotificationListener.getCachedNotifications()
-        if (cachedNotifications.isNotEmpty()) {
+        if (!MediaNotificationListener.isNotificationAccessEnabled(this)) {
+            addPermissionNotification()
+            return
+        }
+        
+        MediaNotificationListener.forceRefreshNotifications()
+        
+        val activeNotifications = MediaNotificationListener.getActiveNotifications()
+        if (activeNotifications.isNotEmpty()) {
             try {
-                for (sbn in cachedNotifications) {
+                for (sbn in activeNotifications) {
                     val notification = sbn.notification
                     val extras = notification.extras
                     
@@ -203,6 +210,11 @@ class NotificationCenterService : Service() {
                     
                     if (title.isEmpty() && text.isEmpty()) continue
                     if (sbn.packageName == packageName) continue
+                    
+                    if (notification.flags and Notification.FLAG_FOREGROUND_SERVICE != 0 &&
+                        notification.flags and Notification.FLAG_ONGOING_EVENT != 0) {
+                        continue
+                    }
                     
                     val appName = try {
                         val appInfo = packageManager.getApplicationInfo(sbn.packageName, 0)
@@ -251,36 +263,19 @@ class NotificationCenterService : Service() {
             }
         }
         
-        if (notifications.isEmpty()) {
-            addSampleNotifications()
-        }
-        
         notifications.sortByDescending { it.time }
     }
-
-    private fun addSampleNotifications() {
+    
+    private fun addPermissionNotification() {
         val currentTime = System.currentTimeMillis()
-        
         notifications.add(
             NotificationData(
                 id = 1,
                 packageName = "system",
                 appName = "Hệ thống",
-                title = "Chào mừng",
-                content = "Vuốt xuống từ góc trái để xem thông báo. Vuốt xuống từ góc phải để mở Control Center.",
+                title = "Cấp quyền truy cập thông báo",
+                content = "Để xem thông báo từ các ứng dụng, vui lòng cấp quyền Notification Listener trong cài đặt.",
                 time = currentTime,
-                icon = null
-            )
-        )
-        
-        notifications.add(
-            NotificationData(
-                id = 2,
-                packageName = "system",
-                appName = "Hệ thống",
-                title = "Cấp quyền Notification Listener",
-                content = "Để xem thông báo từ các ứng dụng khác, vui lòng cấp quyền Notification Listener trong cài đặt.",
-                time = currentTime - 60000,
                 icon = null
             )
         )
@@ -554,11 +549,16 @@ class NotificationCenterService : Service() {
             itemView.setOnClickListener {
                 vibrate()
                 try {
-                    val launchIntent = packageManager.getLaunchIntentForPackage(notification.packageName)
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(launchIntent)
+                    if (notification.packageName == "system") {
+                        MediaNotificationListener.openNotificationAccessSettings(this)
                         hideNotificationCenter()
+                    } else {
+                        val launchIntent = packageManager.getLaunchIntentForPackage(notification.packageName)
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(launchIntent)
+                            hideNotificationCenter()
+                        }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()

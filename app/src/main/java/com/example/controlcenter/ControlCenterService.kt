@@ -912,6 +912,19 @@ class ControlCenterService : Service() {
         for (sbn in notifications) {
             if (sbn.packageName == packageName) continue
             
+            val notification = sbn.notification
+            
+            if (notification.flags and android.app.Notification.FLAG_FOREGROUND_SERVICE != 0 &&
+                notification.flags and android.app.Notification.FLAG_ONGOING_EVENT != 0) {
+                continue
+            }
+            
+            val extras = notification.extras
+            val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
+            val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: ""
+            
+            if (title.isEmpty() && text.isEmpty()) continue
+            
             val itemView = LayoutInflater.from(this).inflate(R.layout.item_notification, container, false)
             
             try {
@@ -922,18 +935,20 @@ class ControlCenterService : Service() {
                 itemView.findViewById<ImageView>(R.id.appIcon)?.setImageDrawable(appIcon)
                 itemView.findViewById<TextView>(R.id.appName)?.text = appName
                 
-                val notification = sbn.notification
-                val extras = notification.extras
-                
-                val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
-                val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: ""
-                
                 itemView.findViewById<TextView>(R.id.notificationTitle)?.text = title
                 itemView.findViewById<TextView>(R.id.notificationContent)?.text = text
                 
                 val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                 val timeText = timeFormat.format(java.util.Date(sbn.postTime))
                 itemView.findViewById<TextView>(R.id.notificationTime)?.text = timeText
+                
+                val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
+                val notificationCard = itemView.findViewById<LinearLayout>(R.id.notificationCard)
+                notificationCard?.background = android.graphics.drawable.GradientDrawable().apply {
+                    shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                    cornerRadius = 20 * resources.displayMetrics.density
+                    setColor(cardColor)
+                }
                 
                 itemView.setOnClickListener {
                     vibrate()
