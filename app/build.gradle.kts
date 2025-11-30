@@ -1,10 +1,16 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
-val keystoreFile = rootProject.file("release-keystore.jks")
-val useReleaseSigning = keystoreFile.exists() && keystoreFile.length() > 0
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
 
 android {
     namespace = "com.example.controlcenter"
@@ -18,23 +24,19 @@ android {
         versionName = "1.0"
     }
 
-    if (useReleaseSigning) {
-        signingConfigs {
-            create("release") {
-                storeFile = keystoreFile
-                storePassword = "android123"
-                keyAlias = "release"
-                keyPassword = "android123"
-            }
+    signingConfigs {
+        create("release") {
+            storeFile = file(keystoreProperties.getProperty("storeFile", "../release-keystore.jks"))
+            storePassword = keystoreProperties.getProperty("storePassword", "")
+            keyAlias = keystoreProperties.getProperty("keyAlias", "")
+            keyPassword = keystoreProperties.getProperty("keyPassword", "")
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            if (useReleaseSigning) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
