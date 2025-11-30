@@ -174,7 +174,7 @@ object QuickSettingsManager {
         return if (savedJson != null) {
             try {
                 val jsonArray = JSONArray(savedJson)
-                (0 until jsonArray.length()).map { jsonArray.getString(it) }
+                (0 until jsonArray.length()).map { jsonArray.getString(it) }.distinct()
             } catch (e: Exception) {
                 getDefaultSelectedTileIds()
             }
@@ -185,7 +185,7 @@ object QuickSettingsManager {
 
     fun setSelectedTileIds(context: Context, tileIds: List<String>) {
         val jsonArray = JSONArray()
-        tileIds.forEach { jsonArray.put(it) }
+        tileIds.distinct().forEach { jsonArray.put(it) }
         getPrefs(context).edit().putString(KEY_SELECTED_TILES, jsonArray.toString()).apply()
     }
 
