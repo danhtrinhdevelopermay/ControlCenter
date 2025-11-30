@@ -27,6 +27,11 @@ object AppearanceSettings {
     private const val KEY_PANEL_COLOR = "panel_color"
     private const val KEY_PANEL_OPACITY = "panel_opacity"
     
+    private const val KEY_NOTIFICATION_COLOR = "notification_color"
+    private const val KEY_NOTIFICATION_OPACITY = "notification_opacity"
+    private const val KEY_NOTIFICATION_HEADER_COLOR = "notification_header_color"
+    private const val KEY_NOTIFICATION_HEADER_OPACITY = "notification_header_opacity"
+    
     private const val DEFAULT_BUTTON_COLOR = 0x505050
     private const val DEFAULT_BUTTON_OPACITY = 80
     private const val DEFAULT_BUTTON_ACTIVE_COLOR = 0x007AFF
@@ -47,6 +52,11 @@ object AppearanceSettings {
     
     private const val DEFAULT_PANEL_COLOR = 0x000000
     private const val DEFAULT_PANEL_OPACITY = 0
+    
+    private const val DEFAULT_NOTIFICATION_COLOR = 0x2C2C2E
+    private const val DEFAULT_NOTIFICATION_OPACITY = 90
+    private const val DEFAULT_NOTIFICATION_HEADER_COLOR = 0xFFFFFF
+    private const val DEFAULT_NOTIFICATION_HEADER_OPACITY = 100
     
     private fun getPrefs(context: Context) = 
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -211,6 +221,46 @@ object AppearanceSettings {
         return colorWithOpacity(color, opacity)
     }
     
+    fun getNotificationColor(context: Context): Int = 
+        getPrefs(context).getInt(KEY_NOTIFICATION_COLOR, DEFAULT_NOTIFICATION_COLOR)
+    
+    fun setNotificationColor(context: Context, color: Int) {
+        getPrefs(context).edit().putInt(KEY_NOTIFICATION_COLOR, color).apply()
+    }
+    
+    fun getNotificationOpacity(context: Context): Int = 
+        getPrefs(context).getInt(KEY_NOTIFICATION_OPACITY, DEFAULT_NOTIFICATION_OPACITY)
+    
+    fun setNotificationOpacity(context: Context, opacity: Int) {
+        getPrefs(context).edit().putInt(KEY_NOTIFICATION_OPACITY, opacity.coerceIn(0, 100)).apply()
+    }
+    
+    fun getNotificationHeaderColor(context: Context): Int = 
+        getPrefs(context).getInt(KEY_NOTIFICATION_HEADER_COLOR, DEFAULT_NOTIFICATION_HEADER_COLOR)
+    
+    fun setNotificationHeaderColor(context: Context, color: Int) {
+        getPrefs(context).edit().putInt(KEY_NOTIFICATION_HEADER_COLOR, color).apply()
+    }
+    
+    fun getNotificationHeaderOpacity(context: Context): Int = 
+        getPrefs(context).getInt(KEY_NOTIFICATION_HEADER_OPACITY, DEFAULT_NOTIFICATION_HEADER_OPACITY)
+    
+    fun setNotificationHeaderOpacity(context: Context, opacity: Int) {
+        getPrefs(context).edit().putInt(KEY_NOTIFICATION_HEADER_OPACITY, opacity.coerceIn(0, 100)).apply()
+    }
+    
+    fun getNotificationColorWithOpacity(context: Context): Int {
+        val color = getNotificationColor(context)
+        val opacity = getNotificationOpacity(context)
+        return colorWithOpacity(color, opacity)
+    }
+    
+    fun getNotificationHeaderColorWithOpacity(context: Context): Int {
+        val color = getNotificationHeaderColor(context)
+        val opacity = getNotificationHeaderOpacity(context)
+        return colorWithOpacity(color, opacity)
+    }
+    
     private fun colorWithOpacity(color: Int, opacity: Int): Int {
         val alpha = (opacity * 255 / 100).coerceIn(0, 255)
         val r = (color shr 16) and 0xFF
@@ -237,6 +287,10 @@ object AppearanceSettings {
             putInt(KEY_SLIDER_FILL_OPACITY, DEFAULT_SLIDER_FILL_OPACITY)
             putInt(KEY_PANEL_COLOR, DEFAULT_PANEL_COLOR)
             putInt(KEY_PANEL_OPACITY, DEFAULT_PANEL_OPACITY)
+            putInt(KEY_NOTIFICATION_COLOR, DEFAULT_NOTIFICATION_COLOR)
+            putInt(KEY_NOTIFICATION_OPACITY, DEFAULT_NOTIFICATION_OPACITY)
+            putInt(KEY_NOTIFICATION_HEADER_COLOR, DEFAULT_NOTIFICATION_HEADER_COLOR)
+            putInt(KEY_NOTIFICATION_HEADER_OPACITY, DEFAULT_NOTIFICATION_HEADER_OPACITY)
             apply()
         }
     }

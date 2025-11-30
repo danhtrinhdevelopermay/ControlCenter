@@ -52,6 +52,15 @@ class AppearanceSettingsActivity : AppCompatActivity() {
     private lateinit var sliderFillOpacitySeekBar: SeekBar
     private lateinit var sliderFillOpacityValue: TextView
 
+    private lateinit var notificationColorInput: EditText
+    private lateinit var notificationColorPreview: View
+    private lateinit var notificationOpacitySeekBar: SeekBar
+    private lateinit var notificationOpacityValue: TextView
+    private lateinit var notificationHeaderColorInput: EditText
+    private lateinit var notificationHeaderColorPreview: View
+    private lateinit var notificationHeaderOpacitySeekBar: SeekBar
+    private lateinit var notificationHeaderOpacityValue: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_appearance_settings)
@@ -97,6 +106,15 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         sliderFillColorPreview = findViewById(R.id.sliderFillColorPreview)
         sliderFillOpacitySeekBar = findViewById(R.id.sliderFillOpacitySeekBar)
         sliderFillOpacityValue = findViewById(R.id.sliderFillOpacityValue)
+
+        notificationColorInput = findViewById(R.id.notificationColorInput)
+        notificationColorPreview = findViewById(R.id.notificationColorPreview)
+        notificationOpacitySeekBar = findViewById(R.id.notificationOpacitySeekBar)
+        notificationOpacityValue = findViewById(R.id.notificationOpacityValue)
+        notificationHeaderColorInput = findViewById(R.id.notificationHeaderColorInput)
+        notificationHeaderColorPreview = findViewById(R.id.notificationHeaderColorPreview)
+        notificationHeaderOpacitySeekBar = findViewById(R.id.notificationHeaderOpacitySeekBar)
+        notificationHeaderOpacityValue = findViewById(R.id.notificationHeaderOpacityValue)
     }
 
     private fun loadSettings() {
@@ -124,6 +142,13 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         sliderFillColorInput.setText(AppearanceSettings.colorToHex(AppearanceSettings.getSliderFillColor(this)))
         sliderFillOpacitySeekBar.progress = AppearanceSettings.getSliderFillOpacity(this)
         sliderFillOpacityValue.text = "${AppearanceSettings.getSliderFillOpacity(this)}%"
+
+        notificationColorInput.setText(AppearanceSettings.colorToHex(AppearanceSettings.getNotificationColor(this)))
+        notificationOpacitySeekBar.progress = AppearanceSettings.getNotificationOpacity(this)
+        notificationOpacityValue.text = "${AppearanceSettings.getNotificationOpacity(this)}%"
+        notificationHeaderColorInput.setText(AppearanceSettings.colorToHex(AppearanceSettings.getNotificationHeaderColor(this)))
+        notificationHeaderOpacitySeekBar.progress = AppearanceSettings.getNotificationHeaderOpacity(this)
+        notificationHeaderOpacityValue.text = "${AppearanceSettings.getNotificationHeaderOpacity(this)}%"
 
         updateAllPreviews()
     }
@@ -212,6 +237,26 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             AppearanceSettings.setSliderFillOpacity(this, value)
             updateSliderFillPreview()
         }
+
+        setupColorInputListener(notificationColorInput) { color ->
+            AppearanceSettings.setNotificationColor(this, color)
+            updateNotificationPreview()
+        }
+
+        setupSeekBarListener(notificationOpacitySeekBar, notificationOpacityValue) { value ->
+            AppearanceSettings.setNotificationOpacity(this, value)
+            updateNotificationPreview()
+        }
+
+        setupColorInputListener(notificationHeaderColorInput) { color ->
+            AppearanceSettings.setNotificationHeaderColor(this, color)
+            updateNotificationHeaderPreview()
+        }
+
+        setupSeekBarListener(notificationHeaderOpacitySeekBar, notificationHeaderOpacityValue) { value ->
+            AppearanceSettings.setNotificationHeaderOpacity(this, value)
+            updateNotificationHeaderPreview()
+        }
     }
 
     private fun setupColorInputListener(editText: EditText, onColorChange: (Int) -> Unit) {
@@ -278,6 +323,16 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             AppearanceSettings.setSliderFillColor(this, AppearanceSettings.hexToColor(sliderFillColorInput.text.toString()))
         } catch (e: Exception) {}
         AppearanceSettings.setSliderFillOpacity(this, sliderFillOpacitySeekBar.progress)
+
+        try {
+            AppearanceSettings.setNotificationColor(this, AppearanceSettings.hexToColor(notificationColorInput.text.toString()))
+        } catch (e: Exception) {}
+        AppearanceSettings.setNotificationOpacity(this, notificationOpacitySeekBar.progress)
+        
+        try {
+            AppearanceSettings.setNotificationHeaderColor(this, AppearanceSettings.hexToColor(notificationHeaderColorInput.text.toString()))
+        } catch (e: Exception) {}
+        AppearanceSettings.setNotificationHeaderOpacity(this, notificationHeaderOpacitySeekBar.progress)
     }
 
     private fun updateAllPreviews() {
@@ -288,6 +343,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         updatePlayerPreview()
         updateSliderPreview()
         updateSliderFillPreview()
+        updateNotificationPreview()
+        updateNotificationHeaderPreview()
     }
 
     private fun updateButtonPreview() {
@@ -338,5 +395,15 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         drawable.cornerRadius = cornerRadius * resources.displayMetrics.density
         drawable.setColor(color)
         view.background = drawable
+    }
+
+    private fun updateNotificationPreview() {
+        val color = AppearanceSettings.getNotificationColorWithOpacity(this)
+        updateRoundedRectPreview(notificationColorPreview, color, 20f)
+    }
+
+    private fun updateNotificationHeaderPreview() {
+        val color = AppearanceSettings.getNotificationHeaderColorWithOpacity(this)
+        updateCirclePreview(notificationHeaderColorPreview, color)
     }
 }

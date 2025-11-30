@@ -3,9 +3,9 @@
     android:id="@+id/notificationCenterContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="60dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="48dp"
     android:paddingBottom="24dp">
 
     <LinearLayout
@@ -13,42 +13,60 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="20dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
 
-            <TextView
-                android:id="@+id/dateTimeText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Thông báo"
-                android:textColor="#FFFFFF"
-                android:textSize="28sp"
-                android:textStyle="bold"
-                android:alpha="0.95" />
-
-            <TextView
-                android:id="@+id/clearAllButton"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Xóa tất cả"
-                android:textColor="#007AFF"
-                android:textSize="14sp"
-                android:padding="8dp" />
-        </LinearLayout>
+                android:orientation="vertical"
+                android:layout_alignParentStart="true">
+
+                <TextView
+                    android:id="@+id/timeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="9:57"
+                    android:textColor="#FFFFFF"
+                    android:textSize="72sp"
+                    android:fontFamily="sans-serif-light"
+                    android:letterSpacing="-0.02"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:id="@+id/dateText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cn, 30 Thg 11"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:alpha="0.9"
+                    android:layout_marginTop="-8dp" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/cameraIcon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="16dp"
+                android:src="@drawable/ic_camera_notification"
+                android:alpha="0.9" />
+
+        </RelativeLayout>
 
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:scrollbars="none"
-            android:fillViewport="true">
+            android:fillViewport="true"
+            android:overScrollMode="never">
 
             <LinearLayout
                 android:id="@+id/notificationsContainer"
@@ -60,6 +78,17 @@
             </LinearLayout>
 
         </ScrollView>
+
+        <ImageView
+            android:id="@+id/dismissButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/ic_dismiss_notifications"
+            android:background="@drawable/dismiss_button_background"
+            android:padding="10dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 

@@ -615,6 +615,165 @@
             </LinearLayout>
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/control_panel_background"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notification Panel"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Card Background"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/notificationColorPreview"
+                    android:layout_width="48dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/notification_item_background" />
+
+                <EditText
+                    android:id="@+id/notificationColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#2C2C2E"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Card Opacity"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <SeekBar
+                    android:id="@+id/notificationOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="90"
+                    android:progressTint="#AF52DE"
+                    android:thumbTint="#AF52DE" />
+
+                <TextView
+                    android:id="@+id/notificationOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="90%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Header Text Color"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/notificationHeaderColorPreview"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/miui_circle_button" />
+
+                <EditText
+                    android:id="@+id/notificationHeaderColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#FFFFFF"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Header Opacity"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <SeekBar
+                    android:id="@+id/notificationHeaderOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="100"
+                    android:progressTint="#AF52DE"
+                    android:thumbTint="#AF52DE" />
+
+                <TextView
+                    android:id="@+id/notificationHeaderOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="100%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+        </LinearLayout>
+
         <Button
             android:id="@+id/applyAppearanceBtn"
             android:layout_width="match_parent"

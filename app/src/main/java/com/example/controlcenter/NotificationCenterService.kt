@@ -29,6 +29,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import androidx.core.app.NotificationCompat
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
@@ -463,12 +464,37 @@ class NotificationCenterService : Service() {
 
         setupNotificationList()
         setupDismissGesture()
+        applyNotificationAppearance()
 
         try {
             windowManager?.addView(notificationCenterView, params)
             showTransparentSystemBars(notificationCenterView)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    private fun applyNotificationAppearance() {
+        val headerColor = AppearanceSettings.getNotificationHeaderColorWithOpacity(this)
+        val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
+
+        val header = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationHeader)
+        header?.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(headerColor)
+        }
+
+        val container = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationsContainer)
+        container?.let { cont ->
+            for (i in 0 until cont.childCount) {
+                val child = cont.getChildAt(i)
+                val drawable = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 20 * resources.displayMetrics.density
+                    setColor(cardColor)
+                }
+                child.background = drawable
+            }
         }
     }
 
@@ -538,25 +564,46 @@ class NotificationCenterService : Service() {
                     e.printStackTrace()
                 }
             }
+
+            val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
+            val notificationCard = itemView.findViewById<LinearLayout>(R.id.notificationCard)
+            notificationCard?.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 20 * resources.displayMetrics.density
+                setColor(cardColor)
+            }
             
             container?.addView(itemView)
         }
     }
 
     private fun addEmptyState(container: LinearLayout?) {
+        val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
         val emptyView = TextView(this).apply {
             text = "Không có thông báo"
             setTextColor(Color.parseColor("#888888"))
             textSize = 16f
             gravity = android.view.Gravity.CENTER
-            setPadding(0, 100, 0, 0)
+            val dp16 = (16 * resources.displayMetrics.density).toInt()
+            val dp100 = (100 * resources.displayMetrics.density).toInt()
+            setPadding(dp16, dp100, dp16, dp100)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 20 * resources.displayMetrics.density
+                setColor(cardColor)
+            }
         }
-        container?.addView(emptyView)
+        val layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        container?.addView(emptyView, layoutParams)
     }
 
     private fun refreshNotificationList() {
         if (isShowing && notificationCenterView != null) {
             setupNotificationList()
+            applyNotificationAppearance()
         }
     }
 
