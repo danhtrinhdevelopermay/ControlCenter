@@ -561,7 +561,7 @@ class NotificationCenterService : Service() {
             setHasFixedSize(false)
             itemAnimator = null
             setItemViewCacheSize(20)
-            isNestedScrollingEnabled = false
+            isNestedScrollingEnabled = true
             setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
                 setMaxRecycledViews(0, 25)
             })
@@ -766,10 +766,43 @@ class NotificationCenterService : Service() {
     }
 
     private fun setupDismissGesture() {
-        notificationCenterView?.setOnTouchListener { _, event ->
+        val headerView = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationHeader)
+        headerView?.setOnTouchListener { _, event ->
             handlePanelTouch(event)
         }
+        
+        recyclerView?.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                canScrollUp = recyclerView.canScrollVertically(-1)
+            }
+        })
+        
+        recyclerView?.setOnTouchListener { _, event ->
+            if (!canScrollUp && event.action == MotionEvent.ACTION_MOVE) {
+                val deltaY = event.rawY - startY
+                if (deltaY < -20 && !isDragging) {
+                    isDragging = true
+                    startY = event.rawY
+                    currentTranslationY = notificationCenterView?.translationY ?: 0f
+                    velocityTracker?.clear()
+                    velocityTracker = VelocityTracker.obtain()
+                }
+            }
+            
+            if (isDragging) {
+                handlePanelTouch(event)
+                true
+            } else {
+                if (event.action == MotionEvent.ACTION_DOWN) {
+                    startY = event.rawY
+                }
+                false
+            }
+        }
     }
+    
+    private var canScrollUp = false
     
     private fun handleBackgroundTouch(event: MotionEvent): Boolean {
         when (event.action) {
