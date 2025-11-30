@@ -434,75 +434,81 @@ object SystemControlHelper {
         }
     }
     
-    fun toggleLocation(context: Context, enable: Boolean) {
-        try {
-            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+    fun isAirplaneModeEnabled(context: Context): Boolean {
+        return try {
+            Settings.Global.getInt(context.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening location settings", e)
+            Log.e(TAG, "Error checking airplane mode state", e)
+            false
         }
     }
     
-    fun toggleAirplaneMode(context: Context, enable: Boolean) {
-        try {
-            val intent = Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+    fun isHotspotEnabled(context: Context): Boolean {
+        return try {
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            val method = wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
+            method.isAccessible = true
+            method.invoke(wifiManager) as Boolean
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening airplane mode settings", e)
+            Log.e(TAG, "Error checking hotspot state", e)
+            false
         }
     }
     
-    fun openHotspotSettings(context: Context) {
-        try {
-            val intent = Intent(Settings.ACTION_WIRELESS_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+    fun isNfcEnabled(context: Context): Boolean {
+        return try {
+            val nfcAdapter = android.nfc.NfcAdapter.getDefaultAdapter(context)
+            nfcAdapter?.isEnabled ?: false
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening hotspot settings", e)
+            Log.e(TAG, "Error checking NFC state", e)
+            false
         }
     }
     
-    fun openNfcSettings(context: Context) {
-        try {
-            val intent = Intent(Settings.ACTION_NFC_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+    fun isBatterySaverEnabled(context: Context): Boolean {
+        return try {
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            powerManager.isPowerSaveMode
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening NFC settings", e)
+            Log.e(TAG, "Error checking battery saver state", e)
+            false
         }
     }
     
-    fun toggleBatterySaver(context: Context, enable: Boolean) {
-        try {
-            val intent = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+    fun isDarkModeEnabled(context: Context): Boolean {
+        return try {
+            val uiMode = context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+            uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening battery saver settings", e)
+            Log.e(TAG, "Error checking dark mode state", e)
+            false
         }
     }
     
-    fun toggleAutoBrightness(context: Context, enable: Boolean) {
-        try {
-            if (!canWriteSettings(context)) {
-                openWriteSettingsPermission(context)
-                return
-            }
-            setAutoBrightness(context, enable)
+    fun isEyeComfortEnabled(context: Context): Boolean {
+        return try {
+            Settings.Secure.getInt(context.contentResolver, "night_display_activated", 0) != 0
         } catch (e: Exception) {
-            Log.e(TAG, "Error toggling auto brightness", e)
+            Log.e(TAG, "Error checking eye comfort state", e)
+            false
         }
     }
     
-    fun toggleDarkMode(context: Context, enable: Boolean) {
-        try {
-            val intent = Intent(Settings.ACTION_DISPLAY_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+    fun isSyncEnabled(context: Context): Boolean {
+        return try {
+            android.content.ContentResolver.getMasterSyncAutomatically()
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening display settings", e)
+            Log.e(TAG, "Error checking sync state", e)
+            false
+        }
+    }
+    
+    fun isInvertColorsEnabled(context: Context): Boolean {
+        return try {
+            Settings.Secure.getInt(context.contentResolver, Settings.Secure.ACCESSIBILITY_DISPLAY_INVERSION_ENABLED, 0) != 0
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking invert colors state", e)
+            false
         }
     }
     

@@ -472,6 +472,89 @@ object ShizukuHelper {
         executeShellCommandAsync("settings put system accelerometer_rotation $value", callback)
     }
     
+    fun toggleHotspot(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        executor.execute {
+            val result = if (enable) {
+                executeShellCommand("cmd wifi set-softap-enabled true") ||
+                executeShellCommand("cmd wifi softap enable") ||
+                executeShellCommand("svc wifi setHotspotEnabled true")
+            } else {
+                executeShellCommand("cmd wifi set-softap-enabled false") ||
+                executeShellCommand("cmd wifi softap disable") ||
+                executeShellCommand("svc wifi setHotspotEnabled false")
+            }
+            callback?.let {
+                mainHandler.post { it(result) }
+            }
+        }
+    }
+    
+    fun toggleLocation(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        val mode = if (enable) "3" else "0"
+        executeShellCommandAsync("settings put secure location_mode $mode", callback)
+    }
+    
+    fun toggleNfc(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        val command = if (enable) "svc nfc enable" else "svc nfc disable"
+        executeShellCommandAsync(command, callback)
+    }
+    
+    fun toggleBatterySaver(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        executor.execute {
+            val value = if (enable) "1" else "0"
+            val result = executeShellCommand("settings put global low_power $value") &&
+                executeShellCommand("am broadcast -a android.os.action.POWER_SAVE_MODE_CHANGED --ez mode $enable")
+            
+            if (!result) {
+                executeShellCommand("cmd power set-mode ${if (enable) "1" else "0"}")
+            }
+            callback?.let {
+                mainHandler.post { it(result) }
+            }
+        }
+    }
+    
+    fun toggleAutoBrightness(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        val value = if (enable) "1" else "0"
+        executeShellCommandAsync("settings put system screen_brightness_mode $value", callback)
+    }
+    
+    fun toggleDarkMode(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        val command = if (enable) "cmd uimode night yes" else "cmd uimode night no"
+        executeShellCommandAsync(command, callback)
+    }
+    
+    fun toggleEyeComfort(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        val value = if (enable) "1" else "0"
+        executeShellCommandAsync("settings put secure night_display_activated $value", callback)
+    }
+    
+    fun toggleSync(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        executor.execute {
+            val result = executeShellCommand("content update --uri content://settings/global --bind value:i:${if (enable) "1" else "0"} --where \"name='master_sync_enabled'\"") ||
+                executeShellCommand("cmd sync set-master-sync-enabled $enable")
+            callback?.let {
+                mainHandler.post { it(result) }
+            }
+        }
+    }
+    
+    fun toggleInvertColors(enable: Boolean, callback: ((Boolean) -> Unit)? = null) {
+        val value = if (enable) "1" else "0"
+        executeShellCommandAsync("settings put secure accessibility_display_inversion_enabled $value", callback)
+    }
+    
+    fun startScreenRecording(callback: ((Boolean) -> Unit)? = null) {
+        executor.execute {
+            val result = executeShellCommand("am start -n com.android.systemui/.screenrecord.ScreenRecordDialog") ||
+                executeShellCommand("am start -a android.settings.SCREEN_RECORD_SETTINGS") ||
+                executeShellCommand("cmd media projection start")
+            callback?.let {
+                mainHandler.post { it(result) }
+            }
+        }
+    }
+    
     private fun executeShellCommandAsync(command: String, callback: ((Boolean) -> Unit)?) {
         executor.execute {
             val result = executeShellCommand(command)

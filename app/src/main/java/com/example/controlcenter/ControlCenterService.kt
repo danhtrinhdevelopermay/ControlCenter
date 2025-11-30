@@ -1569,15 +1569,22 @@ class ControlCenterService : Service() {
                 openAndroidSettings()
             }
             QuickSettingTile.TILE_SCREEN_RECORD -> {
-                SystemControlHelper.openScreenRecording(this)
+                ShizukuHelper.startScreenRecording { success ->
+                    if (!success) {
+                        SystemControlHelper.openScreenRecording(this)
+                    }
+                }
                 hideControlCenter()
             }
             QuickSettingTile.TILE_LOCATION -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isLocationEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleLocation(this, newState)
+                ShizukuHelper.toggleLocation(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_WIFI -> {
                 val currentState = SystemControlHelper.isWifiEnabled(this)
@@ -1600,40 +1607,64 @@ class ControlCenterService : Service() {
                 }
             }
             QuickSettingTile.TILE_AIRPLANE_MODE -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isAirplaneModeEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleAirplaneMode(this, newState)
+                ShizukuHelper.toggleAirplaneMode(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_HOTSPOT -> {
-                SystemControlHelper.openHotspotSettings(this)
-                hideControlCenter()
+                val currentState = SystemControlHelper.isHotspotEnabled(this)
+                val newState = !currentState
+                ShizukuHelper.toggleHotspot(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_NFC -> {
-                SystemControlHelper.openNfcSettings(this)
-                hideControlCenter()
+                val currentState = SystemControlHelper.isNfcEnabled(this)
+                val newState = !currentState
+                ShizukuHelper.toggleNfc(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_BATTERY_SAVER -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isBatterySaverEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleBatterySaver(this, newState)
+                ShizukuHelper.toggleBatterySaver(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_AUTO_BRIGHTNESS -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isAutoBrightnessEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleAutoBrightness(this, newState)
+                ShizukuHelper.toggleAutoBrightness(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_DARK_MODE -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isDarkModeEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleDarkMode(this, newState)
+                ShizukuHelper.toggleDarkMode(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_SCREENSHOT -> {
                 hideControlCenter()
@@ -1658,25 +1689,34 @@ class ControlCenterService : Service() {
                 hideControlCenter()
             }
             QuickSettingTile.TILE_EYE_COMFORT -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isEyeComfortEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleEyeComfort(this, newState)
+                ShizukuHelper.toggleEyeComfort(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_SYNC -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isSyncEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleSync(this, newState)
+                ShizukuHelper.toggleSync(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             QuickSettingTile.TILE_INVERT_COLORS -> {
-                val currentState = quickSettingStates[tile.id] ?: false
+                val currentState = SystemControlHelper.isInvertColorsEnabled(this)
                 val newState = !currentState
-                quickSettingStates[tile.id] = newState
-                updateQuickSettingTileState(tile.id, newState)
-                SystemControlHelper.toggleInvertColors(this, newState)
+                ShizukuHelper.toggleInvertColors(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
             }
             else -> {
                 if (tile.type == QuickSettingTile.TileType.APP_SHORTCUT) {
@@ -1715,6 +1755,14 @@ class ControlCenterService : Service() {
         quickSettingStates[QuickSettingTile.TILE_DO_NOT_DISTURB] = SystemControlHelper.isDoNotDisturbEnabled(this)
         quickSettingStates[QuickSettingTile.TILE_LOCATION] = SystemControlHelper.isLocationEnabled(this)
         quickSettingStates[QuickSettingTile.TILE_AUTO_BRIGHTNESS] = SystemControlHelper.isAutoBrightnessEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_AIRPLANE_MODE] = SystemControlHelper.isAirplaneModeEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_HOTSPOT] = SystemControlHelper.isHotspotEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_NFC] = SystemControlHelper.isNfcEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_BATTERY_SAVER] = SystemControlHelper.isBatterySaverEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_DARK_MODE] = SystemControlHelper.isDarkModeEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_EYE_COMFORT] = SystemControlHelper.isEyeComfortEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_SYNC] = SystemControlHelper.isSyncEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_INVERT_COLORS] = SystemControlHelper.isInvertColorsEnabled(this)
     }
     
     private fun updateQuickSettingTileStates() {
