@@ -24,6 +24,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.animation.ValueAnimator
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -578,6 +579,40 @@ class NotificationCenterService : Service() {
                     val dp16 = (16 * resources.displayMetrics.density).toInt()
                     val dp100 = (100 * resources.displayMetrics.density).toInt()
                     setPadding(dp16, dp100, dp16, dp100)
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                    )
+                    isClickable = true
+                    isFocusable = true
+                    
+                    var startY = 0f
+                    var startTime = 0L
+                    
+                    setOnTouchListener { _, event ->
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                startY = event.y
+                                startTime = System.currentTimeMillis()
+                                true
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                val deltaY = event.y - startY
+                                val deltaTime = System.currentTimeMillis() - startTime
+                                val velocity = if (deltaTime > 0) deltaY / deltaTime * 1000 else 0f
+                                
+                                if (deltaY < -50 && velocity < -200) {
+                                    vibrate()
+                                    hideNotificationCenter()
+                                } else if (Math.abs(deltaY) < 20 && deltaTime < 300) {
+                                    vibrate()
+                                    hideNotificationCenter()
+                                }
+                                true
+                            }
+                            else -> false
+                        }
+                    }
                 }
             }
             val parent = recyclerView?.parent as? android.view.ViewGroup
