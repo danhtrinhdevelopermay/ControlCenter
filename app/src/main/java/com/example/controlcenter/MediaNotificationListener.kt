@@ -113,6 +113,14 @@ class MediaNotificationListener : NotificationListenerService() {
             }
         }
         
+        fun cancelNotificationByKey(key: String) {
+            try {
+                instance?.cancelNotification(key)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error cancelling notification by key", e)
+            }
+        }
+        
         fun isNotificationAccessEnabled(context: Context): Boolean {
             val packageName = context.packageName
             val flat = Settings.Secure.getString(

@@ -274,7 +274,8 @@ class NotificationCenterService : Service() {
                                 content = text,
                                 time = sbn.postTime,
                                 icon = appIcon,
-                                largeIcon = largeIcon
+                                largeIcon = largeIcon,
+                                key = sbn.key
                             )
                         )
                     }
@@ -650,7 +651,11 @@ class NotificationCenterService : Service() {
     private fun dismissNotification(notification: NotificationData) {
         try {
             if (notification.packageName != "system") {
-                MediaNotificationListener.cancelNotification(notification.packageName, notification.id)
+                if (notification.key != null) {
+                    MediaNotificationListener.cancelNotificationByKey(notification.key)
+                } else {
+                    MediaNotificationListener.cancelNotification(notification.packageName, notification.id)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()

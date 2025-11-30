@@ -11,5 +11,6 @@ data class NotificationData(
     val content: String,
     val time: Long,
     val icon: Drawable?,
-    val largeIcon: Bitmap? = null
+    val largeIcon: Bitmap? = null,
+    val key: String? = null
 )
