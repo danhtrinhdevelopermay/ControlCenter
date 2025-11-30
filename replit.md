@@ -28,6 +28,13 @@ The UI adheres strictly to the MIUI Control Center design language, featuring:
 - **Advanced WiFi Scanning & Connection:** `WiFiScannerHelper.kt` enables scanning for available WiFi networks and connecting from within the Control Center. It prioritizes Shizuku for scanning (`cmd wifi list-scan-results`) to bypass Android 10+ throttling, with `WifiManager.startScan()` as a fallback.
 - **Bluetooth Device Management:** Enables listing paired and available Bluetooth devices and connecting/disconnecting them. It uses Shizuku commands (`dumpsys bluetooth_manager`) for device information and control.
 - **Animations:** Smooth popup animations for WiFi and Bluetooth dialogs, incorporating blur transitions, scale animations (85% to 100% with OvershootInterpolator), and alpha animations. `ValueAnimator` and `AnimatorSet` are used for orchestrating these effects.
+- **Appearance Customization:** `AppearanceSettings.kt` stores user-configured colors and opacity (0-100%) for UI components. `AppearanceSettingsActivity.kt` provides a UI to customize:
+    - Circle buttons (inactive/active colors and opacity)
+    - Toggle buttons like WiFi/Cellular (inactive/active colors and opacity)
+    - Media player widget (background color and opacity)
+    - Brightness/Volume sliders (track and fill colors with opacity)
+    - Panel background (color and opacity)
+    Colors are applied dynamically using `GradientDrawable` in `ControlCenterService.kt` via `applyAppearanceSettings()`, `updateButtonState()`, `applyPlayerAppearance()`, and `applySliderAppearance()` methods.
 - **Core Files:** `control_center_panel.xml` defines the main MIUI layout. `ControlCenterService.kt` handles UI logic and interactions.
 
 ## External Dependencies
