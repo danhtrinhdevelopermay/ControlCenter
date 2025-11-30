@@ -1350,11 +1350,11 @@ class NotificationCenterService : Service() {
         override fun finish() {
             stretchAmount = 0f
             recyclerView.scaleY = 1f
-            recyclerView.pivotY = if (direction == DIRECTION_TOP) 0f else recyclerView.height.toFloat()
+            recyclerView.pivotY = if (direction == RecyclerView.EdgeEffectFactory.DIRECTION_TOP) 0f else recyclerView.height.toFloat()
         }
         
         private fun applyStretch() {
-            recyclerView.pivotY = if (direction == DIRECTION_TOP) 0f else recyclerView.height.toFloat()
+            recyclerView.pivotY = if (direction == RecyclerView.EdgeEffectFactory.DIRECTION_TOP) 0f else recyclerView.height.toFloat()
             recyclerView.scaleY = 1f + stretchAmount
         }
         
