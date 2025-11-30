@@ -1347,6 +1347,8 @@ class ControlCenterService : Service() {
         setupVolumeSlider()
     }
     
+    private var hasShownBrightnessPermissionToast = false
+    
     private fun setupBrightnessSlider() {
         val brightnessSlider = controlCenterView?.findViewById<View>(R.id.brightnessSlider)
         val brightnessFill = controlCenterView?.findViewById<View>(R.id.brightnessFill)
@@ -1364,7 +1366,18 @@ class ControlCenterService : Service() {
         
         brightnessSlider?.setOnTouchListener { view, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                MotionEvent.ACTION_DOWN -> {
+                    if (!SystemControlHelper.canWriteSettings(this)) {
+                        if (!hasShownBrightnessPermissionToast) {
+                            hasShownBrightnessPermissionToast = true
+                            Toast.makeText(this, "Cần cấp quyền thay đổi cài đặt hệ thống để điều chỉnh độ sáng", Toast.LENGTH_LONG).show()
+                            handler.postDelayed({
+                                SystemControlHelper.openWriteSettingsPermission(this)
+                            }, 500)
+                        }
+                        return@setOnTouchListener true
+                    }
+                    
                     val sliderHeight = view.height.toFloat()
                     val touchY = event.y.coerceIn(0f, sliderHeight)
                     val progress = 1f - (touchY / sliderHeight)
@@ -1373,7 +1386,25 @@ class ControlCenterService : Service() {
                     brightnessFill?.layoutParams?.height = fillHeight
                     brightnessFill?.requestLayout()
                     
-                    val brightness = (progress * maxBrightness).toInt()
+                    val brightness = (progress * maxBrightness).toInt().coerceAtLeast(1)
+                    SystemControlHelper.setBrightness(this, brightness)
+                    
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (!SystemControlHelper.canWriteSettings(this)) {
+                        return@setOnTouchListener true
+                    }
+                    
+                    val sliderHeight = view.height.toFloat()
+                    val touchY = event.y.coerceIn(0f, sliderHeight)
+                    val progress = 1f - (touchY / sliderHeight)
+                    
+                    val fillHeight = (sliderHeight * progress).toInt()
+                    brightnessFill?.layoutParams?.height = fillHeight
+                    brightnessFill?.requestLayout()
+                    
+                    val brightness = (progress * maxBrightness).toInt().coerceAtLeast(1)
                     SystemControlHelper.setBrightness(this, brightness)
                     
                     true

@@ -276,9 +276,75 @@ object SystemControlHelper {
         }
     }
     
+    fun canWriteSettings(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.System.canWrite(context)
+        } else {
+            true
+        }
+    }
+    
+    fun openWriteSettingsPermission(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+                intent.data = android.net.Uri.parse("package:${context.packageName}")
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error opening write settings permission", e)
+            }
+        }
+    }
+    
+    fun isAutoBrightnessEnabled(context: Context): Boolean {
+        return try {
+            val mode = Settings.System.getInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            )
+            mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking auto brightness", e)
+            false
+        }
+    }
+    
+    fun setAutoBrightness(context: Context, enabled: Boolean): Boolean {
+        return try {
+            if (!canWriteSettings(context)) {
+                return false
+            }
+            val mode = if (enabled) {
+                Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+            } else {
+                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            }
+            Settings.System.putInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+                mode
+            )
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting auto brightness", e)
+            false
+        }
+    }
+    
     fun setBrightness(context: Context, brightness: Int): Boolean {
         return try {
-            val value = brightness.coerceIn(0, 255)
+            if (!canWriteSettings(context)) {
+                Log.w(TAG, "Cannot write settings - permission not granted")
+                return false
+            }
+            
+            if (isAutoBrightnessEnabled(context)) {
+                setAutoBrightness(context, false)
+            }
+            
+            val value = brightness.coerceIn(1, 255)
             Settings.System.putInt(
                 context.contentResolver,
                 Settings.System.SCREEN_BRIGHTNESS,

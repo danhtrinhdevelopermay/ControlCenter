@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     private lateinit var accessibilityPermissionBtn: Button
     private lateinit var notificationPermissionBtn: Button
     private lateinit var shizukuPermissionBtn: Button
+    private lateinit var writeSettingsPermissionBtn: Button
     private lateinit var startServiceBtn: Button
     private lateinit var appearanceSettingsBtn: Button
     private lateinit var swipeZoneSettingsContainer: LinearLayout
@@ -113,6 +114,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         accessibilityPermissionBtn = findViewById(R.id.accessibilityPermissionBtn)
         notificationPermissionBtn = findViewById(R.id.notificationPermissionBtn)
         shizukuPermissionBtn = findViewById(R.id.shizukuPermissionBtn)
+        writeSettingsPermissionBtn = findViewById(R.id.writeSettingsPermissionBtn)
         startServiceBtn = findViewById(R.id.startServiceBtn)
         appearanceSettingsBtn = findViewById(R.id.appearanceSettingsBtn)
         swipeZoneSettingsContainer = findViewById(R.id.swipeZoneSettingsContainer)
@@ -155,6 +157,10 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         
         shizukuPermissionBtn.setOnClickListener {
             requestShizukuPermission()
+        }
+        
+        writeSettingsPermissionBtn.setOnClickListener {
+            requestWriteSettingsPermission()
         }
 
         startServiceBtn.setOnClickListener {
@@ -452,6 +458,16 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
                 }
             )
         }
+        
+        val hasWriteSettingsPermission = SystemControlHelper.canWriteSettings(this)
+        writeSettingsPermissionBtn.apply {
+            isEnabled = !hasWriteSettingsPermission
+            text = if (hasWriteSettingsPermission) "✓ Write Settings Permission Granted (Brightness)" else "Grant Write Settings Permission (Brightness)"
+            setBackgroundColor(
+                if (hasWriteSettingsPermission) ContextCompat.getColor(context, R.color.control_item_active)
+                else ContextCompat.getColor(context, R.color.control_item_inactive)
+            )
+        }
 
         val allPermissionsGranted = hasOverlayPermission && hasAccessibilityPermission
         startServiceBtn.apply {
@@ -545,6 +561,21 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         }
         
         ShizukuHelper.requestShizukuPermission()
+    }
+    
+    private fun requestWriteSettingsPermission() {
+        if (SystemControlHelper.canWriteSettings(this)) {
+            Toast.makeText(this, "Write settings permission already granted!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        Toast.makeText(
+            this,
+            "Bật quyền 'Cho phép sửa đổi cài đặt hệ thống' để điều khiển độ sáng màn hình",
+            Toast.LENGTH_LONG
+        ).show()
+        
+        SystemControlHelper.openWriteSettingsPermission(this)
     }
 
     private fun startControlCenterService() {
