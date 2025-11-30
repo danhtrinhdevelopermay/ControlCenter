@@ -856,7 +856,7 @@ class ControlCenterService : Service() {
         MediaNotificationListener.forceRefreshNotifications()
         loadNotificationsFromListener()
         
-        notificationPanelView?.findViewById<TextView>(R.id.clearAllButton)?.setOnClickListener {
+        notificationPanelView?.findViewById<ImageView>(R.id.clearAllButton)?.setOnClickListener {
             vibrate()
             clearAllNotifications()
         }

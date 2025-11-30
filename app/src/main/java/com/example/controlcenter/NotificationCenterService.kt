@@ -502,7 +502,7 @@ class NotificationCenterService : Service() {
         val container = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationsContainer)
         container?.removeAllViews()
 
-        val clearAllButton = notificationCenterView?.findViewById<TextView>(R.id.clearAllButton)
+        val clearAllButton = notificationCenterView?.findViewById<ImageView>(R.id.clearAllButton)
         clearAllButton?.setOnClickListener {
             vibrate()
             notifications.clear()
@@ -578,7 +578,6 @@ class NotificationCenterService : Service() {
     }
 
     private fun addEmptyState(container: LinearLayout?) {
-        val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
         val emptyView = TextView(this).apply {
             text = "Không có thông báo"
             setTextColor(Color.parseColor("#888888"))
@@ -587,11 +586,6 @@ class NotificationCenterService : Service() {
             val dp16 = (16 * resources.displayMetrics.density).toInt()
             val dp100 = (100 * resources.displayMetrics.density).toInt()
             setPadding(dp16, dp100, dp16, dp100)
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = 20 * resources.displayMetrics.density
-                setColor(cardColor)
-            }
         }
         val layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,

@@ -73,25 +73,12 @@
             android:layout_marginBottom="8dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Thông báo"
                 android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/clearAllButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Xóa tất cả"
-                android:textColor="#007AFF"
-                android:textSize="14sp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp" />
 
         </LinearLayout>
 
@@ -114,17 +101,17 @@
 
         </ScrollView>
 
-        <ImageView
-            android:id="@+id/dismissButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:src="@drawable/ic_dismiss_notifications"
-            android:background="@drawable/dismiss_button_background"
-            android:padding="10dp"
-            android:visibility="gone" />
-
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/clearAllButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="40dp"
+        android:src="@drawable/ic_dismiss_notifications"
+        android:background="@drawable/dismiss_button_background"
+        android:padding="12dp"
+        android:elevation="8dp" />
 
 </FrameLayout>
