@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
-import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -88,17 +87,6 @@ class NotificationCenterService : Service() {
     private val maxBlurRadius = 180f
     private val minFlingVelocity = 1000f
     private val openThreshold = 0.0f
-
-    data class NotificationData(
-        val id: Int,
-        val packageName: String,
-        val appName: String,
-        val title: String,
-        val content: String,
-        val time: Long,
-        val icon: Drawable?,
-        val largeIcon: android.graphics.Bitmap? = null
-    )
 
     private val notifications = mutableListOf<NotificationData>()
     private var notificationAdapter: NotificationAdapter? = null
