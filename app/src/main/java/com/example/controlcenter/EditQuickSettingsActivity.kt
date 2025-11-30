@@ -55,7 +55,7 @@ class EditQuickSettingsActivity : AppCompatActivity() {
     }
 
     private fun loadTiles() {
-        val selectedIds = QuickSettingsManager.getSelectedTileIds(this)
+        val selectedIds = QuickSettingsManager.getSelectedTileIds(this).distinct()
         val allSystemTiles = QuickSettingsManager.getAvailableSystemTiles(this)
         val savedAppShortcuts = QuickSettingsManager.getAppShortcuts(this)
 
@@ -63,26 +63,31 @@ class EditQuickSettingsActivity : AppCompatActivity() {
         availableTiles.clear()
         appShortcuts.clear()
 
+        val addedIds = mutableSetOf<String>()
         selectedIds.forEach { id ->
+            if (addedIds.contains(id)) return@forEach
+            
             val systemTile = allSystemTiles.find { it.id == id }
             if (systemTile != null) {
                 selectedTiles.add(systemTile)
+                addedIds.add(id)
             } else {
                 val appShortcut = savedAppShortcuts.find { it.id == id }
                 if (appShortcut != null) {
                     selectedTiles.add(appShortcut)
+                    addedIds.add(id)
                 }
             }
         }
 
         allSystemTiles.forEach { tile ->
-            if (!selectedIds.contains(tile.id)) {
+            if (!addedIds.contains(tile.id)) {
                 availableTiles.add(tile)
             }
         }
 
         savedAppShortcuts.forEach { shortcut ->
-            if (!selectedIds.contains(shortcut.id)) {
+            if (!addedIds.contains(shortcut.id)) {
                 appShortcuts.add(shortcut)
             }
         }
@@ -158,30 +163,45 @@ class EditQuickSettingsActivity : AppCompatActivity() {
     }
 
     private fun removeFromSelected(tile: QuickSettingTile, position: Int) {
-        selectedAdapter.removeTileAt(position)
+        if (position < 0 || position >= selectedTiles.size) return
+        
         selectedTiles.removeAt(position)
+        selectedAdapter.notifyItemRemoved(position)
+        selectedAdapter.notifyItemRangeChanged(position, selectedTiles.size)
 
         if (tile.type == QuickSettingTile.TileType.SYSTEM) {
-            availableTiles.add(tile)
-            availableAdapter.addTile(tile)
+            if (!availableTiles.any { it.id == tile.id }) {
+                availableTiles.add(tile)
+                availableAdapter.addTile(tile)
+            }
         } else {
-            appShortcuts.add(tile)
-            appShortcutsAdapter.addTile(tile)
+            if (!appShortcuts.any { it.id == tile.id }) {
+                appShortcuts.add(tile)
+                appShortcutsAdapter.addTile(tile)
+            }
             updateNoAppsVisibility()
         }
     }
 
     private fun addToSelected(tile: QuickSettingTile, position: Int, isAppShortcut: Boolean) {
+        if (selectedTiles.any { it.id == tile.id }) return
+        
         selectedTiles.add(tile)
         selectedAdapter.addTile(tile)
 
         if (isAppShortcut) {
-            appShortcutsAdapter.removeTileAt(position)
-            appShortcuts.removeAt(position)
+            if (position >= 0 && position < appShortcuts.size) {
+                appShortcuts.removeAt(position)
+                appShortcutsAdapter.notifyItemRemoved(position)
+                appShortcutsAdapter.notifyItemRangeChanged(position, appShortcuts.size)
+            }
             updateNoAppsVisibility()
         } else {
-            availableAdapter.removeTileAt(position)
-            availableTiles.removeAt(position)
+            if (position >= 0 && position < availableTiles.size) {
+                availableTiles.removeAt(position)
+                availableAdapter.notifyItemRemoved(position)
+                availableAdapter.notifyItemRangeChanged(position, availableTiles.size)
+            }
         }
     }
 

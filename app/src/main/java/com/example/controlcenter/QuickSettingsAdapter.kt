@@ -70,6 +70,7 @@ class QuickSettingsAdapter(
     }
 
     fun addTile(tile: QuickSettingTile) {
+        if (tiles.any { it.id == tile.id }) return
         tiles.add(tile)
         notifyItemInserted(tiles.size - 1)
     }
