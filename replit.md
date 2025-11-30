@@ -31,6 +31,8 @@ The UI adheres strictly to the MIUI Control Center design language, featuring:
     - MainActivity's `onResume()` checks and requests rebind if notification access is enabled but service is not connected
     - **Performance optimizations**: Notification loading now runs on background thread (`backgroundExecutor`) to prevent UI lag
     - Removed excessive logging to improve performance
+    - **Swipe to dismiss**: Vuốt thông báo sang phải để xóa thông báo đó (với animation mượt mà)
+    - **Clear all**: Nhấn nút X ở dưới để xóa tất cả thông báo từ hệ thống
 - **Brightness & Volume Control:** Sliders directly interact with `Settings.System.SCREEN_BRIGHTNESS` (requiring `WRITE_SETTINGS` permission) and `AudioManager.STREAM_MUSIC`, respectively.
 - **App Shortcuts:** Allows users to add up to 8 customizable application shortcuts, managed by `AppShortcutManager.kt` and `AppPickerActivity.kt`. Requires `QUERY_ALL_PACKAGES` permission.
 - **Advanced WiFi Scanning & Connection:** `WiFiScannerHelper.kt` enables scanning for available WiFi networks and connecting from within the Control Center. It prioritizes Shizuku for scanning (`cmd wifi list-scan-results`) to bypass Android 10+ throttling, with `WifiManager.startScan()` as a fallback.

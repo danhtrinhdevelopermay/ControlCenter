@@ -532,6 +532,7 @@ class NotificationCenterService : Service() {
         val clearAllButton = notificationCenterView?.findViewById<ImageView>(R.id.clearAllButton)
         clearAllButton?.setOnClickListener {
             vibrate()
+            dismissAllNotifications()
             notifications.clear()
             container?.removeAllViews()
             addEmptyState(container)
@@ -578,24 +579,7 @@ class NotificationCenterService : Service() {
                 notificationImage.visibility = View.GONE
             }
 
-            itemView.setOnClickListener {
-                vibrate()
-                try {
-                    if (notification.packageName == "system") {
-                        MediaNotificationListener.openNotificationAccessSettings(this)
-                        hideNotificationCenter()
-                    } else {
-                        val launchIntent = packageManager.getLaunchIntentForPackage(notification.packageName)
-                        if (launchIntent != null) {
-                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            startActivity(launchIntent)
-                            hideNotificationCenter()
-                        }
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
+            setupSwipeToDismiss(itemView, notification, container)
 
             val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
             val notificationCard = itemView.findViewById<LinearLayout>(R.id.notificationCard)
@@ -606,6 +590,113 @@ class NotificationCenterService : Service() {
             }
             
             container?.addView(itemView)
+        }
+    }
+    
+    private fun setupSwipeToDismiss(itemView: View, notification: NotificationData, container: LinearLayout?) {
+        var startX = 0f
+        var startY = 0f
+        var isSwiping = false
+        val swipeThreshold = 100 * resources.displayMetrics.density
+        val dismissThreshold = screenWidth * 0.3f
+        
+        itemView.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    startX = event.rawX
+                    startY = event.rawY
+                    isSwiping = false
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = event.rawX - startX
+                    val deltaY = event.rawY - startY
+                    
+                    if (!isSwiping && kotlin.math.abs(deltaX) > 10 && kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY)) {
+                        isSwiping = true
+                    }
+                    
+                    if (isSwiping && deltaX > 0) {
+                        view.translationX = deltaX
+                        view.alpha = 1f - (deltaX / screenWidth).coerceIn(0f, 0.6f)
+                    }
+                    isSwiping
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    val deltaX = event.rawX - startX
+                    
+                    if (isSwiping && deltaX > dismissThreshold) {
+                        animateDismissNotification(view, notification, container)
+                    } else if (isSwiping) {
+                        view.animate()
+                            .translationX(0f)
+                            .alpha(1f)
+                            .setDuration(150)
+                            .start()
+                    } else if (kotlin.math.abs(deltaX) < 10 && kotlin.math.abs(event.rawY - startY) < 10) {
+                        handleNotificationClick(notification)
+                    }
+                    isSwiping = false
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+    
+    private fun handleNotificationClick(notification: NotificationData) {
+        vibrate()
+        try {
+            if (notification.packageName == "system") {
+                MediaNotificationListener.openNotificationAccessSettings(this)
+                hideNotificationCenter()
+            } else {
+                val launchIntent = packageManager.getLaunchIntentForPackage(notification.packageName)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(launchIntent)
+                    hideNotificationCenter()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun animateDismissNotification(view: View, notification: NotificationData, container: LinearLayout?) {
+        vibrate()
+        view.animate()
+            .translationX(screenWidth.toFloat())
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction {
+                container?.removeView(view)
+                notifications.remove(notification)
+                
+                dismissNotification(notification)
+                
+                if (notifications.isEmpty()) {
+                    addEmptyState(container)
+                }
+            }
+            .start()
+    }
+    
+    private fun dismissNotification(notification: NotificationData) {
+        try {
+            if (notification.packageName != "system") {
+                MediaNotificationListener.cancelNotification(notification.packageName, notification.id)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun dismissAllNotifications() {
+        try {
+            MediaNotificationListener.cancelAllNotifications()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
