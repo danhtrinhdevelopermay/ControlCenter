@@ -67,6 +67,11 @@
             android:exported="false"
             android:theme="@style/Theme.ControlCenter" />
 
+        <activity
+            android:name=".EditQuickSettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ControlCenter" />
+
         <service
             android:name=".ControlCenterService"
             android:exported="false"

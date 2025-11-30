@@ -403,205 +403,50 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Row 3-4: Circular Buttons (2 rows x 4 columns) -->
+        <!-- Quick Settings Section -->
         <LinearLayout
+            android:id="@+id/quickSettingsSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginBottom="12dp">
 
-            <!-- First row of circular buttons -->
+            <!-- Quick Settings Header with Edit button -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginBottom="12dp">
+                android:gravity="center_vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:layout_marginBottom="8dp">
 
-                <FrameLayout
-                    android:id="@+id/bluetoothButton"
+                <TextView
                     android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Phím tắt nhanh"
+                    android:textColor="#AAAAAA"
+                    android:textSize="13sp" />
 
-                    <View
-                        android:id="@+id/bluetoothBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
+                <TextView
+                    android:id="@+id/editQuickSettingsButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sửa"
+                    android:textColor="#007AFF"
+                    android:textSize="13sp"
+                    android:padding="4dp" />
 
-                    <ImageView
-                        android:id="@+id/bluetoothIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_bluetooth"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/notificationButton"
-                    android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
-
-                    <View
-                        android:id="@+id/notificationBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
-
-                    <ImageView
-                        android:id="@+id/notificationIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_notification"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/flashlightButton"
-                    android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
-
-                    <View
-                        android:id="@+id/flashlightBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
-
-                    <ImageView
-                        android:id="@+id/flashlightIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_flashlight"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/rotationButton"
-                    android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
-
-                    <View
-                        android:id="@+id/rotationBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
-
-                    <ImageView
-                        android:id="@+id/rotationIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_screen_rotation"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
             </LinearLayout>
 
-            <!-- Second row of circular buttons -->
+            <!-- Dynamic Quick Settings Grid -->
             <LinearLayout
+                android:id="@+id/quickSettingsGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                android:orientation="vertical" />
 
-                <FrameLayout
-                    android:id="@+id/cameraButton"
-                    android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
-
-                    <View
-                        android:id="@+id/cameraBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
-
-                    <ImageView
-                        android:id="@+id/cameraIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_camera"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/screenMirrorButton"
-                    android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
-
-                    <View
-                        android:id="@+id/screenMirrorBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
-
-                    <ImageView
-                        android:id="@+id/screenMirrorIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_screen_mirror"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/videoButton"
-                    android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
-
-                    <View
-                        android:id="@+id/videoBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
-
-                    <ImageView
-                        android:id="@+id/videoIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_video"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/locationButton"
-                    android:layout_width="0dp"
-                    android:layout_height="68dp"
-                    android:layout_weight="1">
-
-                    <View
-                        android:id="@+id/locationBackground"
-                        android:layout_width="68dp"
-                        android:layout_height="68dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/miui_circle_button" />
-
-                    <ImageView
-                        android:id="@+id/locationIcon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_location"
-                        android:tint="#FFFFFF" />
-                </FrameLayout>
-            </LinearLayout>
         </LinearLayout>
 
         <!-- App Shortcuts Section -->

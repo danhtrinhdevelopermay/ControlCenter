@@ -1230,111 +1230,7 @@ class ControlCenterService : Service() {
             true
         }
         
-        controlCenterView?.findViewById<View>(R.id.bluetoothButton)?.setOnClickListener { button ->
-            val currentState = SystemControlHelper.isBluetoothEnabled(this)
-            val newState = !currentState
-            animateButtonPress(button)
-            vibrate()
-            ShizukuHelper.toggleBluetooth(newState) { success ->
-                if (success) {
-                    controlStates["bluetooth"] = newState
-                    updateButtonState(R.id.bluetoothButton, newState)
-                } else {
-                    controlStates["bluetooth"] = SystemControlHelper.isBluetoothEnabled(this)
-                    updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
-                }
-            }
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.bluetoothButton)?.setOnLongClickListener { button ->
-            vibrate()
-            showBluetoothListDialog()
-            true
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.cellularButton)?.setOnClickListener { button ->
-            val currentState = SystemControlHelper.isMobileDataEnabled(this)
-            val newState = !currentState
-            animateButtonPress(button)
-            vibrate()
-            ShizukuHelper.toggleMobileData(newState) { success ->
-                if (success) {
-                    controlStates["cellular"] = newState
-                    updateButtonState(R.id.cellularButton, newState)
-                    updateCellularStatus()
-                } else {
-                    controlStates["cellular"] = SystemControlHelper.isMobileDataEnabled(this)
-                    updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
-                    updateCellularStatus()
-                }
-            }
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.flashlightButton)?.setOnClickListener { button ->
-            val currentState = SystemControlHelper.isFlashlightOn()
-            val newState = !currentState
-            animateButtonPress(button)
-            vibrate()
-            val success = SystemControlHelper.toggleFlashlight(this, newState)
-            if (success) {
-                controlStates["flashlight"] = newState
-                updateButtonState(R.id.flashlightButton, newState)
-            } else {
-                controlStates["flashlight"] = SystemControlHelper.isFlashlightOn()
-                updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
-            }
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.rotationButton)?.setOnClickListener { button ->
-            val currentState = SystemControlHelper.isRotationLocked(this)
-            val newState = !currentState
-            animateButtonPress(button)
-            vibrate()
-            ShizukuHelper.setRotationLock(newState) { success ->
-                if (success) {
-                    controlStates["rotation"] = newState
-                    updateButtonState(R.id.rotationButton, newState)
-                } else {
-                    controlStates["rotation"] = SystemControlHelper.isRotationLocked(this)
-                    updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: false)
-                }
-            }
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.notificationButton)?.setOnClickListener { button ->
-            val currentState = controlStates["notification"] ?: true
-            val newState = !currentState
-            animateButtonPress(button)
-            vibrate()
-            controlStates["notification"] = newState
-            updateButtonState(R.id.notificationButton, newState)
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.cameraButton)?.setOnClickListener { button ->
-            SystemControlHelper.openCamera(this)
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.screenMirrorButton)?.setOnClickListener { button ->
-            SystemControlHelper.openScreenMirroring(this)
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.videoButton)?.setOnClickListener { button ->
-            animateButtonPress(button)
-            vibrate()
-        }
-        
-        controlCenterView?.findViewById<View>(R.id.locationButton)?.setOnClickListener { button ->
-            val currentState = controlStates["location"] ?: false
-            val newState = !currentState
-            animateButtonPress(button)
-            vibrate()
-            controlStates["location"] = newState
-            updateButtonState(R.id.locationButton, newState)
-        }
+        setupQuickSettingsGrid()
         
         controlCenterView?.findViewById<View>(R.id.playButton)?.setOnClickListener { button ->
             MediaControlHelper.playPause(this)
@@ -1541,6 +1437,322 @@ class ControlCenterService : Service() {
         }
     }
     
+    private val quickSettingTileViews = mutableMapOf<String, View>()
+    
+    private fun setupQuickSettingsGrid() {
+        val quickSettingsGrid = controlCenterView?.findViewById<LinearLayout>(R.id.quickSettingsGrid) ?: return
+        val editButton = controlCenterView?.findViewById<View>(R.id.editQuickSettingsButton)
+        
+        quickSettingsGrid.removeAllViews()
+        quickSettingTileViews.clear()
+        
+        editButton?.setOnClickListener {
+            vibrate()
+            hideControlCenter()
+            val intent = Intent(this, EditQuickSettingsActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+        }
+        
+        val selectedTiles = QuickSettingsManager.getSelectedTiles(this)
+        
+        val tilesPerRow = 4
+        var currentRow: LinearLayout? = null
+        
+        selectedTiles.forEachIndexed { index, tile ->
+            if (index % tilesPerRow == 0) {
+                currentRow = LinearLayout(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        if (index > 0) topMargin = 12.dpToPx()
+                    }
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER
+                }
+                quickSettingsGrid.addView(currentRow)
+            }
+            
+            val tileView = createQuickSettingTileView(tile)
+            currentRow?.addView(tileView)
+            quickSettingTileViews[tile.id] = tileView
+        }
+        
+        syncQuickSettingStates()
+        updateQuickSettingTileStates()
+    }
+    
+    private fun createQuickSettingTileView(tile: QuickSettingTile): View {
+        val container = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                68.dpToPx()
+            ).apply {
+                weight = 1f
+            }
+        }
+        
+        val background = View(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                60.dpToPx(),
+                60.dpToPx()
+            ).apply {
+                gravity = Gravity.CENTER
+            }
+            background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setColor(AppearanceSettings.getButtonColorWithOpacity(this@ControlCenterService, false))
+            }
+            tag = "background"
+        }
+        container.addView(background)
+        
+        val icon = ImageView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                28.dpToPx(),
+                28.dpToPx()
+            ).apply {
+                gravity = Gravity.CENTER
+            }
+            
+            if (tile.type == QuickSettingTile.TileType.APP_SHORTCUT && tile.appIcon != null) {
+                setImageDrawable(tile.appIcon)
+                imageTintList = null
+            } else {
+                setImageResource(tile.iconResId)
+                setColorFilter(Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)
+            }
+            tag = "icon"
+        }
+        container.addView(icon)
+        
+        container.tag = tile.id
+        
+        container.setOnClickListener { view ->
+            animateButtonPress(view)
+            vibrate()
+            handleQuickSettingTileClick(tile, view)
+        }
+        
+        container.setOnLongClickListener { view ->
+            vibrate()
+            handleQuickSettingTileLongClick(tile, view)
+            true
+        }
+        
+        return container
+    }
+    
+    private fun handleQuickSettingTileClick(tile: QuickSettingTile, view: View) {
+        when (tile.id) {
+            QuickSettingTile.TILE_BLUETOOTH -> {
+                val currentState = SystemControlHelper.isBluetoothEnabled(this)
+                val newState = !currentState
+                ShizukuHelper.toggleBluetooth(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
+            }
+            QuickSettingTile.TILE_DO_NOT_DISTURB -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleDoNotDisturb(this, newState)
+            }
+            QuickSettingTile.TILE_FLASHLIGHT -> {
+                val currentState = SystemControlHelper.isFlashlightOn()
+                val newState = !currentState
+                val success = SystemControlHelper.toggleFlashlight(this, newState)
+                if (success) {
+                    quickSettingStates[tile.id] = newState
+                    updateQuickSettingTileState(tile.id, newState)
+                }
+            }
+            QuickSettingTile.TILE_ROTATION_LOCK -> {
+                val currentState = SystemControlHelper.isRotationLocked(this)
+                val newState = !currentState
+                ShizukuHelper.setRotationLock(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
+            }
+            QuickSettingTile.TILE_SETTINGS -> {
+                openAndroidSettings()
+            }
+            QuickSettingTile.TILE_SCREEN_RECORD -> {
+                SystemControlHelper.openScreenRecording(this)
+                hideControlCenter()
+            }
+            QuickSettingTile.TILE_LOCATION -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleLocation(this, newState)
+            }
+            QuickSettingTile.TILE_WIFI -> {
+                val currentState = SystemControlHelper.isWifiEnabled(this)
+                val newState = !currentState
+                ShizukuHelper.toggleWifi(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
+            }
+            QuickSettingTile.TILE_MOBILE_DATA -> {
+                val currentState = SystemControlHelper.isMobileDataEnabled(this)
+                val newState = !currentState
+                ShizukuHelper.toggleMobileData(newState) { success ->
+                    if (success) {
+                        quickSettingStates[tile.id] = newState
+                        updateQuickSettingTileState(tile.id, newState)
+                    }
+                }
+            }
+            QuickSettingTile.TILE_AIRPLANE_MODE -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleAirplaneMode(this, newState)
+            }
+            QuickSettingTile.TILE_HOTSPOT -> {
+                SystemControlHelper.openHotspotSettings(this)
+                hideControlCenter()
+            }
+            QuickSettingTile.TILE_NFC -> {
+                SystemControlHelper.openNfcSettings(this)
+                hideControlCenter()
+            }
+            QuickSettingTile.TILE_BATTERY_SAVER -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleBatterySaver(this, newState)
+            }
+            QuickSettingTile.TILE_AUTO_BRIGHTNESS -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleAutoBrightness(this, newState)
+            }
+            QuickSettingTile.TILE_DARK_MODE -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleDarkMode(this, newState)
+            }
+            QuickSettingTile.TILE_SCREENSHOT -> {
+                hideControlCenter()
+                handler.postDelayed({
+                    SystemControlHelper.takeScreenshot(this)
+                }, 500)
+            }
+            QuickSettingTile.TILE_CAMERA -> {
+                SystemControlHelper.openCamera(this)
+                hideControlCenter()
+            }
+            QuickSettingTile.TILE_CALCULATOR -> {
+                SystemControlHelper.openCalculator(this)
+                hideControlCenter()
+            }
+            QuickSettingTile.TILE_WALLET -> {
+                SystemControlHelper.openWallet(this)
+                hideControlCenter()
+            }
+            QuickSettingTile.TILE_QR_SCANNER -> {
+                SystemControlHelper.openQRScanner(this)
+                hideControlCenter()
+            }
+            QuickSettingTile.TILE_EYE_COMFORT -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleEyeComfort(this, newState)
+            }
+            QuickSettingTile.TILE_SYNC -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleSync(this, newState)
+            }
+            QuickSettingTile.TILE_INVERT_COLORS -> {
+                val currentState = quickSettingStates[tile.id] ?: false
+                val newState = !currentState
+                quickSettingStates[tile.id] = newState
+                updateQuickSettingTileState(tile.id, newState)
+                SystemControlHelper.toggleInvertColors(this, newState)
+            }
+            else -> {
+                if (tile.type == QuickSettingTile.TileType.APP_SHORTCUT) {
+                    tile.packageName?.let { pkg ->
+                        hideControlCenter()
+                        try {
+                            val pm = packageManager
+                            val launchIntent = pm.getLaunchIntentForPackage(pkg)
+                            launchIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            launchIntent?.let { startActivity(it) }
+                        } catch (e: Exception) {
+                            Toast.makeText(this, "Không thể mở ứng dụng", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun handleQuickSettingTileLongClick(tile: QuickSettingTile, view: View) {
+        when (tile.id) {
+            QuickSettingTile.TILE_BLUETOOTH -> showBluetoothListDialog()
+            QuickSettingTile.TILE_WIFI -> showWifiListDialog()
+            else -> {}
+        }
+    }
+    
+    private val quickSettingStates = mutableMapOf<String, Boolean>()
+    
+    private fun syncQuickSettingStates() {
+        quickSettingStates[QuickSettingTile.TILE_WIFI] = SystemControlHelper.isWifiEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_BLUETOOTH] = SystemControlHelper.isBluetoothEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_MOBILE_DATA] = SystemControlHelper.isMobileDataEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_FLASHLIGHT] = SystemControlHelper.isFlashlightOn()
+        quickSettingStates[QuickSettingTile.TILE_ROTATION_LOCK] = SystemControlHelper.isRotationLocked(this)
+        quickSettingStates[QuickSettingTile.TILE_DO_NOT_DISTURB] = SystemControlHelper.isDoNotDisturbEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_LOCATION] = SystemControlHelper.isLocationEnabled(this)
+        quickSettingStates[QuickSettingTile.TILE_AUTO_BRIGHTNESS] = SystemControlHelper.isAutoBrightnessEnabled(this)
+    }
+    
+    private fun updateQuickSettingTileStates() {
+        quickSettingTileViews.forEach { (tileId, view) ->
+            val isActive = quickSettingStates[tileId] ?: false
+            updateQuickSettingTileState(tileId, isActive)
+        }
+    }
+    
+    private fun updateQuickSettingTileState(tileId: String, isActive: Boolean) {
+        val tileView = quickSettingTileViews[tileId] ?: return
+        val background = tileView.findViewWithTag<View>("background") ?: return
+        
+        val buttonColor = AppearanceSettings.getButtonColorWithOpacity(this, isActive)
+        val drawable = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setColor(buttonColor)
+        }
+        background.background = drawable
+    }
+    
     private fun setupAppShortcuts() {
         val shortcuts = AppShortcutManager.getSavedShortcuts(this)
         val container = controlCenterView?.findViewById<LinearLayout>(R.id.appShortcutsContainer)
@@ -1634,14 +1846,7 @@ class ControlCenterService : Service() {
         updateWifiStatus()
         updateButtonState(R.id.cellularButton, controlStates["cellular"] ?: false)
         updateCellularStatus()
-        updateButtonState(R.id.bluetoothButton, controlStates["bluetooth"] ?: false)
-        updateButtonState(R.id.flashlightButton, controlStates["flashlight"] ?: false)
-        updateButtonState(R.id.rotationButton, controlStates["rotation"] ?: false)
-        updateButtonState(R.id.notificationButton, controlStates["notification"] ?: true)
-        updateButtonState(R.id.cameraButton, controlStates["camera"] ?: false)
-        updateButtonState(R.id.screenMirrorButton, controlStates["screenMirror"] ?: false)
-        updateButtonState(R.id.videoButton, controlStates["video"] ?: false)
-        updateButtonState(R.id.locationButton, controlStates["location"] ?: false)
+        updateQuickSettingTileStates()
     }
 
     private fun updateButtonState(buttonId: Int, isActive: Boolean) {

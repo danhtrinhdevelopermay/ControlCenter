@@ -391,4 +391,198 @@ object SystemControlHelper {
             15
         }
     }
+    
+    fun isDoNotDisturbEnabled(context: Context): Boolean {
+        return try {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) 
+                as android.app.NotificationManager
+            notificationManager.currentInterruptionFilter != 
+                android.app.NotificationManager.INTERRUPTION_FILTER_ALL
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking DND state", e)
+            false
+        }
+    }
+    
+    fun toggleDoNotDisturb(context: Context, enable: Boolean) {
+        try {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) 
+                as android.app.NotificationManager
+            if (!notificationManager.isNotificationPolicyAccessGranted) {
+                val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                return
+            }
+            notificationManager.setInterruptionFilter(
+                if (enable) android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS
+                else android.app.NotificationManager.INTERRUPTION_FILTER_ALL
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error toggling DND", e)
+        }
+    }
+    
+    fun isLocationEnabled(context: Context): Boolean {
+        return try {
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+            locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+                    locationManager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking location state", e)
+            false
+        }
+    }
+    
+    fun toggleLocation(context: Context, enable: Boolean) {
+        try {
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening location settings", e)
+        }
+    }
+    
+    fun toggleAirplaneMode(context: Context, enable: Boolean) {
+        try {
+            val intent = Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening airplane mode settings", e)
+        }
+    }
+    
+    fun openHotspotSettings(context: Context) {
+        try {
+            val intent = Intent(Settings.ACTION_WIRELESS_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening hotspot settings", e)
+        }
+    }
+    
+    fun openNfcSettings(context: Context) {
+        try {
+            val intent = Intent(Settings.ACTION_NFC_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening NFC settings", e)
+        }
+    }
+    
+    fun toggleBatterySaver(context: Context, enable: Boolean) {
+        try {
+            val intent = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening battery saver settings", e)
+        }
+    }
+    
+    fun toggleAutoBrightness(context: Context, enable: Boolean) {
+        try {
+            if (!canWriteSettings(context)) {
+                openWriteSettingsPermission(context)
+                return
+            }
+            setAutoBrightness(context, enable)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error toggling auto brightness", e)
+        }
+    }
+    
+    fun toggleDarkMode(context: Context, enable: Boolean) {
+        try {
+            val intent = Intent(Settings.ACTION_DISPLAY_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening display settings", e)
+        }
+    }
+    
+    fun openScreenRecording(context: Context) {
+        try {
+            Toast.makeText(context, "Vuốt thanh trạng thái để quay màn hình", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening screen recording", e)
+        }
+    }
+    
+    fun takeScreenshot(context: Context) {
+        try {
+            Toast.makeText(context, "Nhấn đồng thời nút nguồn + giảm âm lượng", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error taking screenshot", e)
+        }
+    }
+    
+    fun openWallet(context: Context) {
+        try {
+            val intent = Intent()
+            intent.setClassName("com.google.android.apps.walletnfcrel", "com.google.commerce.tapandpay.android.common.TapAndPayActivity")
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                val intent = Intent()
+                intent.setClassName("com.google.android.gms", "com.google.android.gms.tapandpay.settings.TapAndPaySettingsActivity")
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            } catch (e2: Exception) {
+                Toast.makeText(context, "Google Wallet chưa được cài đặt", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    fun openQRScanner(context: Context) {
+        try {
+            val intent = Intent("android.media.action.IMAGE_CAPTURE_SECURE")
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                openCamera(context)
+            } catch (e2: Exception) {
+                Log.e(TAG, "Error opening QR scanner", e2)
+            }
+        }
+    }
+    
+    fun toggleEyeComfort(context: Context, enable: Boolean) {
+        try {
+            val intent = Intent(Settings.ACTION_NIGHT_DISPLAY_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            val intent = Intent(Settings.ACTION_DISPLAY_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        }
+    }
+    
+    fun toggleSync(context: Context, enable: Boolean) {
+        try {
+            val intent = Intent(Settings.ACTION_SYNC_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening sync settings", e)
+        }
+    }
+    
+    fun toggleInvertColors(context: Context, enable: Boolean) {
+        try {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening accessibility settings", e)
+        }
+    }
 }
