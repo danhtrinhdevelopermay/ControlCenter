@@ -20,15 +20,32 @@ class NotificationAdapter(
 
     private val expandedItems = mutableSetOf<String>()
     private val maxCollapsedLines = 2
+    private val minContentLengthForExpand = 80
+    
+    private var cachedCardColor: Int? = null
+    private var cachedCornerRadius: Float = 0f
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotificationViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_notification, parent, false)
+        
+        if (cachedCornerRadius == 0f) {
+            cachedCornerRadius = 20 * parent.context.resources.displayMetrics.density
+        }
+        
         return NotificationViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: NotificationViewHolder, position: Int) {
         holder.bind(getItem(position))
+    }
+    
+    override fun onBindViewHolder(holder: NotificationViewHolder, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads)
+        } else {
+            holder.bindPartial(getItem(position), payloads)
+        }
     }
 
     fun removeItem(position: Int): NotificationData? {
@@ -39,9 +56,20 @@ class NotificationAdapter(
         submitList(newList)
         return item
     }
+    
+    fun invalidateCardColorCache() {
+        cachedCardColor = null
+    }
 
     private fun getItemKey(notification: NotificationData): String {
         return "${notification.packageName}_${notification.id}"
+    }
+    
+    private fun getCachedCardColor(): Int {
+        if (cachedCardColor == null) {
+            cachedCardColor = getCardColor()
+        }
+        return cachedCardColor!!
     }
 
     inner class NotificationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -54,8 +82,21 @@ class NotificationAdapter(
         private val notificationCard: LinearLayout = itemView.findViewById(R.id.notificationCard)
         private val previewContainer: View = itemView.findViewById(R.id.previewContainer)
         private val expandArrow: ImageView = itemView.findViewById(R.id.expandArrow)
+        
+        private var currentNotification: NotificationData? = null
+        private var cardBackground: GradientDrawable? = null
+
+        init {
+            cardBackground = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = cachedCornerRadius
+            }
+            notificationCard.background = cardBackground
+        }
 
         fun bind(notification: NotificationData) {
+            currentNotification = notification
+            
             if (notification.icon != null) {
                 appIcon.setImageDrawable(notification.icon)
             } else {
@@ -73,39 +114,22 @@ class NotificationAdapter(
                 notificationContent.text = notification.content
                 notificationContent.visibility = View.VISIBLE
                 
-                notificationContent.post {
-                    val layout = notificationContent.layout
-                    if (layout != null) {
-                        val lineCount = layout.lineCount
-                        val hasEllipsis = if (lineCount > 0) {
-                            layout.getEllipsisCount(lineCount - 1) > 0
-                        } else false
-                        
-                        val needsExpansion = lineCount > maxCollapsedLines || hasEllipsis || notification.content.length > 100
-                        
-                        if (needsExpansion) {
-                            expandArrow.visibility = View.VISIBLE
-                            
-                            if (isExpanded) {
-                                notificationContent.maxLines = Integer.MAX_VALUE
-                                expandArrow.rotation = 180f
-                            } else {
-                                notificationContent.maxLines = maxCollapsedLines
-                                expandArrow.rotation = 0f
-                            }
-                        } else {
-                            expandArrow.visibility = View.GONE
-                            notificationContent.maxLines = maxCollapsedLines
-                        }
-                    }
-                }
+                val needsExpansion = notification.content.length > minContentLengthForExpand || 
+                                     notification.content.contains('\n')
                 
-                if (isExpanded) {
-                    notificationContent.maxLines = Integer.MAX_VALUE
-                    expandArrow.rotation = 180f
+                if (needsExpansion) {
+                    expandArrow.visibility = View.VISIBLE
+                    
+                    if (isExpanded) {
+                        notificationContent.maxLines = Integer.MAX_VALUE
+                        expandArrow.rotation = 180f
+                    } else {
+                        notificationContent.maxLines = maxCollapsedLines
+                        expandArrow.rotation = 0f
+                    }
                 } else {
+                    expandArrow.visibility = View.GONE
                     notificationContent.maxLines = maxCollapsedLines
-                    expandArrow.rotation = 0f
                 }
             } else {
                 notificationContent.visibility = View.GONE
@@ -121,13 +145,7 @@ class NotificationAdapter(
                 notificationImage.visibility = View.GONE
             }
 
-            val cardColor = getCardColor()
-            val density = itemView.context.resources.displayMetrics.density
-            notificationCard.background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = 20 * density
-                setColor(cardColor)
-            }
+            cardBackground?.setColor(getCachedCardColor())
 
             expandArrow.setOnClickListener {
                 toggleExpand(notification, itemKey)
@@ -135,6 +153,24 @@ class NotificationAdapter(
 
             itemView.setOnClickListener {
                 onItemClick(notification)
+            }
+        }
+        
+        fun bindPartial(notification: NotificationData, payloads: MutableList<Any>) {
+            for (payload in payloads) {
+                when (payload) {
+                    "expand_state" -> {
+                        val itemKey = getItemKey(notification)
+                        val isExpanded = expandedItems.contains(itemKey)
+                        if (isExpanded) {
+                            notificationContent.maxLines = Integer.MAX_VALUE
+                            expandArrow.rotation = 180f
+                        } else {
+                            notificationContent.maxLines = maxCollapsedLines
+                            expandArrow.rotation = 0f
+                        }
+                    }
+                }
             }
         }
 
@@ -154,7 +190,7 @@ class NotificationAdapter(
             notificationContent.maxLines = Integer.MAX_VALUE
             
             ValueAnimator.ofFloat(0f, 180f).apply {
-                duration = 200
+                duration = 150
                 interpolator = AccelerateDecelerateInterpolator()
                 addUpdateListener { animator ->
                     expandArrow.rotation = animator.animatedValue as Float
@@ -167,7 +203,7 @@ class NotificationAdapter(
             notificationContent.maxLines = maxCollapsedLines
             
             ValueAnimator.ofFloat(180f, 0f).apply {
-                duration = 200
+                duration = 150
                 interpolator = AccelerateDecelerateInterpolator()
                 addUpdateListener { animator ->
                     expandArrow.rotation = animator.animatedValue as Float

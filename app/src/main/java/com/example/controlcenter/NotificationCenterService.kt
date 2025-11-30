@@ -527,10 +527,18 @@ class NotificationCenterService : Service() {
         )
 
         recyclerView?.apply {
-            layoutManager = LinearLayoutManager(this@NotificationCenterService)
+            layoutManager = LinearLayoutManager(this@NotificationCenterService).apply {
+                isItemPrefetchEnabled = true
+                initialPrefetchItemCount = 5
+            }
             adapter = notificationAdapter
             setHasFixedSize(false)
             itemAnimator = null
+            setItemViewCacheSize(20)
+            isNestedScrollingEnabled = false
+            setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
+                setMaxRecycledViews(0, 25)
+            })
         }
 
         setupSwipeToDelete()
