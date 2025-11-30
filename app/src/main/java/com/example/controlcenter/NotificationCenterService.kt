@@ -938,6 +938,11 @@ class NotificationCenterService : Service() {
             handlePanelTouch(event)
         }
         
+        val bottomDismissArea = notificationCenterView?.findViewById<LinearLayout>(R.id.bottomDismissArea)
+        bottomDismissArea?.setOnTouchListener { _, event ->
+            handleBottomDismissTouch(event)
+        }
+        
         recyclerView?.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
@@ -966,6 +971,121 @@ class NotificationCenterService : Service() {
                 }
                 false
             }
+        }
+    }
+    
+    private fun handleBottomDismissTouch(event: MotionEvent): Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                isDragging = true
+                startY = event.rawY
+                currentTranslationY = notificationCenterView?.translationY ?: 0f
+                
+                velocityTracker?.clear()
+                velocityTracker = VelocityTracker.obtain()
+                velocityTracker?.addMovement(event)
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (isDragging) {
+                    velocityTracker?.addMovement(event)
+                    
+                    val deltaY = event.rawY - startY
+                    if (deltaY > 0) {
+                        val newTranslation = (currentTranslationY + deltaY).coerceIn(0f, panelHeight.toFloat())
+                        notificationCenterView?.translationY = newTranslation
+                        
+                        val progress = 1f - (newTranslation / panelHeight.toFloat())
+                        backgroundView?.alpha = progress
+                        updateBlurRadius(progress)
+                    }
+                }
+                return true
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (isDragging) {
+                    isDragging = false
+                    
+                    velocityTracker?.addMovement(event)
+                    velocityTracker?.computeCurrentVelocity(1000)
+                    val velocityY = velocityTracker?.yVelocity ?: 0f
+                    
+                    val currentTransY = notificationCenterView?.translationY ?: 0f
+                    val shouldHide = currentTransY > panelHeight / 4f || velocityY > minFlingVelocity
+                    
+                    if (shouldHide) {
+                        hideNotificationCenterDownward(velocityY)
+                    } else {
+                        animateBackToPosition()
+                    }
+                    
+                    velocityTracker?.recycle()
+                    velocityTracker = null
+                }
+                return true
+            }
+        }
+        return false
+    }
+    
+    private fun hideNotificationCenterDownward(velocity: Float) {
+        if (isHiding) return
+        isHiding = true
+        isInteractiveDragging = false
+        
+        currentAnimation?.cancel()
+        
+        notificationCenterView?.let { panel ->
+            val springAnimation = SpringAnimation(
+                panel,
+                DynamicAnimation.TRANSLATION_Y,
+                panelHeight.toFloat()
+            )
+            springAnimation.spring.apply {
+                stiffness = SpringForce.STIFFNESS_MEDIUM
+                dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+            }
+            
+            if (velocity != 0f && velocity > 0f) {
+                springAnimation.setStartVelocity(velocity)
+            }
+            
+            springAnimation.addUpdateListener { _, value, _ ->
+                if (!isHiding) return@addUpdateListener
+                val progress = 1f - (value / panelHeight.toFloat())
+                backgroundView?.alpha = progress.coerceIn(0f, 1f)
+                updateBlurRadius(progress.coerceIn(0f, 1f))
+            }
+            springAnimation.addEndListener { _, _, _, _ ->
+                removeViews()
+            }
+            
+            currentAnimation = springAnimation
+            springAnimation.start()
+        } ?: run {
+            isHiding = false
+        }
+    }
+    
+    private fun animateBackToPosition() {
+        notificationCenterView?.let { panel ->
+            val springAnimation = SpringAnimation(
+                panel,
+                DynamicAnimation.TRANSLATION_Y,
+                0f
+            )
+            springAnimation.spring.apply {
+                stiffness = SpringForce.STIFFNESS_MEDIUM
+                dampingRatio = SpringForce.DAMPING_RATIO_LOW_BOUNCY
+            }
+            
+            springAnimation.addUpdateListener { _, value, _ ->
+                val progress = 1f - (value / panelHeight.toFloat())
+                backgroundView?.alpha = progress.coerceIn(0f, 1f)
+                updateBlurRadius(progress.coerceIn(0f, 1f))
+            }
+            
+            springAnimation.start()
         }
     }
     

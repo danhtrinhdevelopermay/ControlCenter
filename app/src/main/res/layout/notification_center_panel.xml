@@ -95,16 +95,32 @@
 
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/clearAllButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="40dp"
-        android:src="@drawable/ic_dismiss_notifications"
-        android:background="@drawable/dismiss_button_background"
-        android:padding="12dp"
-        android:elevation="8dp" />
+    <LinearLayout
+        android:id="@+id/bottomDismissArea"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingTop="20dp">
+
+        <View
+            android:id="@+id/dismissHandle"
+            android:layout_width="40dp"
+            android:layout_height="5dp"
+            android:background="@drawable/dismiss_handle_background" />
+
+        <ImageView
+            android:id="@+id/clearAllButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/ic_dismiss_notifications"
+            android:background="@drawable/dismiss_button_background"
+            android:padding="12dp"
+            android:elevation="8dp" />
+
+    </LinearLayout>
 
 </FrameLayout>
 
