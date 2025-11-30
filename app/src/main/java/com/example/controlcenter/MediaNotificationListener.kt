@@ -53,7 +53,6 @@ class MediaNotificationListener : NotificationListenerService() {
         
         fun requestRebind(context: Context) {
             if (!isNotificationAccessEnabled(context)) {
-                Log.w(TAG, "Cannot rebind: Notification access not enabled")
                 return
             }
             
@@ -61,41 +60,33 @@ class MediaNotificationListener : NotificationListenerService() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     val componentName = ComponentName(context, MediaNotificationListener::class.java)
                     requestRebind(componentName)
-                    Log.d(TAG, "Requested rebind for notification listener")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error requesting rebind", e)
             }
         }
         
         fun getActiveNotifications(): List<StatusBarNotification> {
             if (!isServiceConnected || instance == null) {
-                Log.w(TAG, "Service not connected, returning cached notifications (${cachedNotifications.size} items)")
                 return cachedNotifications
             }
             
             val liveNotifications = try {
                 instance?.activeNotifications?.toList()
             } catch (e: Exception) {
-                Log.e(TAG, "Error getting active notifications", e)
                 null
             }
             
             if (liveNotifications != null) {
                 cachedNotifications = liveNotifications
-                Log.d(TAG, "Got ${liveNotifications.size} live notifications")
                 return liveNotifications
             }
             
-            Log.d(TAG, "Returning ${cachedNotifications.size} cached notifications")
             return cachedNotifications
         }
         
         fun forceRefreshNotifications() {
             if (instance != null && isServiceConnected) {
                 instance?.refreshNotifications()
-            } else {
-                Log.w(TAG, "Cannot refresh: Service instance is null or not connected")
             }
         }
         
@@ -248,17 +239,14 @@ class MediaNotificationListener : NotificationListenerService() {
     
     override fun onListenerConnected() {
         super.onListenerConnected()
-        Log.d(TAG, "Notification listener connected")
         instance = this
         isServiceConnected = true
         initMediaSessionManager(this)
         updateCachedNotifications()
-        Log.d(TAG, "Service connected, got ${cachedNotifications.size} notifications")
     }
     
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
-        Log.d(TAG, "Notification listener disconnected")
         isServiceConnected = false
         instance = null
     }

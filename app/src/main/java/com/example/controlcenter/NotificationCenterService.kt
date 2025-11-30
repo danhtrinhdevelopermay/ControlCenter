@@ -40,6 +40,7 @@ import android.view.WindowInsetsController
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.Executors
 
 class NotificationCenterService : Service() {
 
@@ -67,6 +68,7 @@ class NotificationCenterService : Service() {
     private var backgroundView: View? = null
     private var blurAnimator: ValueAnimator? = null
     private val handler = Handler(Looper.getMainLooper())
+    private val backgroundExecutor = Executors.newSingleThreadExecutor()
 
     private var screenWidth = 0
     private var screenHeight = 0
@@ -189,9 +191,8 @@ class NotificationCenterService : Service() {
     }
 
     private fun loadNotifications() {
-        notifications.clear()
-        
         if (!MediaNotificationListener.isNotificationAccessEnabled(this)) {
+            notifications.clear()
             addPermissionNotification()
             return
         }
@@ -199,91 +200,102 @@ class NotificationCenterService : Service() {
         if (!MediaNotificationListener.isServiceConnected()) {
             MediaNotificationListener.requestRebind(this)
             handler.postDelayed({
-                loadNotificationsInternal()
-                refreshNotificationList()
-            }, 500)
+                loadNotificationsAsync()
+            }, 300)
             return
         }
         
-        loadNotificationsInternal()
+        loadNotificationsAsync()
     }
     
-    private fun loadNotificationsInternal() {
-        notifications.clear()
-        
-        if (!MediaNotificationListener.isNotificationAccessEnabled(this)) {
-            addPermissionNotification()
-            return
-        }
-        
-        MediaNotificationListener.forceRefreshNotifications()
-        
-        val activeNotifications = MediaNotificationListener.getActiveNotifications()
-        if (activeNotifications.isNotEmpty()) {
-            try {
-                for (sbn in activeNotifications) {
-                    val notification = sbn.notification
-                    val extras = notification.extras
-                    
-                    val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
-                    val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-                    
-                    if (title.isEmpty() && text.isEmpty()) continue
-                    if (sbn.packageName == packageName) continue
-                    
-                    if (notification.flags and Notification.FLAG_FOREGROUND_SERVICE != 0 &&
-                        notification.flags and Notification.FLAG_ONGOING_EVENT != 0) {
-                        continue
-                    }
-                    
-                    val appName = try {
-                        val appInfo = packageManager.getApplicationInfo(sbn.packageName, 0)
-                        packageManager.getApplicationLabel(appInfo).toString()
-                    } catch (e: PackageManager.NameNotFoundException) {
-                        sbn.packageName
-                    }
-                    
-                    val appIcon = try {
-                        packageManager.getApplicationIcon(sbn.packageName)
-                    } catch (e: PackageManager.NameNotFoundException) {
-                        null
-                    }
-
-                    val largeIcon = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        notification.getLargeIcon()?.let { icon ->
-                            try {
-                                val drawable = icon.loadDrawable(this)
-                                if (drawable is android.graphics.drawable.BitmapDrawable) {
-                                    drawable.bitmap
-                                } else null
-                            } catch (e: Exception) {
-                                null
-                            }
-                        }
-                    } else {
-                        @Suppress("DEPRECATION")
-                        extras.getParcelable<android.graphics.Bitmap>(Notification.EXTRA_LARGE_ICON)
-                    }
-                    
-                    notifications.add(
-                        NotificationData(
-                            id = sbn.id,
-                            packageName = sbn.packageName,
-                            appName = appName,
-                            title = title,
-                            content = text,
-                            time = sbn.postTime,
-                            icon = appIcon,
-                            largeIcon = largeIcon
-                        )
-                    )
+    private fun loadNotificationsAsync() {
+        backgroundExecutor.execute {
+            val newNotifications = mutableListOf<NotificationData>()
+            
+            if (!MediaNotificationListener.isNotificationAccessEnabled(this)) {
+                handler.post {
+                    notifications.clear()
+                    addPermissionNotification()
+                    refreshNotificationList()
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
+                return@execute
+            }
+            
+            MediaNotificationListener.forceRefreshNotifications()
+            
+            val activeNotifications = MediaNotificationListener.getActiveNotifications()
+            if (activeNotifications.isNotEmpty()) {
+                try {
+                    for (sbn in activeNotifications) {
+                        val notification = sbn.notification
+                        val extras = notification.extras
+                        
+                        val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
+                        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+                        
+                        if (title.isEmpty() && text.isEmpty()) continue
+                        if (sbn.packageName == packageName) continue
+                        
+                        if (notification.flags and Notification.FLAG_FOREGROUND_SERVICE != 0 &&
+                            notification.flags and Notification.FLAG_ONGOING_EVENT != 0) {
+                            continue
+                        }
+                        
+                        val appName = try {
+                            val appInfo = packageManager.getApplicationInfo(sbn.packageName, 0)
+                            packageManager.getApplicationLabel(appInfo).toString()
+                        } catch (e: PackageManager.NameNotFoundException) {
+                            sbn.packageName
+                        }
+                        
+                        val appIcon = try {
+                            packageManager.getApplicationIcon(sbn.packageName)
+                        } catch (e: PackageManager.NameNotFoundException) {
+                            null
+                        }
+
+                        val largeIcon = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            notification.getLargeIcon()?.let { icon ->
+                                try {
+                                    val drawable = icon.loadDrawable(this)
+                                    if (drawable is android.graphics.drawable.BitmapDrawable) {
+                                        drawable.bitmap
+                                    } else null
+                                } catch (e: Exception) {
+                                    null
+                                }
+                            }
+                        } else {
+                            @Suppress("DEPRECATION")
+                            extras.getParcelable<android.graphics.Bitmap>(Notification.EXTRA_LARGE_ICON)
+                        }
+                        
+                        newNotifications.add(
+                            NotificationData(
+                                id = sbn.id,
+                                packageName = sbn.packageName,
+                                appName = appName,
+                                title = title,
+                                content = text,
+                                time = sbn.postTime,
+                                icon = appIcon,
+                                largeIcon = largeIcon
+                            )
+                        )
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            
+            newNotifications.sortByDescending { it.time }
+            
+            handler.post {
+                notifications.clear()
+                notifications.addAll(newNotifications)
+                refreshNotificationList()
             }
         }
-        
-        notifications.sortByDescending { it.time }
     }
     
     private fun addPermissionNotification() {
@@ -308,8 +320,6 @@ class NotificationCenterService : Service() {
         isInteractiveDragging = true
         panelMeasured = false
         vibrate()
-        
-        loadNotifications()
 
         addBackgroundView()
         backgroundView?.alpha = 0f
