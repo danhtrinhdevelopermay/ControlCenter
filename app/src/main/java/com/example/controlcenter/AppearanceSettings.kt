@@ -32,6 +32,11 @@ object AppearanceSettings {
     private const val KEY_NOTIFICATION_HEADER_COLOR = "notification_header_color"
     private const val KEY_NOTIFICATION_HEADER_OPACITY = "notification_header_opacity"
     
+    private const val KEY_BUTTON_CORNER_RADIUS = "button_corner_radius"
+    private const val KEY_NOTIFICATION_CORNER_RADIUS = "notification_corner_radius"
+    private const val KEY_CONTROL_CENTER_BLUR = "control_center_blur"
+    private const val KEY_NOTIFICATION_CENTER_BLUR = "notification_center_blur"
+    
     private const val DEFAULT_BUTTON_COLOR = 0x505050
     private const val DEFAULT_BUTTON_OPACITY = 80
     private const val DEFAULT_BUTTON_ACTIVE_COLOR = 0x007AFF
@@ -57,6 +62,11 @@ object AppearanceSettings {
     private const val DEFAULT_NOTIFICATION_OPACITY = 90
     private const val DEFAULT_NOTIFICATION_HEADER_COLOR = 0xFFFFFF
     private const val DEFAULT_NOTIFICATION_HEADER_OPACITY = 100
+    
+    private const val DEFAULT_BUTTON_CORNER_RADIUS = 20
+    private const val DEFAULT_NOTIFICATION_CORNER_RADIUS = 20
+    private const val DEFAULT_CONTROL_CENTER_BLUR = 100
+    private const val DEFAULT_NOTIFICATION_CENTER_BLUR = 100
     
     private fun getPrefs(context: Context) = 
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -261,6 +271,50 @@ object AppearanceSettings {
         return colorWithOpacity(color, opacity)
     }
     
+    fun getButtonCornerRadius(context: Context): Int = 
+        getPrefs(context).getInt(KEY_BUTTON_CORNER_RADIUS, DEFAULT_BUTTON_CORNER_RADIUS)
+    
+    fun setButtonCornerRadius(context: Context, radius: Int) {
+        getPrefs(context).edit().putInt(KEY_BUTTON_CORNER_RADIUS, radius.coerceIn(0, 50)).apply()
+    }
+    
+    fun getNotificationCornerRadius(context: Context): Int = 
+        getPrefs(context).getInt(KEY_NOTIFICATION_CORNER_RADIUS, DEFAULT_NOTIFICATION_CORNER_RADIUS)
+    
+    fun setNotificationCornerRadius(context: Context, radius: Int) {
+        getPrefs(context).edit().putInt(KEY_NOTIFICATION_CORNER_RADIUS, radius.coerceIn(0, 50)).apply()
+    }
+    
+    fun getControlCenterBlur(context: Context): Int = 
+        getPrefs(context).getInt(KEY_CONTROL_CENTER_BLUR, DEFAULT_CONTROL_CENTER_BLUR)
+    
+    fun setControlCenterBlur(context: Context, blur: Int) {
+        getPrefs(context).edit().putInt(KEY_CONTROL_CENTER_BLUR, blur.coerceIn(0, 100)).apply()
+    }
+    
+    fun getNotificationCenterBlur(context: Context): Int = 
+        getPrefs(context).getInt(KEY_NOTIFICATION_CENTER_BLUR, DEFAULT_NOTIFICATION_CENTER_BLUR)
+    
+    fun setNotificationCenterBlur(context: Context, blur: Int) {
+        getPrefs(context).edit().putInt(KEY_NOTIFICATION_CENTER_BLUR, blur.coerceIn(0, 100)).apply()
+    }
+    
+    fun getButtonCornerRadiusPx(context: Context): Float {
+        return getButtonCornerRadius(context) * context.resources.displayMetrics.density
+    }
+    
+    fun getNotificationCornerRadiusPx(context: Context): Float {
+        return getNotificationCornerRadius(context) * context.resources.displayMetrics.density
+    }
+    
+    fun getControlCenterBlurRadius(context: Context): Float {
+        return (getControlCenterBlur(context) * 1.8f).coerceIn(0f, 180f)
+    }
+    
+    fun getNotificationCenterBlurRadius(context: Context): Float {
+        return (getNotificationCenterBlur(context) * 1.8f).coerceIn(0f, 180f)
+    }
+    
     private fun colorWithOpacity(color: Int, opacity: Int): Int {
         val alpha = (opacity * 255 / 100).coerceIn(0, 255)
         val r = (color shr 16) and 0xFF
@@ -291,6 +345,10 @@ object AppearanceSettings {
             putInt(KEY_NOTIFICATION_OPACITY, DEFAULT_NOTIFICATION_OPACITY)
             putInt(KEY_NOTIFICATION_HEADER_COLOR, DEFAULT_NOTIFICATION_HEADER_COLOR)
             putInt(KEY_NOTIFICATION_HEADER_OPACITY, DEFAULT_NOTIFICATION_HEADER_OPACITY)
+            putInt(KEY_BUTTON_CORNER_RADIUS, DEFAULT_BUTTON_CORNER_RADIUS)
+            putInt(KEY_NOTIFICATION_CORNER_RADIUS, DEFAULT_NOTIFICATION_CORNER_RADIUS)
+            putInt(KEY_CONTROL_CENTER_BLUR, DEFAULT_CONTROL_CENTER_BLUR)
+            putInt(KEY_NOTIFICATION_CENTER_BLUR, DEFAULT_NOTIFICATION_CENTER_BLUR)
             apply()
         }
     }

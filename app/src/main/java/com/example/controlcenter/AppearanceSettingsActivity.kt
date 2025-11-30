@@ -61,6 +61,16 @@ class AppearanceSettingsActivity : AppCompatActivity() {
     private lateinit var notificationHeaderOpacitySeekBar: SeekBar
     private lateinit var notificationHeaderOpacityValue: TextView
 
+    private lateinit var buttonCornerRadiusSeekBar: SeekBar
+    private lateinit var buttonCornerRadiusValue: TextView
+    private lateinit var notificationCornerRadiusSeekBar: SeekBar
+    private lateinit var notificationCornerRadiusValue: TextView
+    
+    private lateinit var controlCenterBlurSeekBar: SeekBar
+    private lateinit var controlCenterBlurValue: TextView
+    private lateinit var notificationCenterBlurSeekBar: SeekBar
+    private lateinit var notificationCenterBlurValue: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_appearance_settings)
@@ -115,6 +125,16 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         notificationHeaderColorPreview = findViewById(R.id.notificationHeaderColorPreview)
         notificationHeaderOpacitySeekBar = findViewById(R.id.notificationHeaderOpacitySeekBar)
         notificationHeaderOpacityValue = findViewById(R.id.notificationHeaderOpacityValue)
+        
+        buttonCornerRadiusSeekBar = findViewById(R.id.buttonCornerRadiusSeekBar)
+        buttonCornerRadiusValue = findViewById(R.id.buttonCornerRadiusValue)
+        notificationCornerRadiusSeekBar = findViewById(R.id.notificationCornerRadiusSeekBar)
+        notificationCornerRadiusValue = findViewById(R.id.notificationCornerRadiusValue)
+        
+        controlCenterBlurSeekBar = findViewById(R.id.controlCenterBlurSeekBar)
+        controlCenterBlurValue = findViewById(R.id.controlCenterBlurValue)
+        notificationCenterBlurSeekBar = findViewById(R.id.notificationCenterBlurSeekBar)
+        notificationCenterBlurValue = findViewById(R.id.notificationCenterBlurValue)
     }
 
     private fun loadSettings() {
@@ -149,6 +169,16 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         notificationHeaderColorInput.setText(AppearanceSettings.colorToHex(AppearanceSettings.getNotificationHeaderColor(this)))
         notificationHeaderOpacitySeekBar.progress = AppearanceSettings.getNotificationHeaderOpacity(this)
         notificationHeaderOpacityValue.text = "${AppearanceSettings.getNotificationHeaderOpacity(this)}%"
+
+        buttonCornerRadiusSeekBar.progress = AppearanceSettings.getButtonCornerRadius(this)
+        buttonCornerRadiusValue.text = "${AppearanceSettings.getButtonCornerRadius(this)}dp"
+        notificationCornerRadiusSeekBar.progress = AppearanceSettings.getNotificationCornerRadius(this)
+        notificationCornerRadiusValue.text = "${AppearanceSettings.getNotificationCornerRadius(this)}dp"
+        
+        controlCenterBlurSeekBar.progress = AppearanceSettings.getControlCenterBlur(this)
+        controlCenterBlurValue.text = "${AppearanceSettings.getControlCenterBlur(this)}%"
+        notificationCenterBlurSeekBar.progress = AppearanceSettings.getNotificationCenterBlur(this)
+        notificationCenterBlurValue.text = "${AppearanceSettings.getNotificationCenterBlur(this)}%"
 
         updateAllPreviews()
     }
@@ -257,6 +287,22 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             AppearanceSettings.setNotificationHeaderOpacity(this, value)
             updateNotificationHeaderPreview()
         }
+        
+        setupSeekBarListenerDp(buttonCornerRadiusSeekBar, buttonCornerRadiusValue) { value ->
+            AppearanceSettings.setButtonCornerRadius(this, value)
+        }
+        
+        setupSeekBarListenerDp(notificationCornerRadiusSeekBar, notificationCornerRadiusValue) { value ->
+            AppearanceSettings.setNotificationCornerRadius(this, value)
+        }
+        
+        setupSeekBarListener(controlCenterBlurSeekBar, controlCenterBlurValue) { value ->
+            AppearanceSettings.setControlCenterBlur(this, value)
+        }
+        
+        setupSeekBarListener(notificationCenterBlurSeekBar, notificationCenterBlurValue) { value ->
+            AppearanceSettings.setNotificationCenterBlur(this, value)
+        }
     }
 
     private fun setupColorInputListener(editText: EditText, onColorChange: (Int) -> Unit) {
@@ -279,6 +325,19 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 valueText.text = "$progress%"
+                if (fromUser) {
+                    onValueChange(progress)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
+    
+    private fun setupSeekBarListenerDp(seekBar: SeekBar, valueText: TextView, onValueChange: (Int) -> Unit) {
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                valueText.text = "${progress}dp"
                 if (fromUser) {
                     onValueChange(progress)
                 }
@@ -333,6 +392,11 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             AppearanceSettings.setNotificationHeaderColor(this, AppearanceSettings.hexToColor(notificationHeaderColorInput.text.toString()))
         } catch (e: Exception) {}
         AppearanceSettings.setNotificationHeaderOpacity(this, notificationHeaderOpacitySeekBar.progress)
+        
+        AppearanceSettings.setButtonCornerRadius(this, buttonCornerRadiusSeekBar.progress)
+        AppearanceSettings.setNotificationCornerRadius(this, notificationCornerRadiusSeekBar.progress)
+        AppearanceSettings.setControlCenterBlur(this, controlCenterBlurSeekBar.progress)
+        AppearanceSettings.setNotificationCenterBlur(this, notificationCenterBlurSeekBar.progress)
     }
 
     private fun updateAllPreviews() {
