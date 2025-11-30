@@ -82,9 +82,11 @@
         </LinearLayout>
 
         <FrameLayout
+            android:id="@+id/notificationListContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:background="@android:color/transparent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/notificationsRecyclerView"
@@ -93,7 +95,8 @@
                 android:scrollbars="none"
                 android:overScrollMode="never"
                 android:clipToPadding="false"
-                android:paddingBottom="100dp" />
+                android:paddingBottom="100dp"
+                android:background="@android:color/transparent" />
 
             <ScrollView
                 android:layout_width="match_parent"
@@ -101,13 +104,15 @@
                 android:scrollbars="none"
                 android:overScrollMode="never"
                 android:clipToPadding="false"
-                android:paddingBottom="100dp">
+                android:paddingBottom="100dp"
+                android:background="@android:color/transparent">
 
                 <LinearLayout
                     android:id="@+id/notificationsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                    android:orientation="vertical"
+                    android:background="@android:color/transparent" />
 
             </ScrollView>
 
