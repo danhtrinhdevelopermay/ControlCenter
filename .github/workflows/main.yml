@@ -57,20 +57,17 @@ jobs:
 
       - name: Create keystore.properties
         run: |
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> keystore.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> keystore.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> keystore.properties
+          echo "storePassword=android123" > keystore.properties
+          echo "keyAlias=release" >> keystore.properties
+          echo "keyPassword=android123" >> keystore.properties
+          echo "storeFile=../release-keystore.jks" >> keystore.properties
 
-      - name: Decode and create keystore
+      - name: Create keystore from base64
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release-keystore.jks
+          echo "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" | base64 --decode > release-keystore.jks
 
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
