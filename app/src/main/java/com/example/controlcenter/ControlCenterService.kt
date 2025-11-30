@@ -125,27 +125,10 @@ class ControlCenterService : Service() {
     
     private val buttonIconMap = mapOf(
         R.id.wifiButton to R.id.wifiIcon,
-        R.id.cellularButton to R.id.cellularIcon,
-        R.id.bluetoothButton to R.id.bluetoothIcon,
-        R.id.notificationButton to R.id.notificationIcon,
-        R.id.flashlightButton to R.id.flashlightIcon,
-        R.id.rotationButton to R.id.rotationIcon,
-        R.id.cameraButton to R.id.cameraIcon,
-        R.id.screenMirrorButton to R.id.screenMirrorIcon,
-        R.id.videoButton to R.id.videoIcon,
-        R.id.locationButton to R.id.locationIcon
+        R.id.cellularButton to R.id.cellularIcon
     )
     
-    private val circularButtons = setOf(
-        R.id.bluetoothButton,
-        R.id.notificationButton,
-        R.id.flashlightButton,
-        R.id.rotationButton,
-        R.id.cameraButton,
-        R.id.screenMirrorButton,
-        R.id.videoButton,
-        R.id.locationButton
-    )
+    private val circularButtons = setOf<Int>()
     
     private val toggleButtons = setOf(
         R.id.wifiButton,
@@ -2783,7 +2766,7 @@ class ControlCenterService : Service() {
             ShizukuHelper.toggleBluetooth(isChecked) { success ->
                 if (success) {
                     controlStates["bluetooth"] = isChecked
-                    updateButtonState(R.id.bluetoothButton, isChecked)
+                    setupQuickSettingsGrid()
                     handler.postDelayed({
                         updateBluetoothUI(isChecked)
                     }, 500)
