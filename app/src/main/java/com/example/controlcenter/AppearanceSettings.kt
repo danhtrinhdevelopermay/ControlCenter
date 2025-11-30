@@ -37,6 +37,9 @@ object AppearanceSettings {
     private const val KEY_CONTROL_CENTER_BLUR = "control_center_blur"
     private const val KEY_NOTIFICATION_CENTER_BLUR = "notification_center_blur"
     
+    private const val KEY_SLIDER_WIDTH = "slider_width"
+    private const val KEY_SLIDER_HEIGHT = "slider_height"
+    
     private const val DEFAULT_BUTTON_COLOR = 0x505050
     private const val DEFAULT_BUTTON_OPACITY = 80
     private const val DEFAULT_BUTTON_ACTIVE_COLOR = 0x007AFF
@@ -67,6 +70,9 @@ object AppearanceSettings {
     private const val DEFAULT_NOTIFICATION_CORNER_RADIUS = 20
     private const val DEFAULT_CONTROL_CENTER_BLUR = 100
     private const val DEFAULT_NOTIFICATION_CENTER_BLUR = 100
+    
+    private const val DEFAULT_SLIDER_WIDTH = 70
+    private const val DEFAULT_SLIDER_HEIGHT = 160
     
     private fun getPrefs(context: Context) = 
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -299,6 +305,28 @@ object AppearanceSettings {
         getPrefs(context).edit().putInt(KEY_NOTIFICATION_CENTER_BLUR, blur.coerceIn(0, 100)).apply()
     }
     
+    fun getSliderWidth(context: Context): Int = 
+        getPrefs(context).getInt(KEY_SLIDER_WIDTH, DEFAULT_SLIDER_WIDTH)
+    
+    fun setSliderWidth(context: Context, width: Int) {
+        getPrefs(context).edit().putInt(KEY_SLIDER_WIDTH, width.coerceIn(40, 120)).apply()
+    }
+    
+    fun getSliderHeight(context: Context): Int = 
+        getPrefs(context).getInt(KEY_SLIDER_HEIGHT, DEFAULT_SLIDER_HEIGHT)
+    
+    fun setSliderHeight(context: Context, height: Int) {
+        getPrefs(context).edit().putInt(KEY_SLIDER_HEIGHT, height.coerceIn(100, 300)).apply()
+    }
+    
+    fun getSliderWidthPx(context: Context): Int {
+        return (getSliderWidth(context) * context.resources.displayMetrics.density).toInt()
+    }
+    
+    fun getSliderHeightPx(context: Context): Int {
+        return (getSliderHeight(context) * context.resources.displayMetrics.density).toInt()
+    }
+    
     fun getButtonCornerRadiusPx(context: Context): Float {
         return getButtonCornerRadius(context) * context.resources.displayMetrics.density
     }
@@ -349,6 +377,8 @@ object AppearanceSettings {
             putInt(KEY_NOTIFICATION_CORNER_RADIUS, DEFAULT_NOTIFICATION_CORNER_RADIUS)
             putInt(KEY_CONTROL_CENTER_BLUR, DEFAULT_CONTROL_CENTER_BLUR)
             putInt(KEY_NOTIFICATION_CENTER_BLUR, DEFAULT_NOTIFICATION_CENTER_BLUR)
+            putInt(KEY_SLIDER_WIDTH, DEFAULT_SLIDER_WIDTH)
+            putInt(KEY_SLIDER_HEIGHT, DEFAULT_SLIDER_HEIGHT)
             apply()
         }
     }

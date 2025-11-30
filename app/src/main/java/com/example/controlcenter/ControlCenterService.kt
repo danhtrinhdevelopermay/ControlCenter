@@ -1630,6 +1630,8 @@ class ControlCenterService : Service() {
     
     private fun applyPlayerAppearance() {
         val mediaPlayerWidget = controlCenterView?.findViewById<FrameLayout>(R.id.mediaPlayerWidget)
+        val sliderHeightPx = AppearanceSettings.getSliderHeightPx(this)
+        
         mediaPlayerWidget?.let { widget ->
             val playerColor = AppearanceSettings.getPlayerColorWithOpacity(this)
             val drawable = android.graphics.drawable.GradientDrawable()
@@ -1637,6 +1639,11 @@ class ControlCenterService : Service() {
             drawable.cornerRadius = 24f * resources.displayMetrics.density
             drawable.setColor(playerColor)
             widget.background = drawable
+            
+            widget.layoutParams?.let { params ->
+                params.height = sliderHeightPx
+                widget.layoutParams = params
+            }
         }
     }
     
@@ -1645,8 +1652,25 @@ class ControlCenterService : Service() {
         val sliderFillColor = AppearanceSettings.getSliderFillColorWithOpacity(this)
         val cornerRadiusDp = 20f * resources.displayMetrics.density
         
+        val sliderWidthPx = AppearanceSettings.getSliderWidthPx(this)
+        val sliderHeightPx = AppearanceSettings.getSliderHeightPx(this)
+        
         val brightnessSlider = controlCenterView?.findViewById<FrameLayout>(R.id.brightnessSlider)
         val volumeSlider = controlCenterView?.findViewById<FrameLayout>(R.id.volumeSlider)
+        val slidersContainer = brightnessSlider?.parent as? LinearLayout
+        
+        slidersContainer?.layoutParams?.height = sliderHeightPx
+        slidersContainer?.requestLayout()
+        
+        brightnessSlider?.layoutParams?.let { params ->
+            params.height = sliderHeightPx
+            brightnessSlider.layoutParams = params
+        }
+        
+        volumeSlider?.layoutParams?.let { params ->
+            params.height = sliderHeightPx
+            volumeSlider.layoutParams = params
+        }
         
         brightnessSlider?.background = android.graphics.drawable.GradientDrawable().apply {
             shape = android.graphics.drawable.GradientDrawable.RECTANGLE

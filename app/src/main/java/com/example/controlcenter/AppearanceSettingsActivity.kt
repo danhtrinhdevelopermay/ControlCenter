@@ -70,6 +70,11 @@ class AppearanceSettingsActivity : AppCompatActivity() {
     private lateinit var controlCenterBlurValue: TextView
     private lateinit var notificationCenterBlurSeekBar: SeekBar
     private lateinit var notificationCenterBlurValue: TextView
+    
+    private lateinit var sliderWidthSeekBar: SeekBar
+    private lateinit var sliderWidthValue: TextView
+    private lateinit var sliderHeightSeekBar: SeekBar
+    private lateinit var sliderHeightValue: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -135,6 +140,11 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         controlCenterBlurValue = findViewById(R.id.controlCenterBlurValue)
         notificationCenterBlurSeekBar = findViewById(R.id.notificationCenterBlurSeekBar)
         notificationCenterBlurValue = findViewById(R.id.notificationCenterBlurValue)
+        
+        sliderWidthSeekBar = findViewById(R.id.sliderWidthSeekBar)
+        sliderWidthValue = findViewById(R.id.sliderWidthValue)
+        sliderHeightSeekBar = findViewById(R.id.sliderHeightSeekBar)
+        sliderHeightValue = findViewById(R.id.sliderHeightValue)
     }
 
     private fun loadSettings() {
@@ -179,6 +189,11 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         controlCenterBlurValue.text = "${AppearanceSettings.getControlCenterBlur(this)}%"
         notificationCenterBlurSeekBar.progress = AppearanceSettings.getNotificationCenterBlur(this)
         notificationCenterBlurValue.text = "${AppearanceSettings.getNotificationCenterBlur(this)}%"
+        
+        sliderWidthSeekBar.progress = AppearanceSettings.getSliderWidth(this)
+        sliderWidthValue.text = "${AppearanceSettings.getSliderWidth(this)}dp"
+        sliderHeightSeekBar.progress = AppearanceSettings.getSliderHeight(this)
+        sliderHeightValue.text = "${AppearanceSettings.getSliderHeight(this)}dp"
 
         updateAllPreviews()
     }
@@ -303,6 +318,14 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         setupSeekBarListener(notificationCenterBlurSeekBar, notificationCenterBlurValue) { value ->
             AppearanceSettings.setNotificationCenterBlur(this, value)
         }
+        
+        setupSeekBarListenerDp(sliderWidthSeekBar, sliderWidthValue) { value ->
+            AppearanceSettings.setSliderWidth(this, value)
+        }
+        
+        setupSeekBarListenerDp(sliderHeightSeekBar, sliderHeightValue) { value ->
+            AppearanceSettings.setSliderHeight(this, value)
+        }
     }
 
     private fun setupColorInputListener(editText: EditText, onColorChange: (Int) -> Unit) {
@@ -397,6 +420,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         AppearanceSettings.setNotificationCornerRadius(this, notificationCornerRadiusSeekBar.progress)
         AppearanceSettings.setControlCenterBlur(this, controlCenterBlurSeekBar.progress)
         AppearanceSettings.setNotificationCenterBlur(this, notificationCenterBlurSeekBar.progress)
+        AppearanceSettings.setSliderWidth(this, sliderWidthSeekBar.progress)
+        AppearanceSettings.setSliderHeight(this, sliderHeightSeekBar.progress)
     }
 
     private fun updateAllPreviews() {
