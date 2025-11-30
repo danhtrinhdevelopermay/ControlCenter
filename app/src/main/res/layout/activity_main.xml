@@ -101,6 +101,17 @@
             android:background="@drawable/control_item_background_active"
             android:visibility="gone" />
 
+        <Button
+            android:id="@+id/appearanceSettingsBtn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Appearance Settings"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:background="@drawable/control_item_background"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/swipeZoneSettingsContainer"
             android:layout_width="match_parent"

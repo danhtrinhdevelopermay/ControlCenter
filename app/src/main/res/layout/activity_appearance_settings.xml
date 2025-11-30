@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1a1a2e"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
+
+            <ImageView
+                android:id="@+id/backButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_check"
+                android:tint="#FFFFFF"
+                android:rotation="180"
+                android:padding="4dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Appearance Settings"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp" />
+
+            <Button
+                android:id="@+id/resetAppearanceBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Reset"
+                android:textColor="#FF3B30"
+                android:textSize="14sp"
+                android:background="@android:color/transparent"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/control_panel_background"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Circle Buttons"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Color (Inactive)"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/buttonColorPreview"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/miui_circle_button" />
+
+                <EditText
+                    android:id="@+id/buttonColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#505050"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opacity (Inactive)"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <SeekBar
+                    android:id="@+id/buttonOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="80"
+                    android:progressTint="#007AFF"
+                    android:thumbTint="#007AFF" />
+
+                <TextView
+                    android:id="@+id/buttonOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="80%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Color (Active)"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/buttonActiveColorPreview"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/miui_circle_button" />
+
+                <EditText
+                    android:id="@+id/buttonActiveColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#007AFF"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opacity (Active)"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <SeekBar
+                    android:id="@+id/buttonActiveOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="100"
+                    android:progressTint="#007AFF"
+                    android:thumbTint="#007AFF" />
+
+                <TextView
+                    android:id="@+id/buttonActiveOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="100%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/control_panel_background"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Toggle Buttons (WiFi, Data)"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Color (Inactive)"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/toggleColorPreview"
+                    android:layout_width="48dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/miui_toggle_background" />
+
+                <EditText
+                    android:id="@+id/toggleColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#535358"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opacity (Inactive)"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <SeekBar
+                    android:id="@+id/toggleOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="65"
+                    android:progressTint="#34C759"
+                    android:thumbTint="#34C759" />
+
+                <TextView
+                    android:id="@+id/toggleOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="65%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Color (Active)"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/toggleActiveColorPreview"
+                    android:layout_width="48dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/miui_toggle_background_active" />
+
+                <EditText
+                    android:id="@+id/toggleActiveColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#007AFF"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opacity (Active)"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <SeekBar
+                    android:id="@+id/toggleActiveOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="100"
+                    android:progressTint="#34C759"
+                    android:thumbTint="#34C759" />
+
+                <TextView
+                    android:id="@+id/toggleActiveOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="100%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/control_panel_background"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Media Player"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Background Color"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/playerColorPreview"
+                    android:layout_width="48dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/miui_media_background" />
+
+                <EditText
+                    android:id="@+id/playerColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#535358"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opacity"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <SeekBar
+                    android:id="@+id/playerOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="65"
+                    android:progressTint="#FF9500"
+                    android:thumbTint="#FF9500" />
+
+                <TextView
+                    android:id="@+id/playerOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="65%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/control_panel_background"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Brightness / Volume Sliders"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Background Color"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/sliderColorPreview"
+                    android:layout_width="28dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/miui_slider_background" />
+
+                <EditText
+                    android:id="@+id/sliderColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#535358"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Background Opacity"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <SeekBar
+                    android:id="@+id/sliderOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="65"
+                    android:progressTint="#5856D6"
+                    android:thumbTint="#5856D6" />
+
+                <TextView
+                    android:id="@+id/sliderOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="65%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Fill Color"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/sliderFillColorPreview"
+                    android:layout_width="28dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/miui_slider_fill" />
+
+                <EditText
+                    android:id="@+id/sliderFillColorInput"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:hint="#FFFFFF"
+                    android:textColor="@color/white"
+                    android:textColorHint="#666666"
+                    android:textSize="14sp"
+                    android:background="@drawable/dialog_rounded_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:inputType="text"
+                    android:maxLength="7" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fill Opacity"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <SeekBar
+                    android:id="@+id/sliderFillOpacitySeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="100"
+                    android:progressTint="#5856D6"
+                    android:thumbTint="#5856D6" />
+
+                <TextView
+                    android:id="@+id/sliderFillOpacityValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="100%"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/applyAppearanceBtn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Apply Settings"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:background="@drawable/control_item_background_active"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+</ScrollView>

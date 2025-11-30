@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     private lateinit var notificationPermissionBtn: Button
     private lateinit var shizukuPermissionBtn: Button
     private lateinit var startServiceBtn: Button
+    private lateinit var appearanceSettingsBtn: Button
     private lateinit var swipeZoneSettingsContainer: LinearLayout
     private lateinit var zoneXSeekBar: SeekBar
     private lateinit var zoneWidthSeekBar: SeekBar
@@ -113,6 +114,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         notificationPermissionBtn = findViewById(R.id.notificationPermissionBtn)
         shizukuPermissionBtn = findViewById(R.id.shizukuPermissionBtn)
         startServiceBtn = findViewById(R.id.startServiceBtn)
+        appearanceSettingsBtn = findViewById(R.id.appearanceSettingsBtn)
         swipeZoneSettingsContainer = findViewById(R.id.swipeZoneSettingsContainer)
         zoneXSeekBar = findViewById(R.id.zoneXSeekBar)
         zoneWidthSeekBar = findViewById(R.id.zoneWidthSeekBar)
@@ -157,6 +159,11 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
 
         startServiceBtn.setOnClickListener {
             startControlCenterService()
+        }
+
+        appearanceSettingsBtn.setOnClickListener {
+            val intent = Intent(this, AppearanceSettingsActivity::class.java)
+            startActivity(intent)
         }
 
         setupSeekBarListeners()
@@ -454,6 +461,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
 
         swipeZoneSettingsContainer.visibility = if (allPermissionsGranted) View.VISIBLE else View.GONE
         notificationZoneSettingsContainer.visibility = if (allPermissionsGranted) View.VISIBLE else View.GONE
+        appearanceSettingsBtn.visibility = if (allPermissionsGranted) View.VISIBLE else View.GONE
 
         statusText.text = when {
             !hasOverlayPermission -> "Step 1: Grant overlay permission to display Control Center over other apps"
