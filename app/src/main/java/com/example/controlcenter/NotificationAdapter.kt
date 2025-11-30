@@ -107,11 +107,22 @@ class NotificationAdapter(
                 val button = TextView(itemView.context).apply {
                     setTextColor(cachedActionTextColor)
                     textSize = 13f
-                    setPadding(paddingH, paddingV, paddingH, paddingV)
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.RECTANGLE
-                        cornerRadius = cachedActionButtonRadius
-                        setColor(cachedActionColor)
+                    val buttonPaddingH = (14 * density).toInt()
+                    val buttonPaddingV = (10 * density).toInt()
+                    setPadding(buttonPaddingH, buttonPaddingV, buttonPaddingH, buttonPaddingV)
+                    background = android.graphics.drawable.StateListDrawable().apply {
+                        val pressedDrawable = GradientDrawable().apply {
+                            shape = GradientDrawable.RECTANGLE
+                            cornerRadius = cachedActionButtonRadius
+                            setColor(0x66FFFFFF)
+                        }
+                        val normalDrawable = GradientDrawable().apply {
+                            shape = GradientDrawable.RECTANGLE
+                            cornerRadius = cachedActionButtonRadius
+                            setColor(cachedActionColor)
+                        }
+                        addState(intArrayOf(android.R.attr.state_pressed), pressedDrawable)
+                        addState(intArrayOf(), normalDrawable)
                     }
                     val params = LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -120,10 +131,16 @@ class NotificationAdapter(
                     params.marginEnd = marginEnd
                     layoutParams = params
                     visibility = View.GONE
+                    isClickable = true
+                    isFocusable = true
+                    minHeight = (36 * density).toInt()
+                    gravity = android.view.Gravity.CENTER
                 }
                 actionButtons.add(button)
                 actionsContainer.addView(button)
             }
+            
+            actionsContainer.isClickable = true
         }
 
         fun bind(notification: NotificationData) {
@@ -193,6 +210,8 @@ class NotificationAdapter(
         private fun setupActions(notification: NotificationData) {
             val actions = notification.actions.take(3)
             
+            android.util.Log.d("NotificationAdapter", "setupActions for ${notification.appName}: ${actions.size} actions")
+            
             if (actions.isEmpty()) {
                 actionsContainer.visibility = View.GONE
                 actionButtons.forEach { it.visibility = View.GONE }
@@ -204,10 +223,14 @@ class NotificationAdapter(
             for (i in 0 until 3) {
                 if (i < actions.size) {
                     val action = actions[i]
+                    android.util.Log.d("NotificationAdapter", "Setting up action button $i: ${action.title}, hasIntent=${action.actionIntent != null}")
                     actionButtons[i].apply {
                         text = action.title
                         visibility = View.VISIBLE
-                        setOnClickListener { onActionClick(action) }
+                        setOnClickListener { 
+                            android.util.Log.d("NotificationAdapter", "Action button clicked: ${action.title}")
+                            onActionClick(action) 
+                        }
                     }
                 } else {
                     actionButtons[i].visibility = View.GONE

@@ -718,16 +718,25 @@ class NotificationCenterService : Service() {
     }
     
     private fun handleActionClick(action: NotificationAction) {
+        Log.d(TAG, "handleActionClick: ${action.title}, hasIntent=${action.actionIntent != null}, isReply=${action.isReplyAction}")
         vibrate()
         try {
             if (action.isReplyAction && action.remoteInputs != null && action.remoteInputs.isNotEmpty()) {
+                Log.d(TAG, "Showing reply dialog for action: ${action.title}")
                 showReplyDialog(action)
             } else {
-                action.actionIntent?.send()
-                hideNotificationCenter()
+                if (action.actionIntent != null) {
+                    Log.d(TAG, "Sending action intent for: ${action.title}")
+                    action.actionIntent.send()
+                    hideNotificationCenter()
+                } else {
+                    Log.w(TAG, "Action intent is null for: ${action.title}")
+                }
             }
+        } catch (e: PendingIntent.CanceledException) {
+            Log.e(TAG, "PendingIntent was canceled for action: ${action.title}", e)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error handling action click: ${action.title}", e)
         }
     }
     
