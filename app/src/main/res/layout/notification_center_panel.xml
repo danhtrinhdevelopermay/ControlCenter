@@ -50,15 +50,7 @@
 
             </LinearLayout>
 
-            <ImageView
-                android:id="@+id/cameraIcon"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="16dp"
-                android:src="@drawable/ic_camera_notification"
-                android:alpha="0.9" />
-
+            
         </RelativeLayout>
 
 
