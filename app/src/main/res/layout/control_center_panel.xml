@@ -182,14 +182,14 @@
                 android:clipChildren="true"
                 android:outlineProvider="background">
 
-                <!-- Album Art Background (shown when playing) -->
+                <!-- Album Art Background with blur (shown when playing) -->
                 <ImageView
                     android:id="@+id/albumArtBackground"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
                     android:visibility="gone"
-                    android:alpha="0.4" />
+                    android:alpha="0.6" />
                     
                 <!-- Dark overlay on album art -->
                 <View
@@ -198,6 +198,15 @@
                     android:layout_height="match_parent"
                     android:background="@drawable/media_background_overlay"
                     android:visibility="gone" />
+                
+                <!-- Audio Visualizer at bottom -->
+                <com.example.controlcenter.AudioVisualizerView
+                    android:id="@+id/audioVisualizer"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_gravity="bottom"
+                    android:visibility="gone"
+                    android:alpha="0.8" />
 
                 <!-- Content Container -->
                 <LinearLayout

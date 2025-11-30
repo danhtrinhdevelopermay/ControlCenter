@@ -8,8 +8,13 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.graphics.Bitmap
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import android.renderscript.Allocation
+import android.renderscript.Element
+import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicBlur
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -1784,6 +1789,9 @@ class ControlCenterService : Service() {
             .start()
     }
     
+    private var lastAlbumArt: Bitmap? = null
+    private var blurredAlbumArt: Bitmap? = null
+    
     private fun updateMediaPlayerState() {
         val mediaInfo = MediaNotificationListener.currentMediaInfo
         
@@ -1795,6 +1803,7 @@ class ControlCenterService : Service() {
         val albumArtOverlay = controlCenterView?.findViewById<View>(R.id.albumArtOverlay)
         val mediaInfoContainer = controlCenterView?.findViewById<View>(R.id.mediaInfoContainer)
         val playButton = controlCenterView?.findViewById<ImageView>(R.id.playButton)
+        val audioVisualizer = controlCenterView?.findViewById<AudioVisualizerView>(R.id.audioVisualizer)
         
         if (mediaInfo != null && (mediaInfo.title.isNotEmpty() || mediaInfo.isPlaying)) {
             musicTitle?.visibility = View.GONE
@@ -1811,13 +1820,43 @@ class ControlCenterService : Service() {
             
             if (mediaInfo.albumArt != null) {
                 albumArtView?.setImageBitmap(mediaInfo.albumArt)
-                albumArtBackground?.setImageBitmap(mediaInfo.albumArt)
+                
+                if (lastAlbumArt != mediaInfo.albumArt) {
+                    lastAlbumArt = mediaInfo.albumArt
+                    blurredAlbumArt = blurBitmap(mediaInfo.albumArt, 25f)
+                }
+                
+                if (blurredAlbumArt != null) {
+                    albumArtBackground?.setImageBitmap(blurredAlbumArt)
+                } else {
+                    albumArtBackground?.setImageBitmap(mediaInfo.albumArt)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        albumArtBackground?.setRenderEffect(
+                            RenderEffect.createBlurEffect(25f, 25f, Shader.TileMode.CLAMP)
+                        )
+                    }
+                }
+                
                 albumArtBackground?.visibility = View.VISIBLE
                 albumArtOverlay?.visibility = View.VISIBLE
+                
+                val dominantColors = extractColorsFromBitmap(mediaInfo.albumArt)
+                audioVisualizer?.setColors(dominantColors)
             } else {
                 albumArtView?.setImageDrawable(null)
                 albumArtBackground?.visibility = View.GONE
                 albumArtOverlay?.visibility = View.GONE
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    albumArtBackground?.setRenderEffect(null)
+                }
+            }
+            
+            if (mediaInfo.isPlaying) {
+                audioVisualizer?.visibility = View.VISIBLE
+                audioVisualizer?.setPlaying(true)
+            } else {
+                audioVisualizer?.setPlaying(false)
+                audioVisualizer?.visibility = View.GONE
             }
             
             val playIcon = if (mediaInfo.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
@@ -1829,12 +1868,96 @@ class ControlCenterService : Service() {
             mediaInfoContainer?.visibility = View.GONE
             albumArtBackground?.visibility = View.GONE
             albumArtOverlay?.visibility = View.GONE
+            audioVisualizer?.setPlaying(false)
+            audioVisualizer?.visibility = View.GONE
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                albumArtBackground?.setRenderEffect(null)
+            }
             
             musicTitle?.text = "Không phát"
             musicTitle?.setTextColor(Color.WHITE)
             
             val playIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
             playButton?.setImageResource(playIcon)
+        }
+    }
+    
+    private fun blurBitmap(bitmap: Bitmap, radius: Float): Bitmap? {
+        return try {
+            val width = (bitmap.width * 0.4f).toInt().coerceAtLeast(1)
+            val height = (bitmap.height * 0.4f).toInt().coerceAtLeast(1)
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+            
+            val outputBitmap = Bitmap.createBitmap(scaledBitmap.width, scaledBitmap.height, Bitmap.Config.ARGB_8888)
+            
+            val renderScript = RenderScript.create(this)
+            val intrinsicBlur = ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript))
+            
+            val tmpIn = Allocation.createFromBitmap(renderScript, scaledBitmap)
+            val tmpOut = Allocation.createFromBitmap(renderScript, outputBitmap)
+            
+            intrinsicBlur.setRadius(radius.coerceIn(1f, 25f))
+            intrinsicBlur.setInput(tmpIn)
+            intrinsicBlur.forEach(tmpOut)
+            tmpOut.copyTo(outputBitmap)
+            
+            renderScript.destroy()
+            
+            outputBitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
+    private fun extractColorsFromBitmap(bitmap: Bitmap): IntArray {
+        return try {
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 24, 24, true)
+            val pixels = IntArray(scaledBitmap.width * scaledBitmap.height)
+            scaledBitmap.getPixels(pixels, 0, scaledBitmap.width, 0, 0, scaledBitmap.width, scaledBitmap.height)
+            
+            val colorCounts = mutableMapOf<Int, Int>()
+            for (pixel in pixels) {
+                val r = Color.red(pixel)
+                val g = Color.green(pixel)
+                val b = Color.blue(pixel)
+                
+                if (r + g + b < 30 || r + g + b > 720) continue
+                
+                val quantizedColor = Color.rgb(
+                    (r / 32) * 32 + 16,
+                    (g / 32) * 32 + 16,
+                    (b / 32) * 32 + 16
+                )
+                colorCounts[quantizedColor] = (colorCounts[quantizedColor] ?: 0) + 1
+            }
+            
+            val sortedColors = colorCounts.entries
+                .sortedByDescending { it.value }
+                .take(3)
+                .map { it.key }
+            
+            if (sortedColors.size >= 3) {
+                intArrayOf(sortedColors[0], sortedColors[1], sortedColors[2])
+            } else if (sortedColors.size >= 2) {
+                intArrayOf(sortedColors[0], sortedColors[1], sortedColors[0])
+            } else if (sortedColors.isNotEmpty()) {
+                intArrayOf(sortedColors[0], sortedColors[0], sortedColors[0])
+            } else {
+                intArrayOf(
+                    Color.parseColor("#FF6B6B"),
+                    Color.parseColor("#FF8E53"),
+                    Color.parseColor("#FFA726")
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            intArrayOf(
+                Color.parseColor("#FF6B6B"),
+                Color.parseColor("#FF8E53"),
+                Color.parseColor("#FFA726")
+            )
         }
     }
     
