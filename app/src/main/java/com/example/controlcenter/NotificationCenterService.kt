@@ -511,21 +511,11 @@ class NotificationCenterService : Service() {
     }
 
     private fun applyNotificationAppearance() {
-        val headerColor = AppearanceSettings.getNotificationHeaderColorWithOpacity(this)
-
-        val header = notificationCenterView?.findViewById<LinearLayout>(R.id.notificationHeader)
-        header?.background = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(headerColor)
-        }
-        
-        val textColor = getContrastTextColor(headerColor)
-        
         val timeText = notificationCenterView?.findViewById<TextView>(R.id.timeText)
         val dateText = notificationCenterView?.findViewById<TextView>(R.id.dateText)
         
-        timeText?.setTextColor(textColor)
-        dateText?.setTextColor(textColor)
+        timeText?.setTextColor(Color.WHITE)
+        dateText?.setTextColor(Color.WHITE)
         
         notificationAdapter?.notifyDataSetChanged()
     }
