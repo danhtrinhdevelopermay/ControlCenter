@@ -75,6 +75,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
     private lateinit var sliderWidthValue: TextView
     private lateinit var sliderHeightSeekBar: SeekBar
     private lateinit var sliderHeightValue: TextView
+    private lateinit var sliderSpacingSeekBar: SeekBar
+    private lateinit var sliderSpacingValue: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,6 +147,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         sliderWidthValue = findViewById(R.id.sliderWidthValue)
         sliderHeightSeekBar = findViewById(R.id.sliderHeightSeekBar)
         sliderHeightValue = findViewById(R.id.sliderHeightValue)
+        sliderSpacingSeekBar = findViewById(R.id.sliderSpacingSeekBar)
+        sliderSpacingValue = findViewById(R.id.sliderSpacingValue)
     }
 
     private fun loadSettings() {
@@ -196,6 +200,9 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         val sliderHeight = AppearanceSettings.getSliderHeight(this)
         sliderHeightSeekBar.progress = sliderHeight - 100
         sliderHeightValue.text = "${sliderHeight}dp"
+        val sliderSpacing = AppearanceSettings.getSliderSpacing(this)
+        sliderSpacingSeekBar.progress = sliderSpacing
+        sliderSpacingValue.text = "${sliderSpacing}dp"
 
         updateAllPreviews()
     }
@@ -344,6 +351,17 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+        
+        sliderSpacingSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                sliderSpacingValue.text = "${progress}dp"
+                if (fromUser) {
+                    AppearanceSettings.setSliderSpacing(this@AppearanceSettingsActivity, progress)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupColorInputListener(editText: EditText, onColorChange: (Int) -> Unit) {
@@ -440,6 +458,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         AppearanceSettings.setNotificationCenterBlur(this, notificationCenterBlurSeekBar.progress)
         AppearanceSettings.setSliderWidth(this, sliderWidthSeekBar.progress + 40)
         AppearanceSettings.setSliderHeight(this, sliderHeightSeekBar.progress + 100)
+        AppearanceSettings.setSliderSpacing(this, sliderSpacingSeekBar.progress)
     }
 
     private fun updateAllPreviews() {

@@ -1714,6 +1714,7 @@ class ControlCenterService : Service() {
         
         val sliderWidthPx = AppearanceSettings.getSliderWidthPx(this)
         val sliderHeightPx = AppearanceSettings.getSliderHeightPx(this)
+        val sliderSpacingPx = AppearanceSettings.getSliderSpacingPx(this)
         
         val brightnessSlider = controlCenterView?.findViewById<FrameLayout>(R.id.brightnessSlider)
         val volumeSlider = controlCenterView?.findViewById<FrameLayout>(R.id.volumeSlider)
@@ -1729,7 +1730,7 @@ class ControlCenterService : Service() {
                 params.width = sliderWidthPx
                 params.height = sliderHeightPx
                 params.weight = 0f
-                params.marginEnd = (6 * resources.displayMetrics.density).toInt()
+                params.marginEnd = sliderSpacingPx
                 brightnessSlider.layoutParams = params
             }
         }

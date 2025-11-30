@@ -39,6 +39,7 @@ object AppearanceSettings {
     
     private const val KEY_SLIDER_WIDTH = "slider_width"
     private const val KEY_SLIDER_HEIGHT = "slider_height"
+    private const val KEY_SLIDER_SPACING = "slider_spacing"
     
     private const val DEFAULT_BUTTON_COLOR = 0x505050
     private const val DEFAULT_BUTTON_OPACITY = 80
@@ -73,6 +74,7 @@ object AppearanceSettings {
     
     private const val DEFAULT_SLIDER_WIDTH = 70
     private const val DEFAULT_SLIDER_HEIGHT = 160
+    private const val DEFAULT_SLIDER_SPACING = 12
     
     private fun getPrefs(context: Context) = 
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -319,6 +321,17 @@ object AppearanceSettings {
         getPrefs(context).edit().putInt(KEY_SLIDER_HEIGHT, height.coerceIn(100, 300)).apply()
     }
     
+    fun getSliderSpacing(context: Context): Int = 
+        getPrefs(context).getInt(KEY_SLIDER_SPACING, DEFAULT_SLIDER_SPACING)
+    
+    fun setSliderSpacing(context: Context, spacing: Int) {
+        getPrefs(context).edit().putInt(KEY_SLIDER_SPACING, spacing.coerceIn(0, 50)).apply()
+    }
+    
+    fun getSliderSpacingPx(context: Context): Int {
+        return (getSliderSpacing(context) * context.resources.displayMetrics.density).toInt()
+    }
+    
     fun getSliderWidthPx(context: Context): Int {
         return (getSliderWidth(context) * context.resources.displayMetrics.density).toInt()
     }
@@ -379,6 +392,7 @@ object AppearanceSettings {
             putInt(KEY_NOTIFICATION_CENTER_BLUR, DEFAULT_NOTIFICATION_CENTER_BLUR)
             putInt(KEY_SLIDER_WIDTH, DEFAULT_SLIDER_WIDTH)
             putInt(KEY_SLIDER_HEIGHT, DEFAULT_SLIDER_HEIGHT)
+            putInt(KEY_SLIDER_SPACING, DEFAULT_SLIDER_SPACING)
             apply()
         }
     }

@@ -666,7 +666,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
 
                 <SeekBar
                     android:id="@+id/sliderHeightSeekBar"
@@ -683,6 +684,39 @@
                     android:layout_width="50dp"
                     android:layout_height="wrap_content"
                     android:text="160dp"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textAlignment="textEnd" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Khoảng cách giữa 2 thanh"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <SeekBar
+                    android:id="@+id/sliderSpacingSeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="50"
+                    android:progress="12"
+                    android:progressTint="#5856D6"
+                    android:thumbTint="#5856D6" />
+
+                <TextView
+                    android:id="@+id/sliderSpacingValue"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="12dp"
                     android:textColor="@color/white"
                     android:textSize="14sp"
                     android:textAlignment="textEnd" />
