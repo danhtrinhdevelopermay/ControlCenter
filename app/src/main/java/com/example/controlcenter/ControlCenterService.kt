@@ -1159,6 +1159,7 @@ class ControlCenterService : Service() {
 
     private fun setupControlButtons() {
         syncStateFromSystem()
+        applyAppearanceSettings()
         
         controlCenterView?.findViewById<View>(R.id.wifiButton)?.setOnClickListener { button ->
             val currentState = SystemControlHelper.isWifiEnabled(this)
@@ -1519,16 +1520,23 @@ class ControlCenterService : Service() {
         when {
             circularButtons.contains(buttonId) -> {
                 val circleView = (button as? android.view.ViewGroup)?.getChildAt(0)
-                val backgroundRes = if (isActive) R.drawable.miui_circle_button_active else R.drawable.miui_circle_button
-                circleView?.setBackgroundResource(backgroundRes)
+                val buttonColor = AppearanceSettings.getButtonColorWithOpacity(this, isActive)
+                val drawable = android.graphics.drawable.GradientDrawable()
+                drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
+                drawable.setColor(buttonColor)
+                circleView?.background = drawable
                 icon?.setColorFilter(
                     if (isActive) inactiveColor else inactiveColor,
                     android.graphics.PorterDuff.Mode.SRC_IN
                 )
             }
             toggleButtons.contains(buttonId) -> {
-                val backgroundRes = if (isActive) R.drawable.miui_toggle_background_active else R.drawable.miui_toggle_background
-                button?.setBackgroundResource(backgroundRes)
+                val toggleColor = AppearanceSettings.getToggleColorWithOpacity(this, isActive)
+                val drawable = android.graphics.drawable.GradientDrawable()
+                drawable.shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                drawable.cornerRadius = 24f * resources.displayMetrics.density
+                drawable.setColor(toggleColor)
+                button?.background = drawable
                 icon?.setColorFilter(
                     inactiveColor,
                     android.graphics.PorterDuff.Mode.SRC_IN
@@ -1540,6 +1548,66 @@ class ControlCenterService : Service() {
                     android.graphics.PorterDuff.Mode.SRC_IN
                 )
             }
+        }
+    }
+    
+    private fun applyAppearanceSettings() {
+        applyPlayerAppearance()
+        applySliderAppearance()
+    }
+    
+    private fun applyPlayerAppearance() {
+        val mediaPlayerWidget = controlCenterView?.findViewById<FrameLayout>(R.id.mediaPlayerWidget)
+        mediaPlayerWidget?.let { widget ->
+            val playerColor = AppearanceSettings.getPlayerColorWithOpacity(this)
+            val drawable = android.graphics.drawable.GradientDrawable()
+            drawable.shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            drawable.cornerRadius = 24f * resources.displayMetrics.density
+            drawable.setColor(playerColor)
+            widget.background = drawable
+        }
+    }
+    
+    private fun applySliderAppearance() {
+        val sliderColor = AppearanceSettings.getSliderColorWithOpacity(this)
+        val sliderFillColor = AppearanceSettings.getSliderFillColorWithOpacity(this)
+        val cornerRadiusDp = 20f * resources.displayMetrics.density
+        
+        val brightnessSlider = controlCenterView?.findViewById<FrameLayout>(R.id.brightnessSlider)
+        val volumeSlider = controlCenterView?.findViewById<FrameLayout>(R.id.volumeSlider)
+        
+        brightnessSlider?.background = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = cornerRadiusDp
+            setColor(sliderColor)
+        }
+        
+        volumeSlider?.background = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = cornerRadiusDp
+            setColor(sliderColor)
+        }
+        
+        val brightnessFill = controlCenterView?.findViewById<View>(R.id.brightnessFill)
+        val volumeFill = controlCenterView?.findViewById<View>(R.id.volumeFill)
+        
+        val bottomRadii = floatArrayOf(
+            0f, 0f,
+            0f, 0f,
+            cornerRadiusDp, cornerRadiusDp,
+            cornerRadiusDp, cornerRadiusDp
+        )
+        
+        brightnessFill?.background = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadii = bottomRadii
+            setColor(sliderFillColor)
+        }
+        
+        volumeFill?.background = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadii = bottomRadii
+            setColor(sliderFillColor)
         }
     }
     
