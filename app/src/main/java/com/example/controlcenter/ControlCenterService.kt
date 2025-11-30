@@ -51,6 +51,7 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.view.animation.OvershootInterpolator
 import android.provider.Settings
+import android.os.UserManager
 
 class ControlCenterService : Service() {
 
@@ -1336,6 +1337,8 @@ class ControlCenterService : Service() {
             }, 300)
         }
         
+        setupOwnerNameAndSettings()
+        
         updateAllButtonStates()
         setupMediaListener()
         updateMediaPlayerState()
@@ -1421,6 +1424,60 @@ class ControlCenterService : Service() {
                 }
                 else -> false
             }
+        }
+    }
+    
+    private fun setupOwnerNameAndSettings() {
+        val userNameText = controlCenterView?.findViewById<TextView>(R.id.userNameText)
+        val settingsButton = controlCenterView?.findViewById<ImageView>(R.id.settingsButton)
+        
+        val ownerName = getDeviceOwnerName()
+        userNameText?.text = ownerName
+        
+        settingsButton?.setOnClickListener { button ->
+            animateButtonPress(button)
+            vibrate()
+            openAndroidSettings()
+        }
+    }
+    
+    private fun getDeviceOwnerName(): String {
+        return try {
+            val userManager = getSystemService(Context.USER_SERVICE) as? UserManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                userManager?.userName ?: userManager?.getUserName() ?: getOwnerNameFromAccount()
+            } else {
+                getOwnerNameFromAccount()
+            }
+        } catch (e: Exception) {
+            getOwnerNameFromAccount()
+        }
+    }
+    
+    private fun getOwnerNameFromAccount(): String {
+        return try {
+            val accounts = android.accounts.AccountManager.get(this).accounts
+            if (accounts.isNotEmpty()) {
+                val account = accounts.firstOrNull { it.type == "com.google" } ?: accounts.first()
+                val name = account.name.split("@").firstOrNull() ?: account.name
+                name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            } else {
+                Build.MODEL
+            }
+        } catch (e: Exception) {
+            Build.MODEL
+        }
+    }
+    
+    private fun openAndroidSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            hideControlCenter()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Không thể mở cài đặt", Toast.LENGTH_SHORT).show()
         }
     }
     
