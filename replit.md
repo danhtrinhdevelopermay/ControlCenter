@@ -51,6 +51,11 @@ The UI adheres strictly to the MIUI Control Center design language, featuring:
     - Panel background (color and opacity)
     Colors are applied dynamically using `GradientDrawable` in `ControlCenterService.kt` via `applyAppearanceSettings()`, `updateButtonState()`, `applyPlayerAppearance()`, and `applySliderAppearance()` methods.
 - **Core Files:** `control_center_panel.xml` defines the main MIUI layout. `ControlCenterService.kt` handles UI logic and interactions.
+- **Performance Optimizations (Nov 30, 2025):**
+    - **Panel height caching**: Pre-calculates panel height in `onCreate()` using a temporary view, caching the result for immediate use when opening Control Center. This eliminates the measurement delay during swipe gestures.
+    - **Background state preloading**: System states (WiFi, Bluetooth, flashlight, etc.) are preloaded in background thread during service startup via `preloadSystemStates()`.
+    - **Async state sync**: `syncStateFromSystem()` and `syncQuickSettingStates()` now run all system API queries on a background executor, posting UI updates back to the main thread. This prevents UI blocking when opening Control Center.
+    - **Fixed Log import issue**: Added missing `import android.util.Log` and `TAG` constant in `NotificationCenterService.kt`.
 
 ## External Dependencies
 - **Shizuku:** `dev.rikka.shizuku:api:13.1.5` and `dev.rikka.shizuku:provider:13.1.5` are used for executing privileged commands and accessing system APIs without root, requiring `moe.shizuku.manager.permission.API_V23`.
