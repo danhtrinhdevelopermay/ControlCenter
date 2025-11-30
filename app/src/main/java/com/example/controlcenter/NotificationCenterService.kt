@@ -196,6 +196,26 @@ class NotificationCenterService : Service() {
             return
         }
         
+        if (!MediaNotificationListener.isServiceConnected()) {
+            MediaNotificationListener.requestRebind(this)
+            handler.postDelayed({
+                loadNotificationsInternal()
+                refreshNotificationList()
+            }, 500)
+            return
+        }
+        
+        loadNotificationsInternal()
+    }
+    
+    private fun loadNotificationsInternal() {
+        notifications.clear()
+        
+        if (!MediaNotificationListener.isNotificationAccessEnabled(this)) {
+            addPermissionNotification()
+            return
+        }
+        
         MediaNotificationListener.forceRefreshNotifications()
         
         val activeNotifications = MediaNotificationListener.getActiveNotifications()
@@ -288,6 +308,8 @@ class NotificationCenterService : Service() {
         isInteractiveDragging = true
         panelMeasured = false
         vibrate()
+        
+        loadNotifications()
 
         addBackgroundView()
         backgroundView?.alpha = 0f

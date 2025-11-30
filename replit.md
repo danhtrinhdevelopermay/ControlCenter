@@ -23,6 +23,12 @@ The UI adheres strictly to the MIUI Control Center design language, featuring:
 **Technical Implementations & Feature Specifications:**
 - **System Control:** Uses `SystemControlHelper.kt` for managing system settings via Shizuku, including WiFi, Cellular Data, Bluetooth, Flashlight, and Rotation Lock.
 - **Media Control:** `MediaControlHelper.kt` manages media playback through system media key events and `MediaNotificationListener.kt` to display current song info (title, artist, album art) by listening to media notifications.
+- **Notification Center:** `NotificationCenterService.kt` displays system notifications in a panel. Key improvements (Nov 30, 2025):
+    - Added `requestRebind()` method to reconnect the notification listener when disconnected
+    - Added `isServiceConnected()` check to verify listener connectivity before fetching notifications
+    - `loadNotifications()` now requests rebind and retries if service is disconnected
+    - `BootReceiver` now starts both ControlCenterService and NotificationCenterService, and requests rebind for MediaNotificationListener
+    - MainActivity's `onResume()` checks and requests rebind if notification access is enabled but service is not connected
 - **Brightness & Volume Control:** Sliders directly interact with `Settings.System.SCREEN_BRIGHTNESS` (requiring `WRITE_SETTINGS` permission) and `AudioManager.STREAM_MUSIC`, respectively.
 - **App Shortcuts:** Allows users to add up to 8 customizable application shortcuts, managed by `AppShortcutManager.kt` and `AppPickerActivity.kt`. Requires `QUERY_ALL_PACKAGES` permission.
 - **Advanced WiFi Scanning & Connection:** `WiFiScannerHelper.kt` enables scanning for available WiFi networks and connecting from within the Control Center. It prioritizes Shizuku for scanning (`cmd wifi list-scan-results`) to bypass Android 10+ throttling, with `WifiManager.startScan()` as a fallback.

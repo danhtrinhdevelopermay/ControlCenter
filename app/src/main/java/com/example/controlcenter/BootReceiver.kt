@@ -14,6 +14,17 @@ class BootReceiver : BroadcastReceiver() {
             } else {
                 context.startService(serviceIntent)
             }
+            
+            val notificationServiceIntent = Intent(context, NotificationCenterService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(notificationServiceIntent)
+            } else {
+                context.startService(notificationServiceIntent)
+            }
+            
+            if (MediaNotificationListener.isNotificationAccessEnabled(context)) {
+                MediaNotificationListener.requestRebind(context)
+            }
         }
     }
 }

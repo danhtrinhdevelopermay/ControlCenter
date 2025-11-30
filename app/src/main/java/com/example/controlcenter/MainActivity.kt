@@ -77,6 +77,11 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     override fun onResume() {
         super.onResume()
         updateUI()
+        
+        if (MediaNotificationListener.isNotificationAccessEnabled(this) && 
+            !MediaNotificationListener.isServiceConnected()) {
+            MediaNotificationListener.requestRebind(this)
+        }
     }
     
     override fun onDestroy() {
