@@ -143,15 +143,10 @@ object SystemControlHelper {
                 ssid = ssid.substring(1, ssid.length - 1)
             }
             
-            // Return null if SSID is <unknown ssid> (not connected)
-            if (ssid == "<unknown ssid>" || ssid.isNullOrBlank()) {
-                // Try Shizuku as last resort
-                if (ShizukuHelper.isShizukuAvailable() && ShizukuHelper.checkShizukuPermission()) {
-                    ssid = ShizukuHelper.getConnectedWifiSSIDSync()
-                    Log.d(TAG, "Got WiFi SSID from Shizuku: $ssid")
-                }
-            }
-            
+            // Return null if SSID is <unknown ssid> (not connected or no location permission)
+            // Note: On Android 10+, ACCESS_FINE_LOCATION permission is required to get SSID
+            // If permission is not granted, wifiInfo.ssid returns "<unknown ssid>"
+            // We intentionally don't use Shizuku here to avoid blocking the main thread
             if (ssid == "<unknown ssid>" || ssid.isNullOrBlank()) {
                 return null
             }

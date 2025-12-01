@@ -92,6 +92,16 @@
             android:layout_marginBottom="16dp" />
 
         <Button
+            android:id="@+id/locationPermissionBtn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Grant Location Permission (WiFi SSID)"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:background="@drawable/control_item_background"
+            android:layout_marginBottom="16dp" />
+
+        <Button
             android:id="@+id/writeSettingsPermissionBtn"
             android:layout_width="match_parent"
             android:layout_height="56dp"

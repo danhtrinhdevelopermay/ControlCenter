@@ -1,5 +1,6 @@
 package com.example.controlcenter
 
+import android.Manifest
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
@@ -17,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import rikka.shizuku.Shizuku
 
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     private lateinit var accessibilityPermissionBtn: Button
     private lateinit var notificationPermissionBtn: Button
     private lateinit var shizukuPermissionBtn: Button
+    private lateinit var locationPermissionBtn: Button
     private lateinit var writeSettingsPermissionBtn: Button
     private lateinit var startServiceBtn: Button
     private lateinit var appearanceSettingsBtn: Button
@@ -60,6 +63,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
     companion object {
         private const val OVERLAY_PERMISSION_REQUEST_CODE = 1001
         private const val SHIZUKU_PERMISSION_REQUEST_CODE = 1002
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1003
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,6 +85,11 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         if (MediaNotificationListener.isNotificationAccessEnabled(this) && 
             !MediaNotificationListener.isServiceConnected()) {
             MediaNotificationListener.requestRebind(this)
+        }
+        
+        // Auto-request location permission if not granted yet
+        if (!hasLocationPermission() && hasOverlayPermission() && isAccessibilityServiceEnabled()) {
+            requestLocationPermission()
         }
     }
     
@@ -119,6 +128,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         accessibilityPermissionBtn = findViewById(R.id.accessibilityPermissionBtn)
         notificationPermissionBtn = findViewById(R.id.notificationPermissionBtn)
         shizukuPermissionBtn = findViewById(R.id.shizukuPermissionBtn)
+        locationPermissionBtn = findViewById(R.id.locationPermissionBtn)
         writeSettingsPermissionBtn = findViewById(R.id.writeSettingsPermissionBtn)
         startServiceBtn = findViewById(R.id.startServiceBtn)
         appearanceSettingsBtn = findViewById(R.id.appearanceSettingsBtn)
@@ -162,6 +172,10 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         
         shizukuPermissionBtn.setOnClickListener {
             requestShizukuPermission()
+        }
+        
+        locationPermissionBtn.setOnClickListener {
+            requestLocationPermission()
         }
         
         writeSettingsPermissionBtn.setOnClickListener {
@@ -420,6 +434,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         val hasNotificationAccess = MediaNotificationListener.isNotificationAccessEnabled(this)
         val hasShizukuPermission = ShizukuHelper.checkShizukuPermission()
         val isShizukuAvailable = ShizukuHelper.isShizukuAvailable()
+        val hasLocationPermission = hasLocationPermission()
 
         overlayPermissionBtn.apply {
             isEnabled = !hasOverlayPermission
@@ -464,6 +479,15 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
             )
         }
         
+        locationPermissionBtn.apply {
+            isEnabled = !hasLocationPermission
+            text = if (hasLocationPermission) "✓ Location Permission Granted (WiFi SSID)" else "Grant Location Permission (WiFi SSID)"
+            setBackgroundColor(
+                if (hasLocationPermission) ContextCompat.getColor(context, R.color.control_item_active)
+                else ContextCompat.getColor(context, R.color.control_item_inactive)
+            )
+        }
+        
         val hasWriteSettingsPermission = SystemControlHelper.canWriteSettings(this)
         writeSettingsPermissionBtn.apply {
             isEnabled = !hasWriteSettingsPermission
@@ -488,8 +512,9 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
             !hasOverlayPermission -> "Step 1: Grant overlay permission to display Control Center over other apps"
             !hasAccessibilityPermission -> "Step 2: Enable accessibility service to detect swipe gestures"
             !hasNotificationAccess -> "Step 3: Grant notification access to display current music info (song title, artist, album art)"
-            !isShizukuAvailable -> "Step 4 (Optional): Install and start Shizuku app for advanced features (WiFi, Bluetooth toggles)\n\nYou can still use Control Center without Shizuku, but some features will be limited."
-            !hasShizukuPermission -> "Step 4 (Optional): Grant Shizuku permission for advanced system control\n\nThis enables WiFi, Bluetooth, DND, and Airplane Mode toggles."
+            !hasLocationPermission -> "Step 4: Grant location permission to display WiFi network name (SSID)\n\nRequired on Android 10+ to show connected WiFi name."
+            !isShizukuAvailable -> "Step 5 (Optional): Install and start Shizuku app for advanced features (WiFi, Bluetooth toggles)\n\nYou can still use Control Center without Shizuku, but some features will be limited."
+            !hasShizukuPermission -> "Step 5 (Optional): Grant Shizuku permission for advanced system control\n\nThis enables WiFi, Bluetooth, DND, and Airplane Mode toggles."
             else -> "All set! Control Center is active.\n\nSwipe down from the configured zone to open.\n\n✓ Shizuku enabled for full system control!\n✓ Notification access enabled for media info!"
         }
 
@@ -566,6 +591,45 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         }
         
         ShizukuHelper.requestShizukuPermission()
+    }
+    
+    private fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+    
+    private fun requestLocationPermission() {
+        if (hasLocationPermission()) {
+            Toast.makeText(this, "Location permission already granted!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        when (requestCode) {
+            LOCATION_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Location permission granted! WiFi SSID will now be displayed.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Location permission denied. WiFi name will not be shown.", Toast.LENGTH_SHORT).show()
+                }
+                updateUI()
+            }
+        }
     }
     
     private fun requestWriteSettingsPermission() {
