@@ -54,47 +54,74 @@
         </RelativeLayout>
 
 
-        <FrameLayout
-            android:id="@+id/notificationListContainer"
+        <ScrollView
+            android:id="@+id/mainScrollView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:clipChildren="false"
+            android:scrollbars="none"
+            android:overScrollMode="never"
             android:clipToPadding="false"
+            android:clipChildren="false"
+            android:paddingBottom="100dp"
             android:background="@android:color/transparent">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/notificationsRecyclerView"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="none"
-                android:overScrollMode="always"
-                android:clipToPadding="false"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
                 android:clipChildren="false"
-                android:paddingBottom="100dp"
-                android:background="@android:color/transparent" />
+                android:clipToPadding="false">
 
-            <ScrollView
-                android:id="@+id/notificationsScrollView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="none"
-                android:overScrollMode="never"
-                android:clipToPadding="false"
-                android:paddingBottom="100dp"
-                android:visibility="gone"
-                android:background="@android:color/transparent">
-
-                <LinearLayout
-                    android:id="@+id/notificationsContainer"
+                <FrameLayout
+                    android:id="@+id/mediaWidgetContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@android:color/transparent" />
+                    android:visibility="gone" />
 
-            </ScrollView>
+                <FrameLayout
+                    android:id="@+id/notificationListContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:background="@android:color/transparent">
 
-        </FrameLayout>
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/notificationsRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:overScrollMode="never"
+                        android:nestedScrollingEnabled="false"
+                        android:clipToPadding="false"
+                        android:clipChildren="false"
+                        android:background="@android:color/transparent" />
+
+                    <ScrollView
+                        android:id="@+id/notificationsScrollView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:overScrollMode="never"
+                        android:clipToPadding="false"
+                        android:visibility="gone"
+                        android:background="@android:color/transparent">
+
+                        <LinearLayout
+                            android:id="@+id/notificationsContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:background="@android:color/transparent" />
+
+                    </ScrollView>
+
+                </FrameLayout>
+
+            </LinearLayout>
+
+        </ScrollView>
 
     </LinearLayout>
 

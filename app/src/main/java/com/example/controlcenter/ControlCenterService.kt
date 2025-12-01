@@ -1000,12 +1000,175 @@ class ControlCenterService : Service() {
     
     private fun setupNotificationPanel() {
         MediaNotificationListener.forceRefreshNotifications()
+        setupMediaWidget()
         loadNotificationsFromListener()
         
         notificationPanelView?.findViewById<ImageView>(R.id.clearAllButton)?.setOnClickListener {
             vibrate()
             clearAllNotifications()
         }
+    }
+    
+    private fun setupMediaWidget() {
+        val mediaWidgetContainer = notificationPanelView?.findViewById<FrameLayout>(R.id.mediaWidgetContainer)
+        mediaWidgetContainer?.removeAllViews()
+        
+        MediaNotificationListener.refreshMediaInfo(this)
+        val mediaInfo = MediaNotificationListener.currentMediaInfo
+        
+        if (mediaInfo == null) {
+            mediaWidgetContainer?.visibility = View.GONE
+            return
+        }
+        
+        val mediaView = LayoutInflater.from(this).inflate(R.layout.item_media_notification, mediaWidgetContainer, false)
+        
+        val albumArt = mediaView.findViewById<ImageView>(R.id.albumArt)
+        val albumArtPlaceholder = mediaView.findViewById<ImageView>(R.id.albumArtPlaceholder)
+        val albumArtBackground = mediaView.findViewById<ImageView>(R.id.albumArtBackground)
+        val mediaTitle = mediaView.findViewById<TextView>(R.id.mediaTitle)
+        val mediaArtist = mediaView.findViewById<TextView>(R.id.mediaArtist)
+        val mediaAppName = mediaView.findViewById<TextView>(R.id.mediaAppName)
+        val playPauseButton = mediaView.findViewById<ImageView>(R.id.mediaPlayPause)
+        val previousButton = mediaView.findViewById<ImageView>(R.id.mediaPrevious)
+        val nextButton = mediaView.findViewById<ImageView>(R.id.mediaNext)
+        val progressContainer = mediaView.findViewById<LinearLayout>(R.id.progressContainer)
+        val mediaProgress = mediaView.findViewById<ProgressBar>(R.id.mediaProgress)
+        val currentTimeText = mediaView.findViewById<TextView>(R.id.mediaCurrentTime)
+        val durationText = mediaView.findViewById<TextView>(R.id.mediaDuration)
+        
+        mediaTitle?.text = mediaInfo.title
+        mediaArtist?.text = if (mediaInfo.artist.isNotEmpty()) mediaInfo.artist else mediaInfo.album
+        
+        try {
+            val appInfo = packageManager.getApplicationInfo(mediaInfo.packageName, 0)
+            val appName = packageManager.getApplicationLabel(appInfo).toString()
+            mediaAppName?.text = appName
+        } catch (e: Exception) {
+            mediaAppName?.text = "PLAYING NOW"
+        }
+        
+        if (mediaInfo.albumArt != null) {
+            albumArt?.setImageBitmap(mediaInfo.albumArt)
+            albumArtBackground?.setImageBitmap(mediaInfo.albumArt)
+            albumArt?.visibility = View.VISIBLE
+            albumArtPlaceholder?.visibility = View.GONE
+        } else {
+            albumArt?.visibility = View.GONE
+            albumArtPlaceholder?.visibility = View.VISIBLE
+        }
+        
+        updatePlayPauseButton(playPauseButton, mediaInfo.isPlaying)
+        
+        if (mediaInfo.duration > 0) {
+            progressContainer?.visibility = View.VISIBLE
+            val progress = ((mediaInfo.position.toFloat() / mediaInfo.duration.toFloat()) * 100).toInt()
+            mediaProgress?.progress = progress
+            currentTimeText?.text = formatDuration(mediaInfo.position)
+            durationText?.text = formatDuration(mediaInfo.duration)
+        } else {
+            progressContainer?.visibility = View.GONE
+        }
+        
+        playPauseButton?.setOnClickListener {
+            vibrate()
+            MediaControlHelper.playPause(this)
+            handler.postDelayed({
+                MediaNotificationListener.refreshMediaInfo(this)
+                val updatedInfo = MediaNotificationListener.currentMediaInfo
+                updatePlayPauseButton(playPauseButton, updatedInfo?.isPlaying ?: false)
+            }, 200)
+        }
+        
+        previousButton?.setOnClickListener {
+            vibrate()
+            MediaControlHelper.previous(this)
+            handler.postDelayed({
+                refreshMediaWidgetInfo()
+            }, 500)
+        }
+        
+        nextButton?.setOnClickListener {
+            vibrate()
+            MediaControlHelper.next(this)
+            handler.postDelayed({
+                refreshMediaWidgetInfo()
+            }, 500)
+        }
+        
+        val cardColor = AppearanceSettings.getNotificationColorWithOpacity(this)
+        val mediaCard = mediaView.findViewById<FrameLayout>(R.id.mediaCard)
+        mediaCard?.background = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = 20 * resources.displayMetrics.density
+            setColor(cardColor)
+        }
+        
+        mediaWidgetContainer?.addView(mediaView)
+        mediaWidgetContainer?.visibility = View.VISIBLE
+        
+        MediaNotificationListener.setOnMediaChangedListener { newMediaInfo ->
+            handler.post {
+                if (notificationPanelView != null) {
+                    setupMediaWidget()
+                }
+            }
+        }
+    }
+    
+    private fun updatePlayPauseButton(button: ImageView?, isPlaying: Boolean) {
+        button?.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        button?.setColorFilter(0xFF000000.toInt())
+    }
+    
+    private fun refreshMediaWidgetInfo() {
+        MediaNotificationListener.refreshMediaInfo(this)
+        val mediaInfo = MediaNotificationListener.currentMediaInfo ?: return
+        
+        val mediaView = notificationPanelView?.findViewById<FrameLayout>(R.id.mediaWidgetContainer)?.getChildAt(0) ?: return
+        
+        val albumArt = mediaView.findViewById<ImageView>(R.id.albumArt)
+        val albumArtPlaceholder = mediaView.findViewById<ImageView>(R.id.albumArtPlaceholder)
+        val albumArtBackground = mediaView.findViewById<ImageView>(R.id.albumArtBackground)
+        val mediaTitle = mediaView.findViewById<TextView>(R.id.mediaTitle)
+        val mediaArtist = mediaView.findViewById<TextView>(R.id.mediaArtist)
+        val playPauseButton = mediaView.findViewById<ImageView>(R.id.mediaPlayPause)
+        val progressContainer = mediaView.findViewById<LinearLayout>(R.id.progressContainer)
+        val mediaProgress = mediaView.findViewById<ProgressBar>(R.id.mediaProgress)
+        val currentTimeText = mediaView.findViewById<TextView>(R.id.mediaCurrentTime)
+        val durationText = mediaView.findViewById<TextView>(R.id.mediaDuration)
+        
+        mediaTitle?.text = mediaInfo.title
+        mediaArtist?.text = if (mediaInfo.artist.isNotEmpty()) mediaInfo.artist else mediaInfo.album
+        
+        if (mediaInfo.albumArt != null) {
+            albumArt?.setImageBitmap(mediaInfo.albumArt)
+            albumArtBackground?.setImageBitmap(mediaInfo.albumArt)
+            albumArt?.visibility = View.VISIBLE
+            albumArtPlaceholder?.visibility = View.GONE
+        } else {
+            albumArt?.visibility = View.GONE
+            albumArtPlaceholder?.visibility = View.VISIBLE
+        }
+        
+        updatePlayPauseButton(playPauseButton, mediaInfo.isPlaying)
+        
+        if (mediaInfo.duration > 0) {
+            progressContainer?.visibility = View.VISIBLE
+            val progress = ((mediaInfo.position.toFloat() / mediaInfo.duration.toFloat()) * 100).toInt()
+            mediaProgress?.progress = progress
+            currentTimeText?.text = formatDuration(mediaInfo.position)
+            durationText?.text = formatDuration(mediaInfo.duration)
+        } else {
+            progressContainer?.visibility = View.GONE
+        }
+    }
+    
+    private fun formatDuration(ms: Long): String {
+        val totalSeconds = ms / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return String.format("%d:%02d", minutes, seconds)
     }
     
     private fun loadNotificationsFromListener() {
@@ -1060,6 +1223,8 @@ class ControlCenterService : Service() {
             return
         }
         
+        val mediaPackage = MediaNotificationListener.currentMediaInfo?.packageName
+        
         for (sbn in notifications) {
             if (sbn.packageName == packageName) continue
             
@@ -1071,6 +1236,15 @@ class ControlCenterService : Service() {
             }
             
             val extras = notification.extras
+            val isMediaNotification = extras.containsKey(android.app.Notification.EXTRA_MEDIA_SESSION) ||
+                notification.category == android.app.Notification.CATEGORY_TRANSPORT ||
+                (mediaPackage != null && sbn.packageName == mediaPackage && 
+                 extras.containsKey("android.mediaSession"))
+            
+            if (isMediaNotification && mediaPackage != null && sbn.packageName == mediaPackage) {
+                continue
+            }
+            
             val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
             val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: ""
             
