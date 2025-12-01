@@ -1035,21 +1035,36 @@ class NotificationCenterService : Service() {
         })
         
         recyclerView?.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            private var initialY = 0f
+            private var initialX = 0f
+            private var hasMovedVertically = false
+            
             override fun onInterceptTouchEvent(rv: RecyclerView, event: MotionEvent): Boolean {
-                if (!canScrollUp && event.action == MotionEvent.ACTION_MOVE) {
-                    val deltaY = event.rawY - startY
-                    if (deltaY < -20 && !isDragging) {
-                        isDragging = true
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
                         startY = event.rawY
-                        currentTranslationY = notificationCenterView?.translationY ?: 0f
-                        velocityTracker?.clear()
-                        velocityTracker = VelocityTracker.obtain()
-                        return true
+                        initialY = event.rawY
+                        initialX = event.rawX
+                        hasMovedVertically = false
                     }
-                }
-                
-                if (event.action == MotionEvent.ACTION_DOWN) {
-                    startY = event.rawY
+                    MotionEvent.ACTION_MOVE -> {
+                        if (!canScrollUp && !isDragging) {
+                            val deltaY = event.rawY - initialY
+                            val deltaX = event.rawX - initialX
+                            val absY = kotlin.math.abs(deltaY)
+                            val absX = kotlin.math.abs(deltaX)
+                            
+                            if (absY > 100 && absY > absX * 2 && deltaY < 0) {
+                                isDragging = true
+                                startY = event.rawY
+                                currentTranslationY = notificationCenterView?.translationY ?: 0f
+                                velocityTracker?.clear()
+                                velocityTracker = VelocityTracker.obtain()
+                                hasMovedVertically = true
+                                return true
+                            }
+                        }
+                    }
                 }
                 
                 return isDragging
