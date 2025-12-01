@@ -834,9 +834,11 @@ class ControlCenterService : Service() {
         if (isHiding) return
         setHiding(true)
         isInteractiveDragging = false
-        enableBlurUpdates = true
         
         currentAnimation?.cancel()
+        blurAnimator?.cancel()
+        
+        val startProgress = 1f - (kotlin.math.abs(controlCenterView?.translationY ?: 0f) / panelHeight.toFloat())
         
         controlCenterView?.let { panel ->
             val springAnimation = SpringAnimation(
@@ -845,19 +847,18 @@ class ControlCenterService : Service() {
                 -panelHeight.toFloat()
             )
             springAnimation.spring.apply {
-                stiffness = SpringForce.STIFFNESS_MEDIUM
+                stiffness = SpringForce.STIFFNESS_HIGH
                 dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
             }
             
             if (velocity != 0f && velocity < 0f) {
-                springAnimation.setStartVelocity(velocity)
+                springAnimation.setStartVelocity(velocity * 1.5f)
             }
             
             springAnimation.addUpdateListener { _, value, _ ->
                 if (!isHiding) return@addUpdateListener
                 val progress = 1f - (kotlin.math.abs(value) / panelHeight.toFloat())
                 backgroundView?.alpha = progress.coerceIn(0f, 1f)
-                updateBlurRadius(progress.coerceIn(0f, 1f))
             }
             springAnimation.addEndListener { _, _, _, _ ->
                 removeViews()
@@ -868,6 +869,41 @@ class ControlCenterService : Service() {
         } ?: run {
             setHiding(false)
         }
+        
+        animateBlurOut(startProgress)
+    }
+    
+    private fun animateBlurOut(startProgress: Float) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        
+        blurAnimator?.cancel()
+        
+        val animator = ValueAnimator.ofFloat(startProgress, 0f)
+        animator.duration = 180
+        animator.interpolator = DecelerateInterpolator(1.5f)
+        
+        animator.addUpdateListener { anim ->
+            if (!isHiding) {
+                anim.cancel()
+                return@addUpdateListener
+            }
+            val progress = anim.animatedValue as Float
+            backgroundView?.let { view ->
+                try {
+                    val blurRadius = (maxBlurRadius * progress).coerceIn(0.1f, maxBlurRadius).toInt().coerceAtLeast(1)
+                    val params = view.layoutParams as? WindowManager.LayoutParams
+                    params?.let {
+                        it.blurBehindRadius = blurRadius
+                        windowManager?.updateViewLayout(view, it)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        
+        blurAnimator = animator
+        animator.start()
     }
 
     private fun removeViews() {
