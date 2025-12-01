@@ -1031,6 +1031,7 @@ class NotificationCenterService : Service() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 canScrollUp = recyclerView.canScrollVertically(-1)
+                canScrollDown = recyclerView.canScrollVertically(1)
             }
         })
         
@@ -1048,13 +1049,13 @@ class NotificationCenterService : Service() {
                         hasMovedVertically = false
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        if (!canScrollUp && !isDragging) {
+                        if (!canScrollDown && !isDragging) {
                             val deltaY = event.rawY - initialY
                             val deltaX = event.rawX - initialX
                             val absY = kotlin.math.abs(deltaY)
                             val absX = kotlin.math.abs(deltaX)
                             
-                            if (absY > 100 && absY > absX * 2 && deltaY < 0) {
+                            if (absY > 50 && absY > absX * 1.5f && deltaY < 0) {
                                 isDragging = true
                                 startY = event.rawY
                                 currentTranslationY = notificationCenterView?.translationY ?: 0f
@@ -1194,6 +1195,7 @@ class NotificationCenterService : Service() {
     }
     
     private var canScrollUp = false
+    private var canScrollDown = false
     
     private fun handleBackgroundTouch(event: MotionEvent): Boolean {
         when (event.action) {
