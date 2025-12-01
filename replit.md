@@ -59,6 +59,8 @@ The UI adheres strictly to the MIUI Control Center design language, featuring:
 - **Performance Optimizations (Dec 1, 2025):**
     - **Blur throttling**: Optimized `updateBlurRadius()` function to reduce lag when dragging Control Center by throttling expensive `windowManager.updateViewLayout()` calls. Updates are now limited to ~60fps (16ms intervals) or when blur radius changes significantly (threshold of 5 units). Uses `SystemClock.elapsedRealtime()` for monotonic time tracking.
     - **Blur state cleanup**: Reset blur throttle state (`lastBlurUpdateTime`, `lastBlurRadius`) in `removeViews()` to ensure clean sessions.
+    - **WiFi SSID async retrieval**: Removed synchronous Shizuku call (`ShizukuHelper.getConnectedWifiSSIDSync()`) that was blocking main thread for 100-300ms when opening Control Center. Now uses native Android `WifiManager` API with `ACCESS_FINE_LOCATION` runtime permission for instant SSID retrieval.
+    - **Location permission auto-request**: Added automatic location permission request in `MainActivity.onResume()` after core permissions (overlay, accessibility) are granted, ensuring WiFi SSID displays without manual user action.
 
 ## External Dependencies
 - **Shizuku:** `dev.rikka.shizuku:api:13.1.5` and `dev.rikka.shizuku:provider:13.1.5` are used for executing privileged commands and accessing system APIs without root, requiring `moe.shizuku.manager.permission.API_V23`.
