@@ -117,8 +117,9 @@ class ControlCenterService : Service() {
     
     private var lastBlurUpdateTime = 0L
     private var lastBlurRadius = -1
-    private val blurUpdateInterval = 16L
-    private val blurChangeThreshold = 5
+    private val blurUpdateInterval = 33L
+    private val blurChangeThreshold = 10
+    private var enableBlurUpdates = true
 
     private val controlStates = mutableMapOf(
         "wifi" to true,
@@ -279,11 +280,11 @@ class ControlCenterService : Service() {
         
         isShowing = true
         isInteractiveDragging = true
+        enableBlurUpdates = false
         vibrate()
 
         addBackgroundView()
         backgroundView?.alpha = 0f
-        updateBlurRadius(0f)
         
         addControlCenterView()
         
@@ -325,12 +326,12 @@ class ControlCenterService : Service() {
 
         val progress = 1f - (kotlin.math.abs(newTranslation) / panelHeight.toFloat())
         backgroundView?.alpha = progress.coerceIn(0f, 1f)
-        updateBlurRadius(progress.coerceIn(0f, 1f))
     }
 
     private fun handleDragEnd(velocityY: Float) {
         if (!isShowing || !isInteractiveDragging) return
         isInteractiveDragging = false
+        enableBlurUpdates = true
 
         if (!panelMeasured || panelHeight == 0) {
             removeViews()
@@ -416,26 +417,26 @@ class ControlCenterService : Service() {
     }
     
     private fun updateBlurRadius(progress: Float) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            backgroundView?.let { view ->
-                val blurRadius = (maxBlurRadius * progress).coerceIn(0.1f, maxBlurRadius).toInt().coerceAtLeast(1)
-                val currentTime = android.os.SystemClock.elapsedRealtime()
-                
-                val timeDiff = currentTime - lastBlurUpdateTime
-                val radiusDiff = kotlin.math.abs(blurRadius - lastBlurRadius)
-                
-                if (timeDiff >= blurUpdateInterval || radiusDiff >= blurChangeThreshold || lastBlurRadius == -1) {
-                    try {
-                        val params = view.layoutParams as? WindowManager.LayoutParams
-                        params?.let {
-                            it.blurBehindRadius = blurRadius
-                            windowManager?.updateViewLayout(view, it)
-                            lastBlurUpdateTime = currentTime
-                            lastBlurRadius = blurRadius
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+        if (!enableBlurUpdates || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        
+        backgroundView?.let { view ->
+            val blurRadius = (maxBlurRadius * progress).coerceIn(0.1f, maxBlurRadius).toInt().coerceAtLeast(1)
+            val currentTime = android.os.SystemClock.elapsedRealtime()
+            
+            val timeDiff = currentTime - lastBlurUpdateTime
+            val radiusDiff = kotlin.math.abs(blurRadius - lastBlurRadius)
+            
+            if (timeDiff >= blurUpdateInterval || radiusDiff >= blurChangeThreshold || lastBlurRadius == -1) {
+                try {
+                    val params = view.layoutParams as? WindowManager.LayoutParams
+                    params?.let {
+                        it.blurBehindRadius = blurRadius
+                        windowManager?.updateViewLayout(view, it)
+                        lastBlurUpdateTime = currentTime
+                        lastBlurRadius = blurRadius
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
         }
@@ -803,6 +804,7 @@ class ControlCenterService : Service() {
         if (isHiding) return
         isHiding = true
         isInteractiveDragging = false
+        enableBlurUpdates = true
         
         currentAnimation?.cancel()
         
@@ -813,8 +815,8 @@ class ControlCenterService : Service() {
                 -panelHeight.toFloat()
             )
             springAnimation.spring.apply {
-                stiffness = SpringForce.STIFFNESS_MEDIUM
-                dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
+                stiffness = SpringForce.STIFFNESS_LOW
+                dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
             }
             
             if (velocity != 0f && velocity < 0f) {
@@ -846,6 +848,7 @@ class ControlCenterService : Service() {
         isHorizontalSwipe = false
         panelMeasured = false
         currentPage = 0
+        enableBlurUpdates = true
         
         currentAnimation?.cancel()
         currentAnimation = null
