@@ -295,7 +295,7 @@ class ControlCenterService : Service() {
         
         isShowing = true
         isInteractiveDragging = true
-        enableBlurUpdates = false
+        enableBlurUpdates = true
         vibrate()
 
         addBackgroundView()
@@ -341,6 +341,7 @@ class ControlCenterService : Service() {
 
         val progress = 1f - (kotlin.math.abs(newTranslation) / panelHeight.toFloat())
         backgroundView?.alpha = progress.coerceIn(0f, 1f)
+        updateBlurRadius(progress)
     }
 
     private fun handleDragEnd(velocityY: Float) {
