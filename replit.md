@@ -56,6 +56,9 @@ The UI adheres strictly to the MIUI Control Center design language, featuring:
     - **Background state preloading**: System states (WiFi, Bluetooth, flashlight, etc.) are preloaded in background thread during service startup via `preloadSystemStates()`.
     - **Async state sync**: `syncStateFromSystem()` and `syncQuickSettingStates()` now run all system API queries on a background executor, posting UI updates back to the main thread. This prevents UI blocking when opening Control Center.
     - **Fixed Log import issue**: Added missing `import android.util.Log` and `TAG` constant in `NotificationCenterService.kt`.
+- **Performance Optimizations (Dec 1, 2025):**
+    - **Blur throttling**: Optimized `updateBlurRadius()` function to reduce lag when dragging Control Center by throttling expensive `windowManager.updateViewLayout()` calls. Updates are now limited to ~60fps (16ms intervals) or when blur radius changes significantly (threshold of 5 units). Uses `SystemClock.elapsedRealtime()` for monotonic time tracking.
+    - **Blur state cleanup**: Reset blur throttle state (`lastBlurUpdateTime`, `lastBlurRadius`) in `removeViews()` to ensure clean sessions.
 
 ## External Dependencies
 - **Shizuku:** `dev.rikka.shizuku:api:13.1.5` and `dev.rikka.shizuku:provider:13.1.5` are used for executing privileged commands and accessing system APIs without root, requiring `moe.shizuku.manager.permission.API_V23`.
