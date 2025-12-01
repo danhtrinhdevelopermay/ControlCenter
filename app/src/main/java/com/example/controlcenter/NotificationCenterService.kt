@@ -1034,28 +1034,33 @@ class NotificationCenterService : Service() {
             }
         })
         
-        recyclerView?.setOnTouchListener { _, event ->
-            if (!canScrollUp && event.action == MotionEvent.ACTION_MOVE) {
-                val deltaY = event.rawY - startY
-                if (deltaY < -20 && !isDragging) {
-                    isDragging = true
-                    startY = event.rawY
-                    currentTranslationY = notificationCenterView?.translationY ?: 0f
-                    velocityTracker?.clear()
-                    velocityTracker = VelocityTracker.obtain()
+        recyclerView?.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, event: MotionEvent): Boolean {
+                if (!canScrollUp && event.action == MotionEvent.ACTION_MOVE) {
+                    val deltaY = event.rawY - startY
+                    if (deltaY < -20 && !isDragging) {
+                        isDragging = true
+                        startY = event.rawY
+                        currentTranslationY = notificationCenterView?.translationY ?: 0f
+                        velocityTracker?.clear()
+                        velocityTracker = VelocityTracker.obtain()
+                        return true
+                    }
                 }
-            }
-            
-            if (isDragging) {
-                handlePanelTouch(event)
-                true
-            } else {
+                
                 if (event.action == MotionEvent.ACTION_DOWN) {
                     startY = event.rawY
                 }
-                false
+                
+                return isDragging
             }
-        }
+            
+            override fun onTouchEvent(rv: RecyclerView, event: MotionEvent) {
+                if (isDragging) {
+                    handlePanelTouch(event)
+                }
+            }
+        })
     }
     
     private fun handleBottomDismissTouch(event: MotionEvent): Boolean {
