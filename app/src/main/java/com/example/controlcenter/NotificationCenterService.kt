@@ -116,231 +116,6 @@ class NotificationCenterService : Service() {
         createNotificationChannel()
         loadNotifications()
         MediaNotificationListener.setOnNotificationChangedListener(notificationChangedListener)
-        preCachePanelHeight()
-    }
-    
-    override fun onDestroy() {
-        super.onDestroy()
-        serviceInstance = null
-        backgroundExecutor.shutdown()
-    }
-    
-    private var cachedPanelHeight = 0
-    private var isPanelHeightCached = false
-    private var lastBlurUpdateTime = 0L
-    private val blurUpdateThrottleMs = 32L
-    private var pendingBlurProgress = 0f
-    private var isBlurUpdatePending = false
-    
-    private fun preCachePanelHeight() {
-        handler.post {
-            try {
-                val inflater = LayoutInflater.from(this)
-                val tempView = inflater.inflate(R.layout.notification_center_panel, null)
-                tempView.measure(
-                    View.MeasureSpec.makeMeasureSpec(screenWidth, View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-                )
-                cachedPanelHeight = tempView.measuredHeight
-                isPanelHeightCached = cachedPanelHeight > 0
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-    
-    fun handleDragStartDirect() {
-        if (isShowing || isHiding) return
-        
-        isShowing = true
-        isInteractiveDragging = true
-        panelMeasured = false
-        vibrate()
-
-        addBackgroundViewFast()
-        backgroundView?.alpha = 0f
-        
-        addNotificationCenterViewFast()
-        
-        if (isPanelHeightCached && cachedPanelHeight > 0) {
-            panelHeight = cachedPanelHeight
-            panelMeasured = true
-            notificationCenterView?.translationY = -panelHeight.toFloat()
-        } else {
-            panelHeight = screenHeight
-            notificationCenterView?.translationY = -panelHeight.toFloat()
-            
-            notificationCenterView?.viewTreeObserver?.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    notificationCenterView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
-                    val measuredHeight = notificationCenterView?.height ?: 0
-                    if (measuredHeight > 0) {
-                        panelHeight = measuredHeight
-                        cachedPanelHeight = measuredHeight
-                        isPanelHeightCached = true
-                    }
-                    panelMeasured = true
-                    notificationCenterView?.translationY = -panelHeight.toFloat()
-                }
-            })
-        }
-    }
-    
-    fun handleDragUpdateDirect(dragY: Float) {
-        if (!isShowing || !isInteractiveDragging) return
-        if (!panelMeasured || panelHeight == 0) {
-            notificationCenterView?.post {
-                val measuredHeight = notificationCenterView?.height ?: 0
-                if (measuredHeight > 0) {
-                    panelHeight = measuredHeight
-                } else if (panelHeight == 0) {
-                    panelHeight = screenHeight
-                }
-                panelMeasured = true
-                handleDragUpdateDirect(dragY)
-            }
-            return
-        }
-
-        val newTranslation = (-panelHeight + dragY).coerceIn(-panelHeight.toFloat(), 0f)
-        notificationCenterView?.translationY = newTranslation
-
-        val progress = 1f - (kotlin.math.abs(newTranslation) / panelHeight.toFloat())
-        backgroundView?.alpha = progress.coerceIn(0f, 1f)
-        updateBlurRadiusThrottled(progress.coerceIn(0f, 1f))
-    }
-    
-    fun handleDragEndDirect(velocityY: Float) {
-        if (!isShowing || !isInteractiveDragging) return
-        isInteractiveDragging = false
-
-        if (!panelMeasured || panelHeight == 0) {
-            removeViews()
-            return
-        }
-
-        val currentTransY = notificationCenterView?.translationY ?: -panelHeight.toFloat()
-        val progress = 1f - (kotlin.math.abs(currentTransY) / panelHeight.toFloat())
-        
-        val shouldOpen = progress > openThreshold || velocityY > minFlingVelocity
-        
-        if (shouldOpen) {
-            animateShowWithVelocity(velocityY.coerceAtLeast(0f))
-        } else {
-            hideNotificationCenterWithVelocity(-kotlin.math.abs(velocityY))
-        }
-    }
-    
-    private fun addBackgroundViewFast() {
-        if (backgroundView != null) return
-        
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else
-                @Suppress("DEPRECATION")
-                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_DIM_BEHIND or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS,
-            PixelFormat.TRANSLUCENT
-        )
-        params.dimAmount = 0.0f
-        params.gravity = Gravity.TOP or Gravity.START
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            params.blurBehindRadius = 1
-            params.flags = params.flags or WindowManager.LayoutParams.FLAG_BLUR_BEHIND
-        }
-
-        backgroundView = View(this).apply {
-            setBackgroundColor(0x00000000.toInt())
-            alpha = 0f
-            setOnTouchListener { _, event ->
-                handleBackgroundTouch(event)
-            }
-        }
-
-        try {
-            windowManager?.addView(backgroundView, params)
-            showTransparentSystemBars(backgroundView)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-    
-    private fun addNotificationCenterViewFast() {
-        if (notificationCenterView != null) return
-        
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else
-                @Suppress("DEPRECATION")
-                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            PixelFormat.TRANSLUCENT
-        )
-        params.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-
-        val inflater = LayoutInflater.from(this)
-        notificationCenterView = inflater.inflate(R.layout.notification_center_panel, null)
-
-        setupNotificationList()
-        setupDismissGesture()
-        applyNotificationAppearance()
-
-        try {
-            windowManager?.addView(notificationCenterView, params)
-            showTransparentSystemBars(notificationCenterView)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-    
-    private fun updateBlurRadiusThrottled(progress: Float) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-        
-        val currentTime = System.currentTimeMillis()
-        pendingBlurProgress = progress
-        
-        if (currentTime - lastBlurUpdateTime < blurUpdateThrottleMs) {
-            if (!isBlurUpdatePending) {
-                isBlurUpdatePending = true
-                handler.postDelayed({
-                    isBlurUpdatePending = false
-                    applyBlurRadius(pendingBlurProgress)
-                }, blurUpdateThrottleMs)
-            }
-            return
-        }
-        
-        lastBlurUpdateTime = currentTime
-        applyBlurRadius(progress)
-    }
-    
-    private fun applyBlurRadius(progress: Float) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            backgroundView?.let { view ->
-                val blurRadius = (maxBlurRadius * progress).coerceIn(0.1f, maxBlurRadius)
-                try {
-                    val params = view.layoutParams as? WindowManager.LayoutParams
-                    params?.let {
-                        it.blurBehindRadius = blurRadius.toInt().coerceAtLeast(1)
-                        windowManager?.updateViewLayout(view, it)
-                    }
-                } catch (e: Exception) {
-                }
-            }
-        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -356,15 +131,15 @@ class NotificationCenterService : Service() {
                 hideNotificationCenter()
             }
             ACTION_DRAG_START -> {
-                handleDragStartDirect()
+                handleDragStart()
             }
             ACTION_DRAG_UPDATE -> {
                 val dragY = intent.getFloatExtra(EXTRA_DRAG_Y, 0f)
-                handleDragUpdateDirect(dragY)
+                handleDragUpdate(dragY)
             }
             ACTION_DRAG_END -> {
                 val velocityY = intent.getFloatExtra(EXTRA_VELOCITY_Y, 0f)
-                handleDragEndDirect(velocityY)
+                handleDragEnd(velocityY)
             }
             ACTION_REFRESH -> {
                 loadNotifications()
@@ -1542,8 +1317,21 @@ class NotificationCenterService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        serviceInstance = null
         MediaNotificationListener.setOnNotificationChangedListener(null)
         removeViews()
+    }
+    
+    fun directDragStart() {
+        handleDragStart()
+    }
+    
+    fun directDragUpdate(dragY: Float) {
+        handleDragUpdate(dragY)
+    }
+    
+    fun directDragEnd(velocityY: Float) {
+        handleDragEnd(velocityY)
     }
     
     inner class StretchEdgeEffectFactory : RecyclerView.EdgeEffectFactory() {
