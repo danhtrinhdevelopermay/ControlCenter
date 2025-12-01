@@ -105,9 +105,13 @@ class NotificationCenterService : Service() {
     private var notificationAdapter: NotificationAdapter? = null
     private var recyclerView: RecyclerView? = null
     private var emptyStateView: TextView? = null
+    private var retryCount = 0
+    private val maxRetries = 5
+    private var isLoadingNotifications = false
 
     private val notificationChangedListener: ((List<android.service.notification.StatusBarNotification>) -> Unit) = { _ ->
         handler.post {
+            retryCount = 0
             loadNotifications()
             refreshNotificationList()
         }
@@ -199,20 +203,36 @@ class NotificationCenterService : Service() {
     }
 
     private fun loadNotifications() {
+        if (isLoadingNotifications) return
+        
         if (!MediaNotificationListener.isNotificationAccessEnabled(this)) {
             notifications.clear()
             addPermissionNotification()
+            retryCount = 0
+            isLoadingNotifications = false
             return
         }
         
         if (!MediaNotificationListener.isServiceConnected()) {
-            MediaNotificationListener.requestRebind(this)
-            handler.postDelayed({
+            if (retryCount < maxRetries) {
+                retryCount++
+                MediaNotificationListener.requestRebind(this)
+                val delayMs = (200L * (1 shl (retryCount - 1))).coerceAtMost(3000L)
+                handler.postDelayed({
+                    isLoadingNotifications = false
+                    loadNotifications()
+                }, delayMs)
+                isLoadingNotifications = true
+            } else {
+                retryCount = 0
+                isLoadingNotifications = true
                 loadNotificationsAsync()
-            }, 300)
+            }
             return
         }
         
+        retryCount = 0
+        isLoadingNotifications = true
         loadNotificationsAsync()
     }
     
@@ -225,6 +245,7 @@ class NotificationCenterService : Service() {
                     notifications.clear()
                     addPermissionNotification()
                     refreshNotificationList()
+                    isLoadingNotifications = false
                 }
                 return@execute
             }
@@ -322,6 +343,7 @@ class NotificationCenterService : Service() {
                 notifications.clear()
                 notifications.addAll(newNotifications)
                 refreshNotificationList()
+                isLoadingNotifications = false
             }
         }
     }
@@ -348,6 +370,12 @@ class NotificationCenterService : Service() {
         isInteractiveDragging = true
         panelMeasured = false
         vibrate()
+        retryCount = 0
+        isLoadingNotifications = false
+        handler.post {
+            MediaNotificationListener.forceRefreshNotifications()
+            loadNotifications()
+        }
 
         addBackgroundView()
         backgroundView?.alpha = 0f
@@ -418,7 +446,12 @@ class NotificationCenterService : Service() {
     private fun showNotificationCenter() {
         isShowing = true
         vibrate()
-        loadNotifications()
+        retryCount = 0
+        isLoadingNotifications = false
+        handler.post {
+            MediaNotificationListener.forceRefreshNotifications()
+            loadNotifications()
+        }
 
         addBackgroundView()
         addNotificationCenterView()

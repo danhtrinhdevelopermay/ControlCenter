@@ -118,8 +118,9 @@
             android:layout_marginTop="10dp"
             android:layout_marginStart="56dp"
             android:visibility="gone"
-            android:clickable="true"
-            android:focusable="true"
+            android:clickable="false"
+            android:focusable="false"
+            android:descendantFocusability="beforeDescendants"
             android:minHeight="36dp"
             android:gravity="center_vertical">
         </LinearLayout>

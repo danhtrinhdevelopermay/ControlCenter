@@ -28,6 +28,15 @@ class NotificationAdapter(
     private var cachedActionColor: Int = Color.parseColor("#1A007AFF")
     private var cachedActionTextColor: Int = Color.parseColor("#007AFF")
 
+    init {
+        setHasStableIds(true)
+    }
+
+    override fun getItemId(position: Int): Long {
+        val item = getItem(position)
+        return "${item.packageName}_${item.id}".hashCode().toLong()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotificationViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_notification, parent, false)
@@ -140,7 +149,23 @@ class NotificationAdapter(
                 actionsContainer.addView(button)
             }
             
-            actionsContainer.isClickable = true
+            actionsContainer.isClickable = false
+            actionsContainer.isFocusable = false
+            
+            expandArrow.setOnClickListener {
+                currentNotification?.let { notification ->
+                    val itemKey = getItemKey(notification)
+                    toggleExpand(notification, itemKey)
+                }
+            }
+
+            val clickableArea = itemView.findViewById<LinearLayout>(R.id.notificationCard)
+                .getChildAt(0) as LinearLayout
+            clickableArea.setOnClickListener {
+                currentNotification?.let { notification ->
+                    onItemClick(notification)
+                }
+            }
         }
 
         fun bind(notification: NotificationData) {
@@ -160,7 +185,9 @@ class NotificationAdapter(
             val isExpanded = expandedItems.contains(itemKey)
 
             if (notification.content.isNotEmpty()) {
-                notificationContent.text = notification.content
+                if (notificationContent.text != notification.content) {
+                    notificationContent.text = notification.content
+                }
                 notificationContent.visibility = View.VISIBLE
                 
                 val needsExpansion = notification.content.length > minContentLengthForExpand || 
@@ -194,46 +221,52 @@ class NotificationAdapter(
                 notificationImage.visibility = View.GONE
             }
 
-            cardBackground?.setColor(getCachedCardColor())
+            val currentColor = getCachedCardColor()
+            if ((cardBackground?.color?.defaultColor ?: 0) != currentColor) {
+                cardBackground?.setColor(currentColor)
+            }
             
             setupActions(notification)
-
-            expandArrow.setOnClickListener {
-                toggleExpand(notification, itemKey)
-            }
-
-            itemView.setOnClickListener {
-                onItemClick(notification)
-            }
         }
         
         private fun setupActions(notification: NotificationData) {
             val actions = notification.actions.take(3)
             
-            android.util.Log.d("NotificationAdapter", "setupActions for ${notification.appName}: ${actions.size} actions")
-            
             if (actions.isEmpty()) {
-                actionsContainer.visibility = View.GONE
-                actionButtons.forEach { it.visibility = View.GONE }
+                if (actionsContainer.visibility != View.GONE) {
+                    actionsContainer.visibility = View.GONE
+                    actionButtons.forEach { 
+                        if (it.visibility != View.GONE) {
+                            it.visibility = View.GONE
+                            it.setOnClickListener(null)
+                        }
+                    }
+                }
                 return
             }
             
-            actionsContainer.visibility = View.VISIBLE
+            if (actionsContainer.visibility != View.VISIBLE) {
+                actionsContainer.visibility = View.VISIBLE
+            }
             
             for (i in 0 until 3) {
+                val button = actionButtons[i]
                 if (i < actions.size) {
                     val action = actions[i]
-                    android.util.Log.d("NotificationAdapter", "Setting up action button $i: ${action.title}, hasIntent=${action.actionIntent != null}")
-                    actionButtons[i].apply {
-                        text = action.title
-                        visibility = View.VISIBLE
-                        setOnClickListener { 
-                            android.util.Log.d("NotificationAdapter", "Action button clicked: ${action.title}")
-                            onActionClick(action) 
-                        }
+                    if (button.text != action.title) {
+                        button.text = action.title
+                    }
+                    if (button.visibility != View.VISIBLE) {
+                        button.visibility = View.VISIBLE
+                    }
+                    button.setOnClickListener { view ->
+                        onActionClick(action)
                     }
                 } else {
-                    actionButtons[i].visibility = View.GONE
+                    if (button.visibility != View.GONE) {
+                        button.visibility = View.GONE
+                        button.setOnClickListener(null)
+                    }
                 }
             }
         }
