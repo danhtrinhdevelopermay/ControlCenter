@@ -65,12 +65,19 @@ class NotificationCenterService : Service() {
         var isShowing = false
             private set
         
+        var isHiding = false
+            private set
+        
         var isInteractiveDragging = false
             private set
             
         private var serviceInstance: NotificationCenterService? = null
         
         fun getInstance(): NotificationCenterService? = serviceInstance
+        
+        internal fun setHiding(hiding: Boolean) {
+            isHiding = hiding
+        }
     }
 
     private var windowManager: WindowManager? = null

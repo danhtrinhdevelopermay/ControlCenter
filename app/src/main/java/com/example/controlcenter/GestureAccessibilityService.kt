@@ -181,7 +181,8 @@ class GestureAccessibilityService : AccessibilityService() {
     private fun handleTouch(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                if (ControlCenterService.isShowing || NotificationCenterService.isShowing) return true
+                if ((ControlCenterService.isShowing && !ControlCenterService.isHiding) || 
+                    (NotificationCenterService.isShowing && !NotificationCenterService.isHiding)) return true
                 
                 startX = event.rawX
                 startY = event.rawY
@@ -224,7 +225,8 @@ class GestureAccessibilityService : AccessibilityService() {
     private fun handleNotificationTouch(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                if (ControlCenterService.isShowing || NotificationCenterService.isShowing) return true
+                if ((ControlCenterService.isShowing && !ControlCenterService.isHiding) || 
+                    (NotificationCenterService.isShowing && !NotificationCenterService.isHiding)) return true
                 
                 notificationStartX = event.rawX
                 notificationStartY = event.rawY

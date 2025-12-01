@@ -75,12 +75,19 @@ class ControlCenterService : Service() {
         var isShowing = false
             private set
         
+        var isHiding = false
+            private set
+        
         var isInteractiveDragging = false
             private set
             
         private var serviceInstance: ControlCenterService? = null
         
         fun getInstance(): ControlCenterService? = serviceInstance
+        
+        internal fun setHiding(hiding: Boolean) {
+            isHiding = hiding
+        }
     }
 
     private var windowManager: WindowManager? = null
@@ -100,7 +107,6 @@ class ControlCenterService : Service() {
     private var currentTranslationX = 0f
     private var velocityTracker: VelocityTracker? = null
     private var isDragging = false
-    private var isHiding = false
     private var isHorizontalSwipe = false
     private var currentAnimation: SpringAnimation? = null
     private var horizontalAnimation: SpringAnimation? = null
@@ -279,7 +285,13 @@ class ControlCenterService : Service() {
     }
 
     private fun handleDragStart() {
-        if (isShowing || isHiding) return
+        if (isShowing && !isHiding) return
+        
+        if (isHiding) {
+            currentAnimation?.cancel()
+            currentAnimation = null
+            setHiding(false)
+        }
         
         isShowing = true
         isInteractiveDragging = true
@@ -354,6 +366,12 @@ class ControlCenterService : Service() {
     }
 
     private fun showControlCenter() {
+        if (isHiding) {
+            currentAnimation?.cancel()
+            currentAnimation = null
+            setHiding(false)
+        }
+        
         isShowing = true
         vibrate()
 
@@ -379,6 +397,10 @@ class ControlCenterService : Service() {
     }
 
     private fun addBackgroundView() {
+        if (backgroundView != null) {
+            return
+        }
+        
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -446,6 +468,10 @@ class ControlCenterService : Service() {
     }
 
     private fun addControlCenterView() {
+        if (controlCenterView != null) {
+            return
+        }
+        
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -805,7 +831,7 @@ class ControlCenterService : Service() {
     
     private fun hideControlCenterWithVelocity(velocity: Float) {
         if (isHiding) return
-        isHiding = true
+        setHiding(true)
         isInteractiveDragging = false
         enableBlurUpdates = true
         
@@ -839,14 +865,14 @@ class ControlCenterService : Service() {
             currentAnimation = springAnimation
             springAnimation.start()
         } ?: run {
-            isHiding = false
+            setHiding(false)
         }
     }
 
     private fun removeViews() {
         isShowing = false
         isDragging = false
-        isHiding = false
+        setHiding(false)
         isInteractiveDragging = false
         isHorizontalSwipe = false
         panelMeasured = false
