@@ -27,11 +27,13 @@ class GestureAccessibilityService : AccessibilityService() {
     private var startX = 0f
     private var isDragging = false
     private var velocityTracker: VelocityTracker? = null
+    private var hasSentDragStart = false
 
     private var notificationStartY = 0f
     private var notificationStartX = 0f
     private var isNotificationDragging = false
     private var notificationVelocityTracker: VelocityTracker? = null
+    private var hasNotificationSentDragStart = false
 
     companion object {
         var instance: GestureAccessibilityService? = null
@@ -45,6 +47,17 @@ class GestureAccessibilityService : AccessibilityService() {
         instance = this
         setupGestureDetector()
         setupNotificationGestureDetector()
+        
+        ensureControlCenterServiceRunning()
+    }
+    
+    private fun ensureControlCenterServiceRunning() {
+        val intent = Intent(this, ControlCenterService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
     }
 
     fun refreshGestureDetector() {
@@ -186,20 +199,23 @@ class GestureAccessibilityService : AccessibilityService() {
                 startX = event.rawX
                 startY = event.rawY
                 isDragging = true
+                hasSentDragStart = false
                 
                 velocityTracker?.recycle()
                 velocityTracker = VelocityTracker.obtain()
                 velocityTracker?.addMovement(event)
-                
-                sendDragStart()
             }
             MotionEvent.ACTION_MOVE -> {
                 if (isDragging) {
                     velocityTracker?.addMovement(event)
                     
                     val dragY = event.rawY - startY
-                    if (dragY > 0) {
-                        sendDragUpdate(dragY)
+                    if (dragY > 5) {
+                        if (!hasSentDragStart) {
+                            hasSentDragStart = true
+                            sendDragStartDirect()
+                        }
+                        sendDragUpdateDirect(dragY)
                     }
                 }
             }
@@ -211,8 +227,11 @@ class GestureAccessibilityService : AccessibilityService() {
                     velocityTracker?.computeCurrentVelocity(1000)
                     val velocityY = velocityTracker?.yVelocity ?: 0f
                     
-                    sendDragEnd(velocityY)
+                    if (hasSentDragStart) {
+                        sendDragEndDirect(velocityY)
+                    }
                     
+                    hasSentDragStart = false
                     velocityTracker?.recycle()
                     velocityTracker = null
                 }
@@ -229,20 +248,23 @@ class GestureAccessibilityService : AccessibilityService() {
                 notificationStartX = event.rawX
                 notificationStartY = event.rawY
                 isNotificationDragging = true
+                hasNotificationSentDragStart = false
                 
                 notificationVelocityTracker?.recycle()
                 notificationVelocityTracker = VelocityTracker.obtain()
                 notificationVelocityTracker?.addMovement(event)
-                
-                sendNotificationDragStart()
             }
             MotionEvent.ACTION_MOVE -> {
                 if (isNotificationDragging) {
                     notificationVelocityTracker?.addMovement(event)
                     
                     val dragY = event.rawY - notificationStartY
-                    if (dragY > 0) {
-                        sendNotificationDragUpdate(dragY)
+                    if (dragY > 5) {
+                        if (!hasNotificationSentDragStart) {
+                            hasNotificationSentDragStart = true
+                            sendNotificationDragStartDirect()
+                        }
+                        sendNotificationDragUpdateDirect(dragY)
                     }
                 }
             }
@@ -254,8 +276,11 @@ class GestureAccessibilityService : AccessibilityService() {
                     notificationVelocityTracker?.computeCurrentVelocity(1000)
                     val velocityY = notificationVelocityTracker?.yVelocity ?: 0f
                     
-                    sendNotificationDragEnd(velocityY)
+                    if (hasNotificationSentDragStart) {
+                        sendNotificationDragEndDirect(velocityY)
+                    }
                     
+                    hasNotificationSentDragStart = false
                     notificationVelocityTracker?.recycle()
                     notificationVelocityTracker = null
                 }
@@ -263,8 +288,31 @@ class GestureAccessibilityService : AccessibilityService() {
         }
         return true
     }
-
-    private fun sendDragStart() {
+    
+    private fun sendDragStartDirect() {
+        val service = ControlCenterService.getInstance()
+        if (service != null) {
+            service.handleDragStartDirect()
+        } else {
+            sendDragStartIntent()
+        }
+    }
+    
+    private fun sendDragUpdateDirect(dragY: Float) {
+        val service = ControlCenterService.getInstance()
+        if (service != null) {
+            service.handleDragUpdateDirect(dragY)
+        }
+    }
+    
+    private fun sendDragEndDirect(velocityY: Float) {
+        val service = ControlCenterService.getInstance()
+        if (service != null) {
+            service.handleDragEndDirect(velocityY)
+        }
+    }
+    
+    private fun sendDragStartIntent() {
         val intent = Intent(this, ControlCenterService::class.java)
         intent.action = ControlCenterService.ACTION_DRAG_START
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -273,54 +321,33 @@ class GestureAccessibilityService : AccessibilityService() {
             startService(intent)
         }
     }
-
-    private fun sendDragUpdate(dragY: Float) {
-        val intent = Intent(this, ControlCenterService::class.java)
-        intent.action = ControlCenterService.ACTION_DRAG_UPDATE
-        intent.putExtra(ControlCenterService.EXTRA_DRAG_Y, dragY)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
+    
+    private fun sendNotificationDragStartDirect() {
+        val service = NotificationCenterService.getInstance()
+        if (service != null) {
+            service.handleDragStartDirect()
         } else {
-            startService(intent)
+            sendNotificationDragStartIntent()
         }
     }
-
-    private fun sendDragEnd(velocityY: Float) {
-        val intent = Intent(this, ControlCenterService::class.java)
-        intent.action = ControlCenterService.ACTION_DRAG_END
-        intent.putExtra(ControlCenterService.EXTRA_VELOCITY_Y, velocityY)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
+    
+    private fun sendNotificationDragUpdateDirect(dragY: Float) {
+        val service = NotificationCenterService.getInstance()
+        if (service != null) {
+            service.handleDragUpdateDirect(dragY)
         }
     }
-
-    private fun sendNotificationDragStart() {
+    
+    private fun sendNotificationDragEndDirect(velocityY: Float) {
+        val service = NotificationCenterService.getInstance()
+        if (service != null) {
+            service.handleDragEndDirect(velocityY)
+        }
+    }
+    
+    private fun sendNotificationDragStartIntent() {
         val intent = Intent(this, NotificationCenterService::class.java)
         intent.action = NotificationCenterService.ACTION_DRAG_START
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
-    }
-
-    private fun sendNotificationDragUpdate(dragY: Float) {
-        val intent = Intent(this, NotificationCenterService::class.java)
-        intent.action = NotificationCenterService.ACTION_DRAG_UPDATE
-        intent.putExtra(NotificationCenterService.EXTRA_DRAG_Y, dragY)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
-    }
-
-    private fun sendNotificationDragEnd(velocityY: Float) {
-        val intent = Intent(this, NotificationCenterService::class.java)
-        intent.action = NotificationCenterService.ACTION_DRAG_END
-        intent.putExtra(NotificationCenterService.EXTRA_VELOCITY_Y, velocityY)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
         } else {
