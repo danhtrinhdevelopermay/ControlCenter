@@ -845,8 +845,8 @@ class ControlCenterService : Service() {
                 -panelHeight.toFloat()
             )
             springAnimation.spring.apply {
-                stiffness = SpringForce.STIFFNESS_LOW
-                dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
+                stiffness = SpringForce.STIFFNESS_MEDIUM
+                dampingRatio = SpringForce.DAMPING_RATIO_NO_BOUNCY
             }
             
             if (velocity != 0f && velocity < 0f) {
