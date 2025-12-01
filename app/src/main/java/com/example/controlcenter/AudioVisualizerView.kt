@@ -32,6 +32,9 @@ class AudioVisualizerView @JvmOverloads constructor(
     private var animationPhase = 0f
     private var bassIntensity = 0f
     private var targetBassIntensity = 0f
+    private var subBassIntensity = 0f
+    private var targetSubBassIntensity = 0f
+    private var realAudioData = false
     
     private val updateRunnable = object : Runnable {
         override fun run() {
@@ -87,6 +90,16 @@ class AudioVisualizerView @JvmOverloads constructor(
         targetBassIntensity = intensity.coerceIn(0f, 1f)
     }
     
+    fun updateWithRealAudio(bassLevel: Float, subBassLevel: Float) {
+        realAudioData = true
+        targetBassIntensity = bassLevel.coerceIn(0f, 1f)
+        targetSubBassIntensity = subBassLevel.coerceIn(0f, 1f)
+    }
+    
+    fun setRealAudioMode(enabled: Boolean) {
+        realAudioData = enabled
+    }
+    
     private fun updateBars() {
         animationPhase += 0.15f
         if (animationPhase > 2 * Math.PI.toFloat()) {
@@ -94,27 +107,57 @@ class AudioVisualizerView @JvmOverloads constructor(
         }
         
         bassIntensity += (targetBassIntensity - bassIntensity) * 0.3f
+        subBassIntensity += (targetSubBassIntensity - subBassIntensity) * 0.3f
         
         for (i in 0 until barCount) {
             val normalizedPos = i.toFloat() / barCount
             
-            val bassSim = if (normalizedPos < 0.3f) {
-                val bassPos = normalizedPos / 0.3f
-                (sin((animationPhase * 2f + bassPos * Math.PI).toDouble()) * 0.5f + 0.5f).toFloat() *
-                    (0.6f + Random.nextFloat() * 0.4f) * (0.7f + bassIntensity * 0.3f)
-            } else if (normalizedPos < 0.6f) {
-                val midPos = (normalizedPos - 0.3f) / 0.3f
-                (sin((animationPhase * 3f + midPos * Math.PI * 2).toDouble()) * 0.5f + 0.5f).toFloat() *
-                    (0.3f + Random.nextFloat() * 0.4f)
+            val bassSim = if (realAudioData) {
+                if (normalizedPos < 0.15f) {
+                    val subBassPos = normalizedPos / 0.15f
+                    val wave = (sin((animationPhase * 1.5f + subBassPos * Math.PI).toDouble()) * 0.3f + 0.7f).toFloat()
+                    wave * (0.4f + subBassIntensity * 0.6f)
+                } else if (normalizedPos < 0.35f) {
+                    val bassPos = (normalizedPos - 0.15f) / 0.2f
+                    val wave = (sin((animationPhase * 2f + bassPos * Math.PI).toDouble()) * 0.3f + 0.7f).toFloat()
+                    wave * (0.5f + bassIntensity * 0.5f)
+                } else if (normalizedPos < 0.6f) {
+                    val midPos = (normalizedPos - 0.35f) / 0.25f
+                    val wave = (sin((animationPhase * 3f + midPos * Math.PI * 1.5).toDouble()) * 0.4f + 0.6f).toFloat()
+                    wave * (0.3f + bassIntensity * 0.3f)
+                } else {
+                    val highPos = (normalizedPos - 0.6f) / 0.4f
+                    val wave = (sin((animationPhase * 4f + highPos * Math.PI * 2).toDouble()) * 0.4f + 0.6f).toFloat()
+                    wave * (0.2f + bassIntensity * 0.2f)
+                }
             } else {
-                val highPos = (normalizedPos - 0.6f) / 0.4f
-                (sin((animationPhase * 4f + highPos * Math.PI * 3).toDouble()) * 0.5f + 0.5f).toFloat() *
-                    (0.2f + Random.nextFloat() * 0.3f)
+                if (normalizedPos < 0.3f) {
+                    val bassPos = normalizedPos / 0.3f
+                    (sin((animationPhase * 2f + bassPos * Math.PI).toDouble()) * 0.5f + 0.5f).toFloat() *
+                        (0.6f + Random.nextFloat() * 0.4f) * (0.7f + bassIntensity * 0.3f)
+                } else if (normalizedPos < 0.6f) {
+                    val midPos = (normalizedPos - 0.3f) / 0.3f
+                    (sin((animationPhase * 3f + midPos * Math.PI * 2).toDouble()) * 0.5f + 0.5f).toFloat() *
+                        (0.3f + Random.nextFloat() * 0.4f)
+                } else {
+                    val highPos = (normalizedPos - 0.6f) / 0.4f
+                    (sin((animationPhase * 4f + highPos * Math.PI * 3).toDouble()) * 0.5f + 0.5f).toFloat() *
+                        (0.2f + Random.nextFloat() * 0.3f)
+                }
             }
             
-            val beatPulse = (sin((animationPhase * 4).toDouble()) * 0.5f + 0.5f).toFloat()
-            val bassBoost = if (normalizedPos < 0.25f) {
-                beatPulse * 0.3f * bassIntensity
+            val beatPulse = if (realAudioData) {
+                (bassIntensity + subBassIntensity * 0.5f).coerceIn(0f, 1f)
+            } else {
+                (sin((animationPhase * 4).toDouble()) * 0.5f + 0.5f).toFloat()
+            }
+            
+            val bassBoost = if (normalizedPos < 0.35f) {
+                if (realAudioData) {
+                    (bassIntensity + subBassIntensity) * 0.25f
+                } else {
+                    beatPulse * 0.3f * bassIntensity
+                }
             } else {
                 0f
             }
@@ -127,7 +170,9 @@ class AudioVisualizerView @JvmOverloads constructor(
             barHeights[i] = barHeights[i].coerceIn(0.05f, 1f)
         }
         
-        targetBassIntensity = 0.5f + Random.nextFloat() * 0.5f
+        if (!realAudioData) {
+            targetBassIntensity = 0.5f + Random.nextFloat() * 0.5f
+        }
     }
     
     override fun onDraw(canvas: Canvas) {

@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         private const val OVERLAY_PERMISSION_REQUEST_CODE = 1001
         private const val SHIZUKU_PERMISSION_REQUEST_CODE = 1002
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1003
+        private const val RECORD_AUDIO_PERMISSION_REQUEST_CODE = 1004
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,6 +91,11 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         // Auto-request location permission if not granted yet
         if (!hasLocationPermission() && hasOverlayPermission() && isAccessibilityServiceEnabled()) {
             requestLocationPermission()
+        }
+        
+        // Auto-request record audio permission for audio visualizer
+        if (!hasRecordAudioPermission() && hasOverlayPermission() && isAccessibilityServiceEnabled()) {
+            requestRecordAudioPermission()
         }
     }
     
@@ -600,6 +606,13 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
         ) == PackageManager.PERMISSION_GRANTED
     }
     
+    private fun hasRecordAudioPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+    
     private fun requestLocationPermission() {
         if (hasLocationPermission()) {
             Toast.makeText(this, "Location permission already granted!", Toast.LENGTH_SHORT).show()
@@ -610,6 +623,18 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
             this,
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
             LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
+    
+    private fun requestRecordAudioPermission() {
+        if (hasRecordAudioPermission()) {
+            return
+        }
+        
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.RECORD_AUDIO),
+            RECORD_AUDIO_PERMISSION_REQUEST_CODE
         )
     }
     
@@ -626,6 +651,14 @@ class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResultListe
                     Toast.makeText(this, "Location permission granted! WiFi SSID will now be displayed.", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this, "Location permission denied. WiFi name will not be shown.", Toast.LENGTH_SHORT).show()
+                }
+                updateUI()
+            }
+            RECORD_AUDIO_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Audio permission granted! Music visualizer will now sync with bass frequencies.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Audio permission denied. Music visualizer will use animation mode.", Toast.LENGTH_LONG).show()
                 }
                 updateUI()
             }

@@ -153,6 +153,9 @@ class ControlCenterService : Service() {
     private var cachedPanelHeight = 0
     private var isPanelHeightCached = false
     private val backgroundExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+    
+    private var audioAnalyzer: AudioAnalyzer? = null
+    private var isAudioAnalyzing = false
 
     override fun onCreate() {
         super.onCreate()
@@ -2246,9 +2249,11 @@ class ControlCenterService : Service() {
             if (mediaInfo.isPlaying) {
                 audioVisualizer?.visibility = View.VISIBLE
                 audioVisualizer?.setPlaying(true)
+                startAudioAnalysis(audioVisualizer)
             } else {
                 audioVisualizer?.setPlaying(false)
                 audioVisualizer?.visibility = View.GONE
+                stopAudioAnalysis()
             }
             
             val playIcon = if (mediaInfo.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
@@ -2262,6 +2267,7 @@ class ControlCenterService : Service() {
             albumArtOverlay?.visibility = View.GONE
             audioVisualizer?.setPlaying(false)
             audioVisualizer?.visibility = View.GONE
+            stopAudioAnalysis()
             
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 albumArtBackground?.setRenderEffect(null)
@@ -2350,6 +2356,42 @@ class ControlCenterService : Service() {
                 Color.parseColor("#FF8E53"),
                 Color.parseColor("#FFA726")
             )
+        }
+    }
+    
+    private fun startAudioAnalysis(audioVisualizer: AudioVisualizerView?) {
+        if (isAudioAnalyzing || audioVisualizer == null) return
+        
+        if (audioAnalyzer == null) {
+            audioAnalyzer = AudioAnalyzer(this)
+        }
+        
+        if (!audioAnalyzer!!.hasRecordPermission()) {
+            audioVisualizer.setRealAudioMode(false)
+            return
+        }
+        
+        audioAnalyzer?.setOnBassDetectedListener { bassLevel, subBassLevel ->
+            handler.post {
+                if (isShowing && controlCenterView != null) {
+                    controlCenterView?.findViewById<AudioVisualizerView>(R.id.audioVisualizer)?.updateWithRealAudio(bassLevel, subBassLevel)
+                }
+            }
+        }
+        
+        audioAnalyzer?.start()
+        isAudioAnalyzing = true
+        audioVisualizer.setRealAudioMode(true)
+    }
+    
+    private fun stopAudioAnalysis() {
+        if (!isAudioAnalyzing) return
+        
+        audioAnalyzer?.stop()
+        isAudioAnalyzing = false
+        
+        handler.post {
+            controlCenterView?.findViewById<AudioVisualizerView>(R.id.audioVisualizer)?.setRealAudioMode(false)
         }
     }
     
@@ -3063,6 +3105,8 @@ class ControlCenterService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceInstance = null
+        stopAudioAnalysis()
+        audioAnalyzer = null
         popupBlurAnimator?.cancel()
         controlCenterBlurAnimator?.cancel()
         flashAnimator?.cancel()
