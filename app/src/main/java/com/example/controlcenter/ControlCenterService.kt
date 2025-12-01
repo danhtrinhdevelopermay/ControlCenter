@@ -114,6 +114,11 @@ class ControlCenterService : Service() {
     private val minHorizontalFlingVelocity = 800f
     private val horizontalSwipeThreshold = 50f
     private val openThreshold = 0.0f
+    
+    private var lastBlurUpdateTime = 0L
+    private var lastBlurRadius = -1
+    private val blurUpdateInterval = 16L
+    private val blurChangeThreshold = 5
 
     private val controlStates = mutableMapOf(
         "wifi" to true,
@@ -413,15 +418,24 @@ class ControlCenterService : Service() {
     private fun updateBlurRadius(progress: Float) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             backgroundView?.let { view ->
-                val blurRadius = (maxBlurRadius * progress).coerceIn(0.1f, maxBlurRadius)
-                try {
-                    val params = view.layoutParams as? WindowManager.LayoutParams
-                    params?.let {
-                        it.blurBehindRadius = blurRadius.toInt().coerceAtLeast(1)
-                        windowManager?.updateViewLayout(view, it)
+                val blurRadius = (maxBlurRadius * progress).coerceIn(0.1f, maxBlurRadius).toInt().coerceAtLeast(1)
+                val currentTime = android.os.SystemClock.elapsedRealtime()
+                
+                val timeDiff = currentTime - lastBlurUpdateTime
+                val radiusDiff = kotlin.math.abs(blurRadius - lastBlurRadius)
+                
+                if (timeDiff >= blurUpdateInterval || radiusDiff >= blurChangeThreshold || lastBlurRadius == -1) {
+                    try {
+                        val params = view.layoutParams as? WindowManager.LayoutParams
+                        params?.let {
+                            it.blurBehindRadius = blurRadius
+                            windowManager?.updateViewLayout(view, it)
+                            lastBlurUpdateTime = currentTime
+                            lastBlurRadius = blurRadius
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
             }
         }
@@ -844,6 +858,9 @@ class ControlCenterService : Service() {
         
         velocityTracker?.recycle()
         velocityTracker = null
+        
+        lastBlurUpdateTime = 0L
+        lastBlurRadius = -1
 
         controlCenterView?.let {
             it.translationX = 0f
