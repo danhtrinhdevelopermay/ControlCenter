@@ -40,6 +40,7 @@ object AppearanceSettings {
     private const val KEY_SLIDER_WIDTH = "slider_width"
     private const val KEY_SLIDER_HEIGHT = "slider_height"
     private const val KEY_SLIDER_SPACING = "slider_spacing"
+    private const val KEY_CIRCLE_BUTTON_SIZE = "circle_button_size"
     
     private const val DEFAULT_BUTTON_COLOR = 0x505050
     private const val DEFAULT_BUTTON_OPACITY = 80
@@ -75,6 +76,7 @@ object AppearanceSettings {
     private const val DEFAULT_SLIDER_WIDTH = 70
     private const val DEFAULT_SLIDER_HEIGHT = 160
     private const val DEFAULT_SLIDER_SPACING = 12
+    private const val DEFAULT_CIRCLE_BUTTON_SIZE = 60
     
     private fun getPrefs(context: Context) = 
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -340,6 +342,17 @@ object AppearanceSettings {
         return (getSliderHeight(context) * context.resources.displayMetrics.density).toInt()
     }
     
+    fun getCircleButtonSize(context: Context): Int = 
+        getPrefs(context).getInt(KEY_CIRCLE_BUTTON_SIZE, DEFAULT_CIRCLE_BUTTON_SIZE)
+    
+    fun setCircleButtonSize(context: Context, size: Int) {
+        getPrefs(context).edit().putInt(KEY_CIRCLE_BUTTON_SIZE, size.coerceIn(40, 80)).apply()
+    }
+    
+    fun getCircleButtonSizePx(context: Context): Int {
+        return (getCircleButtonSize(context) * context.resources.displayMetrics.density).toInt()
+    }
+    
     fun getButtonCornerRadiusPx(context: Context): Float {
         return getButtonCornerRadius(context) * context.resources.displayMetrics.density
     }
@@ -393,6 +406,7 @@ object AppearanceSettings {
             putInt(KEY_SLIDER_WIDTH, DEFAULT_SLIDER_WIDTH)
             putInt(KEY_SLIDER_HEIGHT, DEFAULT_SLIDER_HEIGHT)
             putInt(KEY_SLIDER_SPACING, DEFAULT_SLIDER_SPACING)
+            putInt(KEY_CIRCLE_BUTTON_SIZE, DEFAULT_CIRCLE_BUTTON_SIZE)
             apply()
         }
     }

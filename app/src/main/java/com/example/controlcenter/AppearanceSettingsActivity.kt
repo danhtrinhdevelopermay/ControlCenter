@@ -77,6 +77,9 @@ class AppearanceSettingsActivity : AppCompatActivity() {
     private lateinit var sliderHeightValue: TextView
     private lateinit var sliderSpacingSeekBar: SeekBar
     private lateinit var sliderSpacingValue: TextView
+    
+    private lateinit var circleButtonSizeSeekBar: SeekBar
+    private lateinit var circleButtonSizeValue: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -149,6 +152,9 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         sliderHeightValue = findViewById(R.id.sliderHeightValue)
         sliderSpacingSeekBar = findViewById(R.id.sliderSpacingSeekBar)
         sliderSpacingValue = findViewById(R.id.sliderSpacingValue)
+        
+        circleButtonSizeSeekBar = findViewById(R.id.circleButtonSizeSeekBar)
+        circleButtonSizeValue = findViewById(R.id.circleButtonSizeValue)
     }
 
     private fun loadSettings() {
@@ -203,6 +209,10 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         val sliderSpacing = AppearanceSettings.getSliderSpacing(this)
         sliderSpacingSeekBar.progress = sliderSpacing
         sliderSpacingValue.text = "${sliderSpacing}dp"
+        
+        val circleButtonSize = AppearanceSettings.getCircleButtonSize(this)
+        circleButtonSizeSeekBar.progress = circleButtonSize - 40
+        circleButtonSizeValue.text = "${circleButtonSize}dp"
 
         updateAllPreviews()
     }
@@ -362,6 +372,18 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+        
+        circleButtonSizeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val actualValue = progress + 40
+                circleButtonSizeValue.text = "${actualValue}dp"
+                if (fromUser) {
+                    AppearanceSettings.setCircleButtonSize(this@AppearanceSettingsActivity, actualValue)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupColorInputListener(editText: EditText, onColorChange: (Int) -> Unit) {
@@ -459,6 +481,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         AppearanceSettings.setSliderWidth(this, sliderWidthSeekBar.progress + 40)
         AppearanceSettings.setSliderHeight(this, sliderHeightSeekBar.progress + 100)
         AppearanceSettings.setSliderSpacing(this, sliderSpacingSeekBar.progress)
+        AppearanceSettings.setCircleButtonSize(this, circleButtonSizeSeekBar.progress + 40)
     }
 
     private fun updateAllPreviews() {

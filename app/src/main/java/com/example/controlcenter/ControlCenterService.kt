@@ -1593,10 +1593,14 @@ class ControlCenterService : Service() {
     }
     
     private fun createQuickSettingTileView(tile: QuickSettingTile): View {
+        val buttonSize = AppearanceSettings.getCircleButtonSizePx(this)
+        val containerHeight = (buttonSize * 1.133f).toInt()
+        val iconSize = (buttonSize * 0.467f).toInt()
+        
         val container = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 0,
-                68.dpToPx()
+                containerHeight
             ).apply {
                 weight = 1f
             }
@@ -1604,8 +1608,8 @@ class ControlCenterService : Service() {
         
         val background = View(this).apply {
             layoutParams = FrameLayout.LayoutParams(
-                60.dpToPx(),
-                60.dpToPx()
+                buttonSize,
+                buttonSize
             ).apply {
                 gravity = Gravity.CENTER
             }
@@ -1619,8 +1623,8 @@ class ControlCenterService : Service() {
         
         val icon = ImageView(this).apply {
             layoutParams = FrameLayout.LayoutParams(
-                28.dpToPx(),
-                28.dpToPx()
+                iconSize,
+                iconSize
             ).apply {
                 gravity = Gravity.CENTER
             }
